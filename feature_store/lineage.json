@@ -1,0 +1,12 @@
+{
+  "feature_store_version": "1.0.0",
+  "generated_at_utc": "2026-07-28T11:10:54.744134+00:00",
+  "input_sha256": {
+    "feature_specification": "374bc35bb30f32a97902863767e89d845e7903a7e7f10ac8345da57ef1d58182",
+    "operational_exposure": "9f4267e7b40b542d8e1acc0439bf036999c14439b0ae2ba4039013297240b364",
+    "inspection_intervals": "48bc4c172c77eb63ef6c3fa82ba0805b816106cfecefda6785c3c31123c9e495",
+    "loco_types": "e0cb19c9595c1902e107589d0b23fa608388cdb8a4a83f248e50148e38c3c23c"
+  },
+  "point_in_time_rule": "A feature may use only source facts with business time at or before its score/interval end time.",
+  "grain": "one released Gold-B inspection interval"
+}

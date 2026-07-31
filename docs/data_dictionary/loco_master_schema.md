@@ -1,0 +1,75 @@
+# Data Dictionary: loco_master_schema
+
+| Column | Type | Null count | Null % | Distinct | Candidate key | Sample values | Min | Max | Mean | Comments |
+| --- | --- | ---: | ---: | ---: | --- | --- | --- | --- | --- | --- |
+| LomId | int64 | 0 | 0.0000 | 1 | True | ["1"] | 1 | 1 | 1.0 |  |
+| LomNumber | str | 0 | 0.0000 | 1 | True | ["21107"] |  |  |  |  |
+| LomType | int64 | 0 | 0.0000 | 1 | True | ["2"] | 2 | 2 | 2.0 |  |
+| LomMake | int64 | 0 | 0.0000 | 1 | True | ["1"] | 1 | 1 | 1.0 |  |
+| LomDoC | datetime64[us] | 0 | 0.0000 | 1 | True | ["1981-09-22T00:00:00"] | 1981-09-22T00:00:00 | 1981-09-22T00:00:00 |  |  |
+| LomDoM | datetime64[us] | 0 | 0.0000 | 1 | True | ["1981-09-22T00:00:00"] | 1981-09-22T00:00:00 | 1981-09-22T00:00:00 |  |  |
+| LomDoR | datetime64[us] | 0 | 0.0000 | 1 | True | ["1981-09-22T00:00:00"] | 1981-09-22T00:00:00 | 1981-09-22T00:00:00 |  |  |
+| LomFuncLocation | int64 | 0 | 0.0000 | 1 | True | ["2"] | 2 | 2 | 2.0 |  |
+| LomLocoControl | int64 | 0 | 0.0000 | 1 | True | ["1"] | 1 | 1 | 1.0 |  |
+| LomIntialWheelDiaBogie1 | float64 | 0 | 0.0000 | 1 | True | ["1065.0"] | 1065.0 | 1065.0 | 1065.0 |  |
+| LomInitalWheelDiaBogie2 | float64 | 0 | 0.0000 | 1 | True | ["1050.5"] | 1050.5 | 1050.5 | 1050.5 |  |
+| LomSPMReading | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomRegenerationReading | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomEnergyMeterReading | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomStatus | int64 | 0 | 0.0000 | 1 | True | ["2"] | 2 | 2 | 2.0 |  |
+| LomLastSchDone | int64 | 0 | 0.0000 | 1 | True | ["618"] | 618 | 618 | 618.0 |  |
+| LomLastSchDoneOn | datetime64[us] | 0 | 0.0000 | 1 | True | ["2017-08-23T09:30:00"] | 2017-08-23T09:30:00 | 2017-08-23T09:30:00 |  |  |
+| LomPOHCount | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomRemarks | str | 0 | 0.0000 | 1 | True | ["21107"] |  |  |  |  |
+| LomCreatedBy | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomCreatedOn | datetime64[us] | 0 | 0.0000 | 1 | True | ["2014-01-31T23:28:02.860000"] | 2014-01-31T23:28:02.860000 | 2014-01-31T23:28:02.860000 |  |  |
+| LomLastModifiedBy | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomLastModifiedOn | datetime64[us] | 0 | 0.0000 | 1 | True | ["2017-06-01T10:49:58.657000"] | 2017-06-01T10:49:58.657000 | 2017-06-01T10:49:58.657000 |  |  |
+| LomNominationTypes | int64 | 0 | 0.0000 | 1 | True | ["4"] | 4 | 4 | 4.0 |  |
+| LomAuxilaryOutPut | int64 | 0 | 0.0000 | 1 | True | ["3"] | 3 | 3 | 3.0 |  |
+| LomMicroProcCtrl | int64 | 0 | 0.0000 | 1 | True | ["1"] | 1 | 1 | 1.0 |  |
+| LomLastPOHDoneOn | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomLastMTRDoneOn | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomLastRCDoneOn | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomCAB1AC | int64 | 0 | 0.0000 | 1 | True | ["2"] | 2 | 2 | 2.0 |  |
+| LomCAB2AC | int64 | 0 | 0.0000 | 1 | True | ["2"] | 2 | 2 | 2.0 |  |
+| LomCrewFriendMod | int64 | 0 | 0.0000 | 1 | True | ["1"] | 1 | 1 | 1.0 |  |
+| LomTMType | str | 0 | 0.0000 | 1 | True | ["TAOchi"] |  |  |  |  |
+| LomVCDMake | int64 | 0 | 0.0000 | 1 | True | ["219"] | 219 | 219 | 219.0 |  |
+| LomHRPantoCab1 | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomHRPantoCab2 | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomCVVRS | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomHLC | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomRTIS | int64 | 0 | 0.0000 | 1 | True | ["0"] | 0 | 0 | 0.0 |  |
+| LomMCBG | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomRAMMLOT | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomVCD | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomLastRebulidingDone | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomAPU | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomBrakeType | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| lomKAVACH | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomDoA | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomActive | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomTwinLoco | str | 0 | 0.0000 | 1 | True | ["N"] |  |  |  |  |
+| LomTwinLocoA | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomTwinLocoB | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomTwinParentLoco | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomDomainType | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| LomDPWCS | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_LED | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_INSPT | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_SEAT | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_SIGNAL | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_TOOLBOX | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_CabAC1Img | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_CabAC2Img | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_HRPT1Img | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_HRPT2Img | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_SIGNALEXCHANGEImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_LEDImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_INSPTSEATImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_ERGONOMICALLYSEATImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_TOOLBOXImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_WATERLESSURINALImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_DPWCSImg | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |
+| Lom_WATERLESS_URINAL | object | 1 | 100.0000 | 0 | False | [] |  |  |  |  |

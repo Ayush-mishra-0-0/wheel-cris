@@ -1,0 +1,137 @@
+1. Multi-source data fusion: combine wheel measurements, maintenance history, route characteristics, environmental conditions, and operational telemetry rather than relying only on inspection records.
+2. Spatio-temporal modeling: explicitly model how degradation depends on both time and the specific routes or track segments traveled.
+3. Hybrid modeling: integrate domain knowledge (wheel wear indices, engineering constraints, or contact mechanics) with data-driven ML instead of using a pure black-box model.
+4. Actionable outputs: predict Remaining Useful Life (RUL), maintenance priority, and recommended maintenance windows—not just wear values.
+5. Explainability: provide feature attribution (e.g., SHAP) so maintenance engineers understand why a wheel is flagged.
+6. Closed-loop learning: incorporate new maintenance outcomes back into the model to continuously improve predictions as more data becomes available. This aligns with recent research trends in continual learning for railway maintenance.
+
+Applications include
+
+RUL prediction
+Abnormal wear detection
+Fleet benchmarking
+Maintenance optimization
+Root-cause investigation
+Route analytics
+Maintenance effectiveness
+Asset life-cycle analytics
+Failure prediction
+Digital twin
+
+Level 1 — Wear Detection
+
+"Is wear accelerating?"
+
+Yes / No
+
+Level 2 — Wear Driver Category
+
+"What broad category is most associated with the acceleration?"
+
+Examples:
+
+Route
+Operations
+Maintenance
+Locomotive
+Wheel history
+Level 3 — Candidate Contributors
+
+Within those categories:
+
+Operations
+
+heavy load
+high braking frequency
+long-distance service
+
+Maintenance
+
+overdue turning
+frequent reprofiling
+
+Route
+
+gradients
+curves
+region
+
+Locomotive
+
+locomotive model
+age
+maintenance history
+Level 4 — Engineering Investigation
+
+Finally, recommend where to inspect next.
+
+For example:
+
+Wear Risk
+
+HIGH
+
+Most influential factors
+
+Route curvature
+
+Heavy load
+
+Repeated emergency braking
+
+Recommendation
+
+Inspect bogie alignment and braking system.
+
+Notice the wording.
+
+We're not saying:
+
+"The brake system is faulty."
+
+We're saying:
+
+"Given the observed wear pattern and operational history, inspecting the braking system and bogie alignment is warranted."
+
+That's a defensible engineering recommendation.
+
+
+
+               Phase 0
+        Enterprise Data Discovery
+                ✓ Complete
+
+                    │
+                    ▼
+
+              Phase 1
+        Business Truth Layer
+     (Wheel Timeline + Intervals)
+           ← You are here
+
+                    │
+                    ▼
+
+              Phase 2
+       Engineering Knowledge Layer
+   (Wear rates, exposure, health indices)
+
+                    │
+                    ▼
+
+              Phase 3
+         Decision Intelligence
+ (Health cards, abnormal wear, maintenance)
+
+                    │
+                    ▼
+
+              Phase 4
+        Physics-Informed Learning
+ (RUL, survival analysis, explainable ML)
+
+                    │
+                    ▼
+
+              Phase 5
+        Digital Twin & Continual Learning

@@ -1,0 +1,15 @@
+{
+  "run_id": "7275a6c5-4f51-4a46-a436-a1e2b646fda2",
+  "generated_at_utc": "2026-07-28T05:43:51.268634+00:00",
+  "interval_sha256": "48bc4c172c77eb63ef6c3fa82ba0805b816106cfecefda6785c3c31123c9e495",
+  "jobcard_sha256": "a92d969bb1fc97ddc0a2c78642f41b023e5e711a7fd784880461fb8e64366220",
+  "interval_boundary": "start < SejCreatedOn <= end",
+  "metrics": {
+    "jobcards_with_valid_loco_and_timestamp": 4429700,
+    "intervals_evaluated": 225262,
+    "intervals_with_maintenance_event": 161551,
+    "intervals_with_multiple_maintenance_events": 155560,
+    "max_maintenance_events_in_interval": 604
+  },
+  "limitation": "Job-card creation time is not confirmed maintenance completion time; this is a temporal-presence validation only."
+}

@@ -1,0 +1,42 @@
+architecture_version: 1.0.0
+platform_name: Railway Wheel Engineering Intelligence Platform
+feature_governance:
+  specification: configs/engineering_feature_specification_v1.json
+  schema: configs/engineering_feature_specification.schema.json
+  validator: silver_gold/validate_feature_specification.py
+  rule: A feature may only be materialised when its specification status and dependencies permit it.
+feature_store:
+  status: released
+  version: 1.0.0
+  artifact: feature_store/feature_store_v1.parquet
+  contract: feature_store/feature_store_contract.md
+  admission_statuses: [READY, READY_WITH_CAVEAT, READY_FOR_MATERIALISATION]
+layers:
+  identity:
+    status: released
+    contract_source: configs/wheel_timeline_contract.md
+    current_artifact: data/gold/business_truth/v1.0/wheel_timeline_gold_b.parquet
+  state:
+    status: released_as_evidence
+    source: WheelSetMeasurements endpoint fields in Gold-B timeline
+  exposure:
+    status: partial
+    released: interval duration only
+    blocked: RTIS physical distance aggregation
+  behaviour:
+    status: released
+    contract_source: configs/inspection_interval_contract.md
+    current_artifact: data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet
+  degradation:
+    status: blocked
+    blocked: approved measurement, turning and physical-change rules
+  maintenance:
+    status: partial
+    released: job-card temporal presence/count
+    blocked: completion/effectiveness semantics
+  health:
+    status: not_released
+  prediction:
+    status: not_released
+  decision:
+    status: not_released

@@ -1,0 +1,11 @@
+.ayush
+.env
+.vscode/
+data/
+data.zip
+models/
+extract/
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/

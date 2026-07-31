@@ -1,0 +1,111 @@
+{
+  "feature_specification_id": "railway-wheel-engineering-features",
+  "feature_specification_version": "1.0.0",
+  "approved_statuses": [
+    "READY",
+    "READY_FOR_MATERIALISATION",
+    "READY_WITH_CAVEAT"
+  ],
+  "materialised_features": [
+    {
+      "feature_id": "interval_days",
+      "status": "READY",
+      "evidence_level": "Measured",
+      "columns": [
+        "interval_days"
+      ]
+    },
+    {
+      "feature_id": "assignment_quality_tier",
+      "status": "READY",
+      "evidence_level": "Observed",
+      "columns": [
+        "assignment_quality_tier"
+      ]
+    },
+    {
+      "feature_id": "diameter_delta_raw_mm",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Derived",
+      "columns": [
+        "diameter_delta_raw_mm_side_1",
+        "diameter_delta_raw_mm_side_2"
+      ]
+    },
+    {
+      "feature_id": "rtis_source_event_count",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Observed",
+      "columns": [
+        "rtis_source_event_count",
+        "rtis_source_event_type_count",
+        "rtis_source_event_types"
+      ]
+    },
+    {
+      "feature_id": "maintenance_jobcard_creation_count",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Observed",
+      "columns": [
+        "maintenance_jobcard_creation_count"
+      ]
+    },
+    {
+      "feature_id": "rtis_reporting_coverage_pct",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Derived",
+      "columns": [
+        "rtis_reporting_coverage_pct",
+        "rtis_report_count",
+        "rtis_reporting_days",
+        "rtis_duplicate_report_count"
+      ]
+    },
+    {
+      "feature_id": "static_locomotive_axle_load",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Measured",
+      "columns": [
+        "static_locomotive_axle_load",
+        "static_locomotive_axle_count"
+      ]
+    }
+  ],
+  "excluded_features": [
+    {
+      "feature_id": "turning_indicator_raw",
+      "status": "PENDING",
+      "reason": "status_not_approved_for_feature_store"
+    },
+    {
+      "feature_id": "wear_rate_mm_per_day",
+      "status": "BLOCKED",
+      "reason": "status_not_approved_for_feature_store"
+    },
+    {
+      "feature_id": "interval_distance_km",
+      "status": "BLOCKED",
+      "reason": "status_not_approved_for_feature_store"
+    },
+    {
+      "feature_id": "wear_rate_mm_per_km",
+      "status": "BLOCKED",
+      "reason": "status_not_approved_for_feature_store"
+    },
+    {
+      "feature_id": "weather_exposure_index",
+      "status": "PENDING",
+      "reason": "status_not_approved_for_feature_store"
+    },
+    {
+      "feature_id": "curve_severity_index",
+      "status": "FUTURE",
+      "reason": "status_not_approved_for_feature_store"
+    },
+    {
+      "feature_id": "wheel_health_index",
+      "status": "BLOCKED",
+      "reason": "status_not_approved_for_feature_store"
+    }
+  ]
+}

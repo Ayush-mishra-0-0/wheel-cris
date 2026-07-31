@@ -1,0 +1,24 @@
+{
+  "run_id": "1f73323d-0772-4d4b-bcc4-ea5b12b300ea",
+  "generated_at_utc": "2026-07-28T10:41:12.899763+00:00",
+  "version": "v1.0",
+  "input_sha256": {
+    "intervals": "48bc4c172c77eb63ef6c3fa82ba0805b816106cfecefda6785c3c31123c9e495",
+    "emergency": "54c008433499a3f3f049e24507dede90195792c7f724822f6dac3518f36d5387",
+    "jobcards": "a92d969bb1fc97ddc0a2c78642f41b023e5e711a7fd784880461fb8e64366220",
+    "rtis": "affe9ca363ef062e4896a2f6dd0c9f79d85ed9fa1192a244e9f4a47c35654b41"
+  },
+  "semantic_limits": {
+    "maintenance": "Job-card creation time only; not confirmed completion or effectiveness.",
+    "rtis": "Reporting metadata only; no distance aggregation or interpretation.",
+    "emergency": "Transmission timestamp event count."
+  },
+  "metrics": {
+    "intervals": 225262,
+    "intervals_with_emergency_events": 2234,
+    "intervals_with_jobcard_events": 161551,
+    "intervals_with_rtis_reports": 134866,
+    "intervals_without_rtis_reports": 90396,
+    "distance_status": "BLOCKED_PENDING_SOURCE_CONFIRMATION"
+  }
+}

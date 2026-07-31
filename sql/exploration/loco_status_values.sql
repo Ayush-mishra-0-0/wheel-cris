@@ -1,0 +1,1 @@
+SELECT * FROM LocoStatus ORDER BY 1;

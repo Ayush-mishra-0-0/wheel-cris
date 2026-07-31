@@ -1,0 +1,14 @@
+{
+  "run_id": "2af3fd82-153e-4d69-9902-9fe5763964f6",
+  "contract_version": "1.0.0",
+  "business_truth_version": "v1.0",
+  "generated_at_utc": "2026-07-27T11:17:31.239175+00:00",
+  "timeline_sha256": "71c915e91dd6f4c6a283a9708406ccafd140262848459ac641b7f6c62a452f8c",
+  "candidate_consecutive_pairs": 252183,
+  "gold_b_intervals": 225262,
+  "gold_c_interval_exclusions": 26921,
+  "exclusions_by_reason": {
+    "non_positive_interval_days": 20229,
+    "loco_changed_within_consecutive_inspections": 6692
+  }
+}

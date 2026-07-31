@@ -1,0 +1,13 @@
+{
+  "row_count": 225262,
+  "duplicate_feature_store_keys": 0,
+  "null_locomotive_id": 0,
+  "approved_feature_count": 7,
+  "excluded_feature_count": 7,
+  "excluded_by_status": {
+    "BLOCKED": 4,
+    "PENDING": 2,
+    "FUTURE": 1
+  },
+  "quality_verdict": "PASS"
+}

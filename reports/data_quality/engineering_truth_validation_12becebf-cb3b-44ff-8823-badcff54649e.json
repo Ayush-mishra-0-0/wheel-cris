@@ -1,0 +1,25 @@
+{
+  "run_id": "12becebf-cb3b-44ff-8823-badcff54649e",
+  "generated_at_utc": "2026-07-27T11:42:17.711376+00:00",
+  "interval_contract_version": "1.0.0",
+  "input_sha256": "48bc4c172c77eb63ef6c3fa82ba0805b816106cfecefda6785c3c31123c9e495",
+  "checks": {
+    "interval_rows": 225262,
+    "non_positive_days": 0,
+    "loco_endpoint_mismatch": 0,
+    "duplicate_interval_endpoint_pairs": 0,
+    "delta_wsmDia1_non_null": 225262,
+    "delta_wsmDia1_positive_count": 13549,
+    "delta_wsmDia1_negative_count": 92716,
+    "delta_wsmDia2_non_null": 225262,
+    "delta_wsmDia2_positive_count": 13601,
+    "delta_wsmDia2_negative_count": 92685,
+    "delta_wsmFlangeThickness1_non_null": 225245,
+    "delta_wsmFlangeThickness1_positive_count": 64829,
+    "delta_wsmFlangeThickness1_negative_count": 82362,
+    "delta_wsmFlangeThickness2_non_null": 225245,
+    "delta_wsmFlangeThickness2_positive_count": 65049,
+    "delta_wsmFlangeThickness2_negative_count": 82732
+  },
+  "interpretation": "Positive/negative geometry deltas are raw observations, not yet accepted wear labels. Their meaning requires approved measurement and turning/reprofiling business rules."
+}

@@ -1,0 +1,18 @@
+{
+  "run_id": "9c31bd1a-df23-4066-8519-5e7e7f6a95bc",
+  "contract_version": "1.0.0",
+  "generated_at_utc": "2026-07-27T11:09:48.156670+00:00",
+  "inputs": {
+    "silver_wheel_measurements_sha256": "cef889fdc4ddbaeb57fe8c1bdcf3df27bbb2cde096b253e988aa28f1fe372fb6",
+    "silver_loco_equipment_history_sha256": "3dd8e49c8e8e69f13b1616b6f8fa29dff79fa6e8d986327972afda816758ac34",
+    "cohort_sha256": "8a09dfc297f8f69debf5668cadc0d95400acad39e268e2d96c70c527786287fe"
+  },
+  "measurements_evaluated": 1141282,
+  "gold_b_timeline_rows": 271350,
+  "gold_c_exclusions": 869932,
+  "exclusions_by_reason": {
+    "no_assignment_history": 821575,
+    "no_valid_assignment_interval": 45211,
+    "ambiguous_assignment_interval": 3146
+  }
+}

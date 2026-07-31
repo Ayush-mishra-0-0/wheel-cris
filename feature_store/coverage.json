@@ -1,0 +1,58 @@
+{
+  "interval_days": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "assignment_quality_tier": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "diameter_delta_raw_mm_side_1": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "diameter_delta_raw_mm_side_2": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_source_event_count": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_source_event_type_count": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_source_event_types": {
+    "non_null_rows": 2234,
+    "coverage_pct": 0.9917
+  },
+  "maintenance_jobcard_creation_count": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_reporting_coverage_pct": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_report_count": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_reporting_days": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "rtis_duplicate_report_count": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "static_locomotive_axle_load": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "static_locomotive_axle_count": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  }
+}

@@ -1,0 +1,4 @@
+column_name,data_type,null_count,null_percent,distinct_count,sample_values,is_candidate_key,minimum,maximum,mean,comments
+TABLE_NAME,str,0,0.0,2,"[""INTEG_rtisLocoEmergencyData"", ""RtisLocoKmDetails""]",False,,,,
+COLUMN_NAME,str,0,0.0,24,"[""IrledId"", ""LOCO_NO"", ""DEVICE_ID"", ""COMM_TYPE"", ""EVENT_TYPE""]",True,,,,
+DATA_TYPE,str,0,0.0,5,"[""int"", ""varchar"", ""char"", ""decimal"", ""datetime""]",False,,,,

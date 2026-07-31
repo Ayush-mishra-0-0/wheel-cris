@@ -1,0 +1,19 @@
+{
+  "run_id": "068693ad-c871-4072-839d-4100aabc05bf",
+  "contract_version": "1.0.0",
+  "generated_at_utc": "2026-07-27T10:59:31.103312+00:00",
+  "source": {
+    "path": "data\\bronze\\loco_equipment_history.parquet",
+    "sha256": "a7b84abb5cc7558425b100e26a49f5df1d01c069d59d9dd28234662b3335521a",
+    "rows": 547635
+  },
+  "output": {
+    "accepted_rows": 500634,
+    "quarantined_rows": 47001
+  },
+  "quality_flag_counts": {
+    "valid": 500634,
+    "invalid_provision_date": 40088,
+    "removed_before_provision": 6913
+  }
+}

@@ -1,0 +1,4 @@
+column_name,data_type,null_count,null_percent,distinct_count,sample_values,is_candidate_key,minimum,maximum,mean,comments
+TABLE_NAME,str,0,0.0,1,"[""FOIS_LocoLocation_History""]",False,,,,
+COLUMN_NAME,str,0,0.0,17,"[""IntgFLidHis"", ""LocoNumb"", ""FOISZone"", ""FOISDvsn"", ""FOISSttn""]",True,,,,
+DATA_TYPE,str,0,0.0,3,"[""int"", ""varchar"", ""datetime""]",False,,,,

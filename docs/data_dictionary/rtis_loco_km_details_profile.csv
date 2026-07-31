@@ -1,0 +1,4 @@
+column_name,data_type,null_count,null_percent,distinct_count,sample_values,is_candidate_key,minimum,maximum,mean,comments
+TotalRows,int64,0,0.0,1,"[""17404443""]",True,17404443,17404443,17404443.0,
+MinReportDate,datetime64[us],0,0.0,1,"[""2023-02-06T00:00:00""]",True,2023-02-06T00:00:00,2023-02-06T00:00:00,,
+MaxReportDate,datetime64[us],0,0.0,1,"[""2026-07-21T00:00:00""]",True,2026-07-21T00:00:00,2026-07-21T00:00:00,,

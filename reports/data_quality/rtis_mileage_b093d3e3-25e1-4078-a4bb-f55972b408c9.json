@@ -1,0 +1,17 @@
+{
+  "run_id": "b093d3e3-25e1-4078-a4bb-f55972b408c9",
+  "contract_version": "1.0.0",
+  "generated_at_utc": "2026-07-27T10:34:37.205226+00:00",
+  "source": {
+    "path": "data\\bronze\\rtis_mileage.parquet",
+    "sha256": "640ff7e3c247fb4d53cfa2a6ebac444c570ca2906c139e486f591089dd719adc",
+    "rows": 4320461
+  },
+  "output": {
+    "accepted_rows": 4320461,
+    "quarantined_rows": 0
+  },
+  "quality_flag_counts": {
+    "valid": 4320461
+  }
+}

@@ -1,0 +1,259 @@
+sp_help LocoWheelRegister;
+
+select Top 10 * from LocoWheelRegister;
+
+-- 1. Inspect Equipment Master to check if wsmEquipmentId maps to serial numbers and loco IDs
+EXEC sp_help 'EquipmentMasterRegister';
+SELECT TOP 20 * FROM EquipmentMasterRegister;
+
+-- 2. Inspect Loco Equipment relations
+EXEC sp_help 'LocoEquipments';
+SELECT TOP 20 * FROM LocoEquipments;
+
+-- 3. Check for physical wheel serial/lifecycle tracking tables
+SELECT name 
+FROM sys.tables 
+WHERE name LIKE '%Equipment%' 
+   OR name LIKE '%LocoWheel%' 
+   OR name LIKE '%Axle%'
+ORDER BY name;
+
+-- Check structure of JobcardMeasurements
+EXEC sp_help 'JobcardMeasurements';
+SELECT TOP 20 * FROM JobcardMeasurements;
+
+-- Check structure of CheckSheeetForAxle
+EXEC sp_help 'CheckSheeetForAxle';
+SELECT TOP 20 * FROM CheckSheeetForAxle;
+
+-- Find tables tracking cumulative kilometers / trips
+SELECT name 
+FROM sys.tables 
+WHERE name LIKE '%Km%' 
+   OR name LIKE '%Trip%' 
+   OR name LIKE '%Distance%' 
+   OR name LIKE '%Log%'
+ORDER BY name;
+
+SELECT TOP 20
+    wsm.wsmId,
+    wsm.wsmUpdatedOn AS MeasurementDate,
+    emr.EmrId,
+    emr.EmrSerialNo,
+    le.LoeLocoMaster AS LocoMasterId,
+    wsm.wsmDia1 AS LeftDiameter,
+    wsm.wsmDia2 AS RightDiameter,
+    wsm.wsmFlangeThickness1 AS FlangeThick_L,
+    wsm.wsmturning1 AS TurningFlag
+FROM WheelSetMeasurements wsm
+INNER JOIN EquipmentMasterRegister emr 
+    ON wsm.wsmEquipmentId = emr.EmrId
+LEFT JOIN LocoEquipments le 
+    ON emr.EmrId = le.LoeEquipmentMasterRegister
+ORDER BY wsm.wsmUpdatedOn DESC;
+
+
+-- Check structure and sample data for RTIS tables
+EXEC sp_help 'RTISLOCOKM';
+SELECT TOP 20 * FROM RTISLOCOKM;
+
+EXEC sp_help 'RtisLocoKmDetails';
+SELECT TOP 20 * FROM RtisLocoKmDetails;
+
+SELECT TOP 20
+    wsm.wsmId,
+    wsm.wsmUpdatedOn AS MeasurementDate,
+    emr.EmrId,
+    emr.EmrSerialNo AS WheelsetSerialNo,
+    le.LoeLocoMaster AS LocoMasterId,
+    wsm.wsmDia1 AS LeftDiameter,
+    wsm.wsmDia2 AS RightDiameter,
+    wsm.wsmFlangeThickness1 AS LeftFlangeThick,
+    wsm.wsmturning1 AS IsTurned
+FROM WheelSetMeasurements wsm
+INNER JOIN EquipmentMasterRegister emr 
+    ON wsm.wsmEquipmentId = emr.EmrId
+LEFT JOIN LocoEquipments le 
+    ON emr.EmrId = le.LoeEquipmentMasterRegister
+ORDER BY wsm.wsmUpdatedOn DESC;
+
+-- View schema structure
+EXEC sp_help 'RTISLOCOKM';
+SELECT Count(*) from RTISLOCOKM;
+
+-- View sample mileage logs
+SELECT TOP 20 * FROM RTISLOCOKM 
+ORDER BY 1 DESC;
+
+
+-- View schema structure
+EXEC sp_help 'RtisLocoKmDetails';
+SELECT Count(*) FROM RtisLocoKmDetails;
+
+-- View sample detailed mileage records
+SELECT TOP 20 * FROM RtisLocoKmDetails 
+ORDER BY 1 DESC;
+
+
+-- 1. Check row counts in RTIS-related tables
+SELECT 'RtisLocoKmDetails' AS TableName, COUNT(*) AS TotalRows FROM RtisLocoKmDetails;
+
+-- 2. Check row counts in Loco status/history tables
+SELECT 'LocostatusHistoryLog' AS TableName, COUNT(*) AS TotalRows FROM LocostatusHistoryLog;
+SELECT 'LocoSchstatusUpdateLog' AS TableName, COUNT(*) AS TableRows FROM LocoSchstatusUpdateLog;
+
+-- 3. Search for any other table with 'KM', 'Cum', or 'Distance' in the column name
+SELECT 
+    t.name AS TableName,
+    c.name AS ColumnName
+FROM sys.tables t
+INNER JOIN sys.columns c ON t.object_id = c.object_id
+WHERE c.name LIKE '%km%' 
+   OR c.name LIKE '%distance%' 
+   OR c.name LIKE '%cum%'
+ORDER BY t.name;
+
+
+-- Find tables that hold Locomotive Master data
+SELECT name 
+FROM sys.tables 
+WHERE name LIKE '%LocoMaster%' 
+   OR name LIKE '%LocoHeader%'
+   OR name LIKE '%LocoRegister%'
+ORDER BY name;
+
+
+-- Replace 'LocoMaster' if the name differs in your database
+EXEC sp_help 'LocoMaster';
+SELECT TOP 20 * FROM LocoMaster;
+
+
+SELECT TOP 20
+    wsm.wsmId,
+    wsm.wsmUpdatedOn AS MeasurementDate,
+    emr.EmrSerialNo AS WheelsetSerialNo,
+    lm.LomNumber AS LocoNumber,
+    lm.LomType AS LocoType,
+    lm.LomIntialWheelDiaBogie1 AS InitialDiaBogie1,
+    wsm.wsmDia1 AS LeftDiameter_mm,
+    wsm.wsmDia2 AS RightDiameter_mm,
+    wsm.wsmFlangeThickness1 AS FlangeThick_mm,
+    wsm.wsmturning1 AS TurningFlag,
+    rtis.RlkdTotalDistance AS RecentTotalDistance_km,
+    rtis.RlkdReportDate AS MileageReportDate
+FROM WheelSetMeasurements wsm
+INNER JOIN EquipmentMasterRegister emr 
+    ON wsm.wsmEquipmentId = emr.EmrId
+LEFT JOIN LocoEquipments le 
+    ON emr.EmrId = le.LoeEquipmentMasterRegister
+LEFT JOIN LocoMaster lm 
+    ON le.LoeLocoMaster = lm.LomId
+OUTER APPLY (
+    SELECT TOP 1 RlkdTotalDistance, RlkdReportDate
+    FROM RtisLocoKmDetails r
+    WHERE r.RlkdLocoNumber = lm.LomNumber
+      AND r.RlkdReportDate <= wsm.wsmUpdatedOn
+    ORDER BY r.RlkdReportDate DESC
+) rtis
+ORDER BY wsm.wsmUpdatedOn DESC;
+
+
+-- Inspect CMR track tables
+SELECT TOP 20 * FROM CMR322;
+SELECT TOP 20 * FROM CMR369;
+SELECT TOP 20 * FROM asset_table_new_17022026;
+
+
+-- Inspect online defect logs
+EXEC sp_help 'OnlineDefects_LogHistory';
+SELECT TOP 20 * FROM OnlineDefects_LogHistory;
+
+
+
+SELECT name 
+FROM sys.tables 
+WHERE name LIKE '%FOIS%' 
+   OR name LIKE '%Train%' 
+   OR name LIKE '%Wagon%' 
+   OR name LIKE '%Rake%'
+   OR name LIKE '%Load%'
+ORDER BY name;
+
+SELECT name 
+FROM sys.tables 
+WHERE name LIKE '%Track%' 
+   OR name LIKE '%Curve%' 
+   OR name LIKE '%Section%' 
+   OR name LIKE '%Geo%'
+   OR name LIKE '%Gradient%'
+ORDER BY name;
+
+SELECT name 
+FROM sys.tables 
+WHERE name LIKE '%WILD%' 
+   OR name LIKE '%Impact%' 
+   OR name LIKE '%Sensor%'
+   OR name LIKE '%Vibration%'
+ORDER BY name;
+
+SELECT
+    t.name AS TableName,
+    c.name AS ColumnName
+FROM sys.tables t
+JOIN sys.columns c
+ON t.object_id = c.object_id
+WHERE c.name LIKE '%Gradient%'
+   OR c.name LIKE '%Curve%'
+   OR c.name LIKE '%Track%'
+   OR c.name LIKE '%Load%'
+   OR c.name LIKE '%Wagon%'
+   OR c.name LIKE '%Speed%'
+   OR c.name LIKE '%Brake%'
+ORDER BY t.name;
+
+Exec sp_help 'INTEG_FOIS_LocoLocation';
+SELECT TOP 20 * FROM FOIS_LocoLocation_History;
+
+-- Check if there is a primary lookup table for Load
+SELECT TOP 20 * 
+FROM OnlineDefects 
+WHERE OldLoad IS NOT NULL;
+
+-- Or search the schema for potential Load master tables
+SELECT TABLE_NAME, COLUMN_NAME 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE COLUMN_NAME LIKE '%Load%' OR COLUMN_NAME LIKE '%LoadID%';
+
+-- Inspect the schema and sample data for ICMS train attachments
+SELECT TOP 20 * 
+FROM INTEG_icmsLocoTrainAttachmentDetail;
+
+Exec sp_help 'INTEG_icmsLocoTrainAttachmentDetail';
+
+-- Check RTIS Mileage tracking schema & sample
+SELECT TOP 20 * FROM RtisLocoKmDetails;
+Exec sp_help 'RtisLocoKmDetails';
+
+-- Check Asset Track KM tracking
+SELECT TOP 20 TRACK_KMS, WAGON_NUMBER, WAGON_TYPE FROM asset_table_new_17022026;
+
+SELECT
+    RlkdLocoNumber,
+    RlkdReportDate,
+    RlkdTotalDistance
+FROM RtisLocoKmDetails
+WHERE RlkdLocoNumber = '22201'
+ORDER BY RlkdReportDate;
+
+SELECT 
+    TABLE_SCHEMA, 
+    TABLE_NAME, 
+    COLUMN_NAME, 
+    DATA_TYPE 
+FROM INFORMATION_SCHEMA.COLUMNS 
+WHERE COLUMN_NAME LIKE '%Wheel%' 
+   OR COLUMN_NAME LIKE '%Serial%' 
+   OR COLUMN_NAME LIKE '%Component%'
+   OR COLUMN_NAME LIKE '%Dia%'
+   OR COLUMN_NAME LIKE '%Flange%'
+ORDER BY TABLE_NAME, ORDINAL_POSITION;
