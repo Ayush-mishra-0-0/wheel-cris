@@ -1,0 +1,63 @@
+{
+  "label_specification_id": "railway-wheel-baseline-labels",
+  "label_specification_version": "1.0.0",
+  "as_of_date": "2026-08-03",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "grain": "one released Gold-B inspection interval (row = interval); label describes the NEXT inspection interval on the same wheelset equipment",
+  "governance": {
+    "point_in_time_rule": "Labels use only source facts with business time AFTER the row's interval_end_timestamp (strictly future-dated; no leakage).",
+    "row_eligibility": "A row is eligible only if a chronologically next inspection interval exists on the same wheelset_equipment_id; otherwise the label is unavailable (NA) and the row is dropped from supervised splits.",
+    "freeze_rule": "Labels are generated once per dataset version by this specification; they are never overwritten or regenerated silently."
+  },
+  "labels": [
+    {
+      "label_id": "next_interval_dia_delta_mm",
+      "name": "Next-interval diameter change",
+      "family": "regression",
+      "definition": "Diameter change (interval_end - interval_start, mm, side 1) of the chronologically next inspection interval on the same wheelset equipment.",
+      "prediction_horizon": "next inspection interval (variable length)",
+      "positive_definition": "negative value = material loss (diameter decreased); positive = measurement variance, turning-at-end residual or replacement artefact",
+      "unit": "mm",
+      "generation_sql": "NEXT interval end_wsmDia1 - NEXT interval start_wsmDia1, where NEXT interval = MIN(interval_start_timestamp) over intervals with same wheelset_equipment_id AND interval_start_timestamp > this_row.interval_end_timestamp",
+      "validation_status": "CANDIDATE",
+      "known_limitations": "Not a pure wear measure: the next interval may contain a turning event or replacement (both cut diameter). Unit confirmation for wsmDia pending; sign convention end-start confirmed as negative-at-turning (Q5)."
+    },
+    {
+      "label_id": "next_interval_turning_flag",
+      "name": "Turning in next interval",
+      "family": "binary",
+      "definition": "1 if the end measurement of the next inspection interval on the same wheelset equipment carries turning_indicator_raw == 1 (wsmturning1).",
+      "prediction_horizon": "next inspection interval (variable length)",
+      "positive_definition": "a reprofiling/turning event was recorded at the next measurement (owner-confirmed wsmturning=1, Q1)",
+      "unit": "binary 0/1",
+      "generation_sql": "CAST(NEXT interval turning_indicator_raw == 1 AS INT), where NEXT interval as defined for next_interval_dia_delta_mm",
+      "validation_status": "CANDIDATE",
+      "known_limitations": "Imbalanced (positive rate ~2% of measurements). The wsmturning flag may undercount events by a small residual (~0.6% of pairs, Q2), so the label is not a perfect true turning count. LwrTurningType is NOT used (post-turning outcome, Q3)."
+    },
+    {
+      "label_id": "next_interval_large_loss_flag",
+      "name": "Material-loss event in next interval",
+      "family": "binary",
+      "definition": "1 if the next inspection interval shows a material-removal signature: diameter delta <= -2.0 mm OR root delta <= -1.0 mm (side 1).",
+      "prediction_horizon": "next inspection interval (variable length)",
+      "positive_definition": "material-removal event in the next interval (turning cut, replacement cut, skid/flat) beyond heuristic threshold",
+      "unit": "binary 0/1",
+      "generation_sql": "CAST((NEXT interval end_wsmDia1 - NEXT interval start_wsmDia1) <= -2.0 OR (NEXT interval end_wsmRoot1 - NEXT interval start_wsmRoot1) <= -1.0 AS INT)",
+      "validation_status": "CANDIDATE",
+      "known_limitations": "Thresholds are heuristic (turning median -2.8 mm dia; replacement cut avg -2.14 mm dia; root-drop>1.0 buckets), to be sanity-checked in Dataset Validation. Conflates turning, replacement and genuine wear into one event class."
+    },
+    {
+      "label_id": "time_to_next_turning_days",
+      "name": "Days to next turning (survival)",
+      "family": "survival",
+      "definition": "Calendar days from this interval's end to the next wsmturning1 == 1 measurement on the same wheelset equipment. Right-censored (censored_flag = 1) when no turning is observed within the data horizon for that equipment.",
+      "prediction_horizon": "time-to-event, uncensored observation window = data end",
+      "positive_definition": "event = turning; censored_flag distinguishes observed (0) from right-censored (1) rows",
+      "unit": "days; plus censored_flag (binary)",
+      "generation_sql": "MIN(wsmUpdatedOn) over measurements with same wsmEquipmentId AND wsmturning1 == 1 AND wsmUpdatedOn > this_row.interval_end_timestamp, minus this_row.interval_end_timestamp; NULL => censored at data horizon",
+      "validation_status": "CANDIDATE",
+      "known_limitations": "Right-censoring at the observation window end biases short horizons. Same undercount residual as next_interval_turning_flag. Requires survival-aware evaluation (Harrell C-index, Kaplan-Meier strata), not plain regression RMSE."
+    }
+  ]
+}

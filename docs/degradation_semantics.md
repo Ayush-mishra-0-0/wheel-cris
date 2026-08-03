@@ -85,7 +85,7 @@ degradation_delta = end_value - start_value
 | **Physical Meaning** | Wheel tread diameter at the measurement plane (mm). |
 | **Expected Degradation Direction** | **Decreases** with wear (material removed from tread). |
 | **Observed Delta Evidence** | n=1,031,574 intervals. **Negative** (decrease): 51.26%. **Positive** (increase): 9.13%. **Zero**: 39.61%. |
-| **Possible Intervention Effects** | Turning/reprofiling **increases** diameter (material removed from worn surface to restore profile). Wheel replacement resets to new-wheel diameter. |
+| **Possible Intervention Effects** | Turning/reprofiling **decreases** diameter — material is cut away from the tread to restore the profile (owner-confirmed 2026-08-03; diameter drops ~2.8 mm median at turning rows, ~3.7 mm at 91% of turning rows). Wheel replacement resets to new-wheel diameter. |
 | **Required Engineering Confirmations** | 1. Unit is millimetres (data clusters 1055–1090, consistent with Indian locomotive wheels). 2. Measurement plane repeatability across inspections. 3. `wsmProvDia1/2` = provision/new diameter reference. 4. Condemning limit for diameter. |
 | **Safe Derived Calculations** | Raw delta (`start - end`) as **unsigned material-loss signal** for intervals **without turning flags**. Quarantine values outside [600, 1300] mm. |
 | **Unsafe/Blocked Calculations** | Wear rate (mm/day or mm/km) — blocked on distance semantics and turning reset rule. Health score — blocked on approved geometry limits. |
@@ -112,14 +112,14 @@ degradation_delta = end_value - start_value
 
 | Attribute | Value |
 |-----------|-------|
-| **Physical Meaning** | Wear at the wheel-root/fillet area. **Requires confirmation**: is this a direct measured depth/width, or an already-cumulative since-turning index? |
-| **Expected Degradation Direction** | **Likely increases** with wear (root radius deepens/width grows). |
-| **Observed Delta Evidence** | n=1,031,482. **Positive** (increase): 45.24%. **Negative**: 28.50%. **Zero**: 26.26%. Predominantly increasing, consistent with cumulative wear depth. |
-| **Possible Intervention Effects** | Turning/reprofiling likely resets or reduces root wear. Replacement resets to zero. |
-| **Required Engineering Confirmations** | 1. Direct measured dimension vs. cumulative index. 2. If cumulative since turning, delta = incremental wear (do not reset at turning). If direct dimension, delta = change in depth (reset at turning). 3. Unit (mm?). 4. Condemning/limit value. |
-| **Safe Derived Calculations** | Raw delta (`end - start`) as **incremental root-wear signal** for intervals without turning flags — **only if** confirmed as cumulative index. |
-| **Unsafe/Blocked Calculations** | Wear rate per distance. Health score contribution. |
-| **Dependencies Before Release** | `wear_rate_mm_per_day` blocked on (a) dimension vs. cumulative confirmation, (b) turning reset rule. |
+| **Physical Meaning** | Wear at the wheel-root/fillet area. **RESOLVED (2026-08-03): direct measured depth/width with measurement variance — NOT a cumulative since-turning index.** Evidence: 38.8% of root changes on 64,729 long-history equipment are decreases (420,487 up→down flips); root resets to ~0 at provision changes (73.8%) = replacement, only 7.5% at flagged turning. |
+| **Expected Degradation Direction** | **Increases** with wear (root radius deepens/width grows); noisy, may decrease on re-measurement. |
+| **Observed Delta Evidence** | n=1,031,482. **Positive** (increase): 45.24%. **Negative**: 28.50%. **Zero**: 26.26%. Predominantly increasing; the negative tail is measurement variance + replacement resets, not cumulative resets. |
+| **Possible Intervention Effects** | Turning reduces root only modestly (~1.0, and in 24% of cases root *increases* at turning rows — direct-depth noise). **Replacement resets root to ~0.** |
+| **Required Engineering Confirmations** | 1. Unit (mm?). 2. Condemning/limit value. (Direct-vs-cumulative resolved.) |
+| **Safe Derived Calculations** | Raw delta (`end - start`) as **direct root-depth change**; treat replacement resets (provision-change) as boundaries, not wear. |
+| **Unsafe/Blocked Calculations** | Wear rate per distance. Any cumulative-since-turning index. Health score contribution. |
+| **Dependencies Before Release** | `wear_rate_mm_per_day` blocked on (a) approved wear dimensions, (b) turning reset rule. |
 
 ---
 

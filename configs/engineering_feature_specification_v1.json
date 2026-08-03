@@ -29,12 +29,27 @@
       "engineering_meaning": "Elapsed calendar time between two attributable wheelset/equipment measurements.",
       "formula": "(interval_end_timestamp - interval_start_timestamp) / 86,400 seconds",
       "unit": "days",
-      "lineage": ["data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet:interval_start_timestamp", "data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet:interval_end_timestamp"],
-      "validation_rules": ["interval_days > 0", "same locomotive at both endpoints", "interval_quality_tier = Gold B"],
+      "lineage": [
+        "data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet:interval_start_timestamp",
+        "data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet:interval_end_timestamp"
+      ],
+      "validation_rules": [
+        "interval_days > 0",
+        "same locomotive at both endpoints",
+        "interval_quality_tier = Gold B"
+      ],
       "availability_time": "interval_end_timestamp",
       "dependencies": [],
-      "consumer_limit": "Duration is not evidence of locomotive operation or distance."
-      ,"materialization": {"source": "operational_exposure", "columns": {"interval_days": "interval_days"}}
+      "consumer_limit": "Duration is not evidence of locomotive operation or distance.",
+      "materialization": {
+        "source": "operational_exposure",
+        "columns": {
+          "interval_days": "interval_days"
+        }
+      },
+      "feature_family": "Temporal",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
     },
     {
       "feature_id": "assignment_quality_tier",
@@ -47,12 +62,26 @@
       "engineering_meaning": "Whether a measurement has exactly one effective-dated equipment-to-locomotive assignment.",
       "formula": "timeline_quality_tier emitted by Business Truth v1.0",
       "unit": "categorical",
-      "lineage": ["data/gold/business_truth/v1.0/wheel_timeline_gold_b.parquet:timeline_quality_tier", "data/silver/loco_equipment_history.parquet"],
-      "validation_rules": ["Gold B requires exactly one valid assignment interval", "Gold C records are excluded from high-confidence features"],
+      "lineage": [
+        "data/gold/business_truth/v1.0/wheel_timeline_gold_b.parquet:timeline_quality_tier",
+        "data/silver/loco_equipment_history.parquet"
+      ],
+      "validation_rules": [
+        "Gold B requires exactly one valid assignment interval",
+        "Gold C records are excluded from high-confidence features"
+      ],
       "availability_time": "measurement_timestamp",
       "dependencies": [],
-      "consumer_limit": "wsmEquipmentId remains equipment/wheelset-candidate identity pending business-semantic confirmation."
-      ,"materialization": {"source": "inspection_intervals", "columns": {"assignment_quality_tier": "timeline_quality_tier"}}
+      "consumer_limit": "wsmEquipmentId remains equipment/wheelset-candidate identity pending business-semantic confirmation.",
+      "materialization": {
+        "source": "inspection_intervals",
+        "columns": {
+          "assignment_quality_tier": "timeline_quality_tier"
+        }
+      },
+      "feature_family": "Identity",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
     },
     {
       "feature_id": "diameter_delta_raw_mm",
@@ -65,12 +94,27 @@
       "engineering_meaning": "Observed endpoint difference in the recorded diameter field; not yet an approved wear measure.",
       "formula": "interval_end_wsmDiaN - interval_start_wsmDiaN",
       "unit": "source measurement unit, engineering unit confirmation pending",
-      "lineage": ["data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet:wsmDia1,wsmDia2,interval_end_wsmDia1,interval_end_wsmDia2"],
-      "validation_rules": ["both endpoint values populated", "retain sign and do not clip", "interval is Gold B"],
+      "lineage": [
+        "data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet:wsmDia1,wsmDia2,interval_end_wsmDia1,interval_end_wsmDia2"
+      ],
+      "validation_rules": [
+        "both endpoint values populated",
+        "retain sign and do not clip",
+        "interval is Gold B"
+      ],
       "availability_time": "interval_end_timestamp",
       "dependencies": [],
-      "consumer_limit": "Do not label as wear or use as a health score until measurement units, turning and replacement semantics are approved."
-      ,"materialization": {"source": "inspection_intervals", "columns": {"diameter_delta_raw_mm_side_1": "delta_wsmDia1", "diameter_delta_raw_mm_side_2": "delta_wsmDia2"}}
+      "consumer_limit": "Do not label as wear or use as a health score until measurement units, turning and replacement semantics are approved.",
+      "materialization": {
+        "source": "inspection_intervals",
+        "columns": {
+          "diameter_delta_raw_mm_side_1": "delta_wsmDia1",
+          "diameter_delta_raw_mm_side_2": "delta_wsmDia2"
+        }
+      },
+      "feature_family": "Geometry",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
     },
     {
       "feature_id": "rtis_source_event_count",
@@ -83,12 +127,29 @@
       "engineering_meaning": "Count of timestamped records from the RTIS emergency-event source in the interval.",
       "formula": "COUNT(DISTINCT IrledId WHERE start < EVENT_TRANSMISSION_TIME <= end AND normalised LOCO_NO matches)",
       "unit": "events",
-      "lineage": ["data/bronze/rtis_emergency.parquet:IrledId,LOCO_NO,EVENT_TRANSMISSION_TIME", "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet:emergency_event_count"],
-      "validation_rules": ["IrledId unique", "EVENT_TRANSMISSION_TIME populated", "interval boundary is start-exclusive/end-inclusive"],
+      "lineage": [
+        "data/bronze/rtis_emergency.parquet:IrledId,LOCO_NO,EVENT_TRANSMISSION_TIME",
+        "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet:emergency_event_count"
+      ],
+      "validation_rules": [
+        "IrledId unique",
+        "EVENT_TRANSMISSION_TIME populated",
+        "interval boundary is start-exclusive/end-inclusive"
+      ],
       "availability_time": "interval_end_timestamp",
       "dependencies": [],
-      "consumer_limit": "Event-code engineering meaning is pending; do not claim an individual code proves braking or a wheel mechanism."
-      ,"materialization": {"source": "operational_exposure", "columns": {"rtis_source_event_count": "emergency_event_count", "rtis_source_event_type_count": "emergency_event_type_count", "rtis_source_event_types": "emergency_event_types"}}
+      "consumer_limit": "Event-code engineering meaning is pending; do not claim an individual code proves braking or a wheel mechanism.",
+      "materialization": {
+        "source": "operational_exposure",
+        "columns": {
+          "rtis_source_event_count": "emergency_event_count",
+          "rtis_source_event_type_count": "emergency_event_type_count",
+          "rtis_source_event_types": "emergency_event_types"
+        }
+      },
+      "feature_family": "Operational",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
     },
     {
       "feature_id": "maintenance_jobcard_creation_count",
@@ -101,12 +162,26 @@
       "engineering_meaning": "Number of job cards created for the assigned locomotive in the interval.",
       "formula": "COUNT(DISTINCT SejId WHERE start < SejCreatedOn <= end AND SejLocoId matches)",
       "unit": "job cards",
-      "lineage": ["data/bronze/section_jobcards.parquet:SejId,SejLocoId,SejCreatedOn", "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet:maintenance_jobcard_count"],
-      "validation_rules": ["valid locomotive ID and creation timestamp", "interval boundary is start-exclusive/end-inclusive"],
+      "lineage": [
+        "data/bronze/section_jobcards.parquet:SejId,SejLocoId,SejCreatedOn",
+        "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet:maintenance_jobcard_count"
+      ],
+      "validation_rules": [
+        "valid locomotive ID and creation timestamp",
+        "interval boundary is start-exclusive/end-inclusive"
+      ],
       "availability_time": "interval_end_timestamp",
       "dependencies": [],
-      "consumer_limit": "Creation is not completion, effectiveness, wheel specificity, or a turning/replacement event."
-      ,"materialization": {"source": "operational_exposure", "columns": {"maintenance_jobcard_creation_count": "maintenance_jobcard_count"}}
+      "consumer_limit": "Creation is not completion, effectiveness, wheel specificity, or a turning/replacement event.",
+      "materialization": {
+        "source": "operational_exposure",
+        "columns": {
+          "maintenance_jobcard_creation_count": "maintenance_jobcard_count"
+        }
+      },
+      "feature_family": "Maintenance",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
     },
     {
       "feature_id": "rtis_reporting_coverage_pct",
@@ -119,12 +194,30 @@
       "engineering_meaning": "Share of interval days with one or more RTIS mileage-source reports.",
       "formula": "100 * distinct RTIS report dates in interval / interval_days",
       "unit": "percent",
-      "lineage": ["data/silver/rtis_mileage.parquet:event_timestamp", "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet:rtis_reporting_days,rtis_coverage_pct"],
-      "validation_rules": ["interval_days > 0", "dates must be source report dates", "duplicates remain visible through rtis_duplicate_report_count"],
+      "lineage": [
+        "data/silver/rtis_mileage.parquet:event_timestamp",
+        "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet:rtis_reporting_days,rtis_coverage_pct"
+      ],
+      "validation_rules": [
+        "interval_days > 0",
+        "dates must be source report dates",
+        "duplicates remain visible through rtis_duplicate_report_count"
+      ],
       "availability_time": "interval_end_timestamp",
       "dependencies": [],
-      "consumer_limit": "Coverage measures reporting presence only; it is not a measure of kilometres, movement, route coverage or utilisation."
-      ,"materialization": {"source": "operational_exposure", "columns": {"rtis_reporting_coverage_pct": "rtis_coverage_pct", "rtis_report_count": "rtis_report_count", "rtis_reporting_days": "rtis_reporting_days", "rtis_duplicate_report_count": "rtis_duplicate_report_count"}}
+      "consumer_limit": "Coverage measures reporting presence only; it is not a measure of kilometres, movement, route coverage or utilisation.",
+      "materialization": {
+        "source": "operational_exposure",
+        "columns": {
+          "rtis_reporting_coverage_pct": "rtis_coverage_pct",
+          "rtis_report_count": "rtis_report_count",
+          "rtis_reporting_days": "rtis_reporting_days",
+          "rtis_duplicate_report_count": "rtis_duplicate_report_count"
+        }
+      },
+      "feature_family": "Operational",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
     },
     {
       "feature_id": "static_locomotive_axle_load",
@@ -137,29 +230,410 @@
       "engineering_meaning": "Configured static axle load of the locomotive class, not hauled-train or dynamic load.",
       "formula": "LocoTypes.LotAxelLoad joined via LocoMaster.LomType",
       "unit": "source unit; engineering confirmation required before display",
-      "lineage": ["LocoTypes:LotAxelLoad", "LocoMaster:LomType", "data/gold/business_truth/v1.0/wheel_timeline_gold_b.parquet:LocoType"],
-      "validation_rules": ["one applicable type record", "unit confirmed by rolling-stock engineering"],
+      "lineage": [
+        "LocoTypes:LotAxelLoad",
+        "LocoMaster:LomType",
+        "data/gold/business_truth/v1.0/wheel_timeline_gold_b.parquet:LocoType"
+      ],
+      "validation_rules": [
+        "one applicable type record",
+        "unit confirmed by rolling-stock engineering"
+      ],
       "availability_time": "score timestamp",
-      "dependencies": ["engineering unit confirmation"],
-      "consumer_limit": "Never represent as time-varying hauled-train load or wheel-rail contact load."
-      ,"materialization": {"source": "loco_types", "join_key": "LocoType=LotTypeName", "columns": {"static_locomotive_axle_load": "LotAxelLoad", "static_locomotive_axle_count": "LotNumberOfAxels"}}
+      "dependencies": [
+        "engineering unit confirmation"
+      ],
+      "consumer_limit": "Never represent as time-varying hauled-train load or wheel-rail contact load.",
+      "materialization": {
+        "source": "loco_types",
+        "join_key": "LocoType=LotTypeName",
+        "columns": {
+          "static_locomotive_axle_load": "LotAxelLoad",
+          "static_locomotive_axle_count": "LotNumberOfAxels"
+        }
+      },
+      "feature_family": "Physics",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
+    },
+    {
+      "feature_id": "wheel_position_1_12",
+      "name": "Wheel position (1-12)",
+      "owning_layer": "Identity",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "measurement endpoint / inherited by interval",
+      "engineering_meaning": "Physical wheel position on the locomotive, resolved from wheelset position and end type via the formation template.",
+      "formula": "WheelFormationTemplates.WftWheelPos joined on (wsmWheelSetPosition, wsmW1EndType)",
+      "unit": "position index 1-12",
+      "lineage": [
+        "data/bronze/wheel_formation_templates.parquet:WftWSPos,WftEndType,WftWheelPos",
+        "data/bronze/wheel_measurements.parquet:wsmWheelSetPosition,wsmW1EndType",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:wheel_position_1_12"
+      ],
+      "validation_rules": [
+        "position in 1-12",
+        "endpoint measurement present",
+        "template join resolves"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [],
+      "consumer_limit": "Uses the WAP7 formation template; other locomotive types require their own template rows.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "wheel_position_1_12": "wheel_position_1_12"
+        }
+      },
+      "feature_family": "Identity",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
+    },
+    {
+      "feature_id": "axle_position_1_6",
+      "name": "Axle / wheelset position",
+      "owning_layer": "Identity",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "measurement endpoint / inherited by interval",
+      "engineering_meaning": "Wheelset (axle) position on the locomotive as recorded on the endpoint measurement.",
+      "formula": "wsmWheelSetPosition at interval end",
+      "unit": "position index 1-6",
+      "lineage": [
+        "data/bronze/wheel_measurements.parquet:wsmWheelSetPosition",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:axle_position_1_6"
+      ],
+      "validation_rules": [
+        "position in 1-6",
+        "endpoint measurement present"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [],
+      "consumer_limit": "Position as recorded; wheelset reassignment across locomotives is not inferred here.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "axle_position_1_6": "axle_position_1_6"
+        }
+      },
+      "feature_family": "Identity",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
+    },
+    {
+      "feature_id": "inspection_count_through_interval_end",
+      "name": "Wheel inspection count",
+      "owning_layer": "Behaviour",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Derived",
+      "version": "1.0.0",
+      "grain": "one wheel register record, up to and including interval end",
+      "engineering_meaning": "Number of wheel measurements recorded for the same wheel register id up to the interval end.",
+      "formula": "COUNT(WheelSetMeasurements rows with same wsmWRId AND wsmUpdatedOn <= interval_end_timestamp)",
+      "unit": "count",
+      "lineage": [
+        "data/bronze/wheel_measurements.parquet:wsmWRId,wsmUpdatedOn",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:inspection_count_through_interval_end"
+      ],
+      "validation_rules": [
+        "endpoint wheel register id present",
+        "point-in-time count at interval end"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [],
+      "consumer_limit": "Count of recorded inspections; not evidence of maintenance quality or completion.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "inspection_count_through_interval_end": "inspection_count_through_interval_end"
+        }
+      },
+      "feature_family": "Maintenance",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
+    },
+    {
+      "feature_id": "wheel_profile_2class",
+      "name": "Wheel profile (2-class)",
+      "owning_layer": "Maintenance",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "wheel register record / inherited by interval",
+      "engineering_meaning": "Current wheel profile class (1/2) recorded on the wheel register for the endpoint wheel.",
+      "formula": "LocoWheelRegister.LwrWheelProfile",
+      "unit": "coded 1/2",
+      "lineage": [
+        "data/bronze/loco_wheel_register.parquet:LwrId,LwrWheelProfile",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:wheel_profile_2class"
+      ],
+      "validation_rules": [
+        "register join wsmWRId=LwrId on WAP7 intervals matches 99.98% (2026-08-03)",
+        "profile code is 1 or 2",
+        "coverage 75% (2-class: 1=45,484 / 2=123,558 intervals)"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [
+        "register join wsmWRId=LwrId confirmed (Q7)"
+      ],
+      "consumer_limit": "Two-class source profile; meaning of each class requires domain confirmation. 25% of intervals have no profile recorded.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "wheel_profile_2class": "wheel_profile_2class"
+        }
+      },
+      "feature_family": "Maintenance",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 24.96
+    },
+    {
+      "feature_id": "wheel_schedule_id",
+      "name": "Wheel maintenance schedule",
+      "owning_layer": "Maintenance",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "wheel register record / inherited by interval",
+      "engineering_meaning": "Schedule id recorded against the wheel register for the endpoint wheel.",
+      "formula": "LocoWheelRegister.LwrScheduleId",
+      "unit": "coded schedule id",
+      "lineage": [
+        "data/bronze/loco_wheel_register.parquet:LwrId,LwrScheduleId",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:wheel_schedule_id"
+      ],
+      "validation_rules": [
+        "register join wsmWRId=LwrId on WAP7 intervals matches 99.98% (2026-08-03)",
+        "schedule code value mapped to schedule type",
+        "coverage 97.6%"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [
+        "register join wsmWRId=LwrId confirmed (Q7)",
+        "schedule-type lookup mapping"
+      ],
+      "consumer_limit": "Recorded schedule context; not a maintenance completion or effectiveness signal.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "wheel_schedule_id": "wheel_schedule_id"
+        }
+      },
+      "feature_family": "Maintenance",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 2.44
+    },
+    {
+      "feature_id": "home_shed",
+      "name": "Home shed",
+      "owning_layer": "Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "locomotive, latest at or before interval end",
+      "engineering_meaning": "Home shed of the locomotive as recorded in the daily overdue ledger at interval end.",
+      "formula": "DailyOverdueLocoCount.HomeShed latest per locomotive with EntryDate <= interval_end_timestamp",
+      "unit": "categorical shed code",
+      "lineage": [
+        "data/bronze/daily_overdue_loco_count.parquet:LocoNumber,EntryDate,HomeShed",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:home_shed"
+      ],
+      "validation_rules": [
+        "loco match",
+        "EntryDate at or before interval end",
+        "shed code present"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [],
+      "consumer_limit": "The overdue ledger begins 2024-12-03; earlier intervals have no shed value. Shed is assignment context, not movement evidence.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "home_shed": "home_shed"
+        }
+      },
+      "feature_family": "Operational",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 50.12
+    },
+    {
+      "feature_id": "defect_zone",
+      "name": "Defect zone",
+      "owning_layer": "Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "locomotive, latest at or before interval end",
+      "engineering_meaning": "Zone recorded against the most recent locomotive defect occurrence at or before interval end.",
+      "formula": "OnlineDefects_LogHistory.OldZone latest per OldLocoId with OldDateOccurance <= interval_end_timestamp",
+      "unit": "categorical zone code",
+      "lineage": [
+        "data/bronze/online_defects_log_history.parquet:OldLocoId,OldDateOccurance,OldZone",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:defect_zone"
+      ],
+      "validation_rules": [
+        "loco match",
+        "occurrence date at or before interval end",
+        "zone present"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [],
+      "consumer_limit": "Zone inferred from defect records; absence of a defect does not mean absence of zone coverage. 26% of intervals have no zone.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "defect_zone": "defect_zone"
+        }
+      },
+      "feature_family": "Route",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 26.16
+    },
+    {
+      "feature_id": "defect_division",
+      "name": "Defect division",
+      "owning_layer": "Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "version": "1.0.0",
+      "grain": "locomotive, latest at or before interval end",
+      "engineering_meaning": "Division recorded against the most recent locomotive defect occurrence at or before interval end.",
+      "formula": "OnlineDefects_LogHistory.OldDivision latest per OldLocoId with OldDateOccurance <= interval_end_timestamp",
+      "unit": "categorical division code",
+      "lineage": [
+        "data/bronze/online_defects_log_history.parquet:OldLocoId,OldDateOccurance,OldDivision",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:defect_division"
+      ],
+      "validation_rules": [
+        "loco match",
+        "occurrence date at or before interval end",
+        "division present"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [],
+      "consumer_limit": "Division inferred from defect records; not a route-reconstruction source.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "defect_division": "defect_division"
+        }
+      },
+      "feature_family": "Route",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 26.08
+    },
+    {
+      "feature_id": "wheel_age_days_proxy",
+      "name": "Wheel age proxy (days, EmrDoR-anchored)",
+      "owning_layer": "Identity",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Derived",
+      "version": "1.1.0",
+      "grain": "wheelset equipment, state at interval end",
+      "engineering_meaning": "Days since the wheel's authoritative age date: EquipmentMasterRegister.EmrDoR (in-service date, near manufacture) preferred, falling back to EmrDoM (manufacture) then wsmProvDate (provision/fit date).",
+      "formula": "interval_end_timestamp - cascade[EmrDoR per wsmEquipmentId -> EmrDoM -> wsmProvDate at interval end]; date source recorded in wheel_age_date_source",
+      "unit": "days",
+      "lineage": [
+        "data/bronze/equipment_master_register.parquet:EmrId,EmrDoR,EmrDoM",
+        "data/bronze/wheel_measurements.parquet:wsmEquipmentId,wsmProvDate",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:wheel_age_days_proxy,wheel_age_date_source"
+      ],
+      "validation_rules": [
+        "age date at or before interval end",
+        "EmrDoR usable on 58.4% of wheelsets; EmrDoM on 11.9%; wsmProvDate fallback 35.0% (Q6)",
+        "sentinel/out-of-range dates excluded",
+        "date source column populated on every non-null age"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [
+        "wheel identity resolved (Q7)",
+        "date-source cascade approved (Q6)"
+      ],
+      "consumer_limit": "Proxy for wheel age, not operating age or distance. wsmProvDate fallback lags manufacture by ~94 days median (fit date, not manufacture). LocoEquipmentChangeRegister dates are loco-level and must not be used per wheel (Q6).",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "wheel_age_days_proxy": "wheel_age_days_proxy",
+          "wheel_age_date_source": "wheel_age_date_source"
+        }
+      },
+      "feature_family": "Temporal",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 20.87
     },
     {
       "feature_id": "turning_indicator_raw",
       "name": "Raw turning indicator",
       "owning_layer": "Maintenance",
-      "status": "PENDING",
+      "status": "READY_WITH_CAVEAT",
       "evidence_level": "Observed",
       "version": "1.0.0",
-      "grain": "measurement endpoint",
-      "engineering_meaning": "Source turning fields recorded with a wheel measurement.",
-      "formula": "wsmturning1 and wsmturning2 as recorded",
-      "unit": "source-coded value",
-      "lineage": ["data/gold/business_truth/v1.0/wheel_timeline_gold_b.parquet:wsmturning1,wsmturning2"],
-      "validation_rules": ["domain owner must define values, timing and relation to actual turning/reprofiling"],
-      "availability_time": "measurement_timestamp",
-      "dependencies": ["turning business semantics"],
-      "consumer_limit": "Do not reset wear history, calculate time since turning, or infer intervention effectiveness."
+      "grain": "measurement endpoint / inherited by interval",
+      "engineering_meaning": "Turning flag recorded at the interval-end wheel measurement; 1 = reprofiling/turning performed at or near that measurement (owner-confirmed 2026-08-03, Q1).",
+      "formula": "wsmturning1 at the interval-end measurement",
+      "unit": "source-coded value (0/1)",
+      "lineage": [
+        "data/bronze/wheel_measurements.parquet:wsmId,wsmturning1,wsmUpdatedOn",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:turning_indicator_raw"
+      ],
+      "validation_rules": [
+        "value is 0 or 1",
+        "flag refers to the endpoint measurement only",
+        "LwrTurningType must NOT be used as a turning event (Q3: it is a post-turning inspection outcome; 92.5% of its rows are un-flagged)"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [
+        "turning event semantics confirmed (Q1/Q3)"
+      ],
+      "consumer_limit": "Does not assert the wheel is fully restored or that an interval contained only one turning event. Minor turning undercount possible (Q2 residual ~0.6% of pairs); acceptable for a feature, not for a true turning-count label.",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "turning_indicator_raw": "turning_indicator_raw"
+        }
+      },
+      "feature_family": "Maintenance",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 0.0
+    },
+    {
+      "feature_id": "days_since_turning",
+      "name": "Days since last wheel turning",
+      "owning_layer": "Maintenance",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Derived",
+      "version": "1.0.0",
+      "grain": "wheelset equipment, state at interval end",
+      "engineering_meaning": "Calendar days since the most recent wsmturning=1 measurement on the same wheelset equipment identity, at or before the interval end.",
+      "formula": "interval_end_timestamp - MAX(wsmUpdatedOn WHERE wsmEquipmentId = interval-end equipment AND wsmturning1 = 1 AND wsmUpdatedOn <= interval_end_timestamp)",
+      "unit": "days",
+      "lineage": [
+        "data/bronze/wheel_measurements.parquet:wsmEquipmentId,wsmUpdatedOn,wsmturning1",
+        "data/gold/interval_context/v1.0/inspection_interval_context.parquet:days_since_turning"
+      ],
+      "validation_rules": [
+        "event flag semantics confirmed (Q1)",
+        "per-equipment identity (Q7)",
+        "point-in-time at interval end",
+        "no turning event in history -> null"
+      ],
+      "availability_time": "interval_end_timestamp",
+      "dependencies": [
+        "turning event semantics confirmed (Q1)",
+        "wheel identity resolved (Q7)"
+      ],
+      "consumer_limit": "Not a true turning-count label: the flag may undercount events by a small residual (~0.6% of pairs, Q2). Do not combine with LwrTurningType (Q3).",
+      "materialization": {
+        "source": "interval_context",
+        "columns": {
+          "days_since_turning": "days_since_turning"
+        }
+      },
+      "feature_family": "Maintenance",
+      "point_in_time_safe": true,
+      "expected_missing_pct": 81.57
     },
     {
       "feature_id": "wear_rate_mm_per_day",
@@ -172,11 +646,26 @@
       "engineering_meaning": "Physical material loss rate across a validated non-intervened interval.",
       "formula": "approved material-loss measure / interval_days",
       "unit": "mm/day after engineering unit confirmation",
-      "lineage": ["diameter_delta_raw_mm", "interval_days", "turning_indicator_raw"],
-      "validation_rules": ["approved geometry direction/units", "turning/replacement exclusion or reset rule", "plausibility limits"],
+      "lineage": [
+        "diameter_delta_raw_mm",
+        "interval_days",
+        "turning_indicator_raw"
+      ],
+      "validation_rules": [
+        "approved geometry direction/units",
+        "turning/replacement exclusion or reset rule",
+        "plausibility limits"
+      ],
       "availability_time": "interval_end_timestamp",
-      "dependencies": ["measurement-unit and geometry semantics", "turning/replacement business rule", "engineering-approved wear definition"],
-      "consumer_limit": "No numerical output or training label is permitted."
+      "dependencies": [
+        "measurement-unit and geometry semantics",
+        "turning/replacement business rule",
+        "engineering-approved wear definition"
+      ],
+      "consumer_limit": "No numerical output or training label is permitted.",
+      "feature_family": "Geometry",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
     },
     {
       "feature_id": "interval_distance_km",
@@ -189,11 +678,24 @@
       "engineering_meaning": "Physical locomotive travel attributable to the interval.",
       "formula": "owner-approved mileage aggregation or validated movement ledger",
       "unit": "km",
-      "lineage": ["data/silver/rtis_mileage.parquet:reported_distance_km"],
-      "validation_rules": ["owner-approved business grain", "duplicate/reload and reset rule", "physical plausibility", "coverage report", "reproducible SQL implementation"],
+      "lineage": [
+        "data/silver/rtis_mileage.parquet:reported_distance_km"
+      ],
+      "validation_rules": [
+        "owner-approved business grain",
+        "duplicate/reload and reset rule",
+        "physical plausibility",
+        "coverage report",
+        "reproducible SQL implementation"
+      ],
       "availability_time": "interval_end_timestamp",
-      "dependencies": ["RTIS distance semantics approval or validated alternative movement ledger"],
-      "consumer_limit": "Must remain null with BLOCKED_PENDING_SOURCE_CONFIRMATION."
+      "dependencies": [
+        "RTIS distance semantics approval or validated alternative movement ledger"
+      ],
+      "consumer_limit": "Must remain null with BLOCKED_PENDING_SOURCE_CONFIRMATION.",
+      "feature_family": "Operational",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
     },
     {
       "feature_id": "wear_rate_mm_per_km",
@@ -206,11 +708,23 @@
       "engineering_meaning": "Material loss normalised by attributable physical travel.",
       "formula": "approved material-loss measure / interval_distance_km",
       "unit": "mm/km",
-      "lineage": ["wear_rate_mm_per_day", "interval_distance_km"],
-      "validation_rules": ["all parent features released", "distance_km > 0"],
+      "lineage": [
+        "wear_rate_mm_per_day",
+        "interval_distance_km"
+      ],
+      "validation_rules": [
+        "all parent features released",
+        "distance_km > 0"
+      ],
       "availability_time": "interval_end_timestamp",
-      "dependencies": ["wear_rate_mm_per_day", "interval_distance_km"],
-      "consumer_limit": "No numerical output or training label is permitted."
+      "dependencies": [
+        "wear_rate_mm_per_day",
+        "interval_distance_km"
+      ],
+      "consumer_limit": "No numerical output or training label is permitted.",
+      "feature_family": "Geometry",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
     },
     {
       "feature_id": "weather_exposure_index",
@@ -223,11 +737,24 @@
       "engineering_meaning": "Aggregated weather context over validated time/location observations.",
       "formula": "provider-defined aggregation of temperature, precipitation and humidity over validated movement locations/times",
       "unit": "dimensionless documented index",
-      "lineage": ["future weather archive", "future validated location-time events"],
-      "validation_rules": ["provider/version retained", "coordinate and timestamp quality", "coverage and spatial/temporal resolution recorded"],
+      "lineage": [
+        "future weather archive",
+        "future validated location-time events"
+      ],
+      "validation_rules": [
+        "provider/version retained",
+        "coordinate and timestamp quality",
+        "coverage and spatial/temporal resolution recorded"
+      ],
       "availability_time": "interval_end_timestamp",
-      "dependencies": ["weather provider", "validated movement/location coverage"],
-      "consumer_limit": "Supporting context only; never a causal conclusion."
+      "dependencies": [
+        "weather provider",
+        "validated movement/location coverage"
+      ],
+      "consumer_limit": "Supporting context only; never a causal conclusion.",
+      "feature_family": "Environment",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
     },
     {
       "feature_id": "curve_severity_index",
@@ -240,28 +767,58 @@
       "engineering_meaning": "Route-segment physical severity based on authoritative curvature and gradient.",
       "formula": "distance-weighted approved curve/gradient function over mapped track segments",
       "unit": "dimensionless documented index",
-      "lineage": ["future authoritative track geometry", "future WAP movement-to-segment mapping"],
-      "validation_rules": ["effective-dated track source", "route/chainage mapping confidence", "engineering-approved weighting"],
+      "lineage": [
+        "future authoritative track geometry",
+        "future WAP movement-to-segment mapping"
+      ],
+      "validation_rules": [
+        "effective-dated track source",
+        "route/chainage mapping confidence",
+        "engineering-approved weighting"
+      ],
       "availability_time": "interval_end_timestamp",
-      "dependencies": ["track geometry", "WAP movement coverage", "released interval distance or segment exposure rule"],
-      "consumer_limit": "Open/GIS data may support research only until engineering validation."
+      "dependencies": [
+        "track geometry",
+        "WAP movement coverage",
+        "released interval distance or segment exposure rule"
+      ],
+      "consumer_limit": "Open/GIS data may support research only until engineering validation.",
+      "feature_family": "Route",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
     },
     {
       "feature_id": "wheel_health_index",
       "name": "Explainable wheel health index",
       "owning_layer": "Health",
-      "status": "BLOCKED",
+      "status": "FUTURE",
       "evidence_level": "ML",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "grain": "wheelset/equipment state at score time",
       "engineering_meaning": "Engineering-approved summary of measured geometry, degradation and maintenance state.",
       "formula": "versioned rule or calibrated model over released State, Degradation and Maintenance features",
       "unit": "dimensionless score with confidence",
-      "lineage": ["future released degradation features", "future approved geometry limits", "maintenance_jobcard_creation_count"],
-      "validation_rules": ["approved limits", "calibration/review protocol", "missingness and confidence output", "no raw Bronze/Silver input"],
+      "lineage": [
+        "future released degradation features",
+        "future approved geometry limits",
+        "maintenance_jobcard_creation_count"
+      ],
+      "validation_rules": [
+        "approved limits",
+        "calibration/review protocol",
+        "missingness and confidence output",
+        "no raw Bronze/Silver input"
+      ],
       "availability_time": "score timestamp",
-      "dependencies": ["approved degradation features", "geometry limits", "health rule design"],
-      "consumer_limit": "No numerical output is permitted until the dependencies are released. It is not a prediction, maintenance directive or failure diagnosis."
+      "dependencies": [
+        "approved degradation features",
+        "geometry limits",
+        "health rule design"
+      ],
+      "consumer_limit": "No numerical output is permitted until the dependencies are released. It is not a prediction, maintenance directive or failure diagnosis.",
+      "feature_family": "Health",
+      "point_in_time_safe": true,
+      "expected_missing_pct": null
     }
   ]
 }

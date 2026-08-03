@@ -1,0 +1,51 @@
+{
+  "evaluation_specification_id": "railway-wheel-baseline-evaluation",
+  "evaluation_specification_version": "1.0.0",
+  "as_of_date": "2026-08-03",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.0",
+  "cv_contract": {
+    "split_type": "temporal split by interval_end_timestamp (train = earliest 70%, val = next 15%, test = latest 15%)",
+    "grouping": "grouped CV by wheelset_equipment_id; no wheelset may appear in more than one fold",
+    "leakage_rule": "label horizon strictly after interval_end_timestamp; features point-in-time safe; identifiers (locomotive_number, wheelset_equipment_id, measurement ids) removed from model features",
+    "reproducibility": "fixed random_state recorded per run; identical splits for every model in a phase"
+  },
+  "tasks": {
+    "regression": {
+      "labels": ["next_interval_dia_delta_mm"],
+      "metrics": {
+        "primary": ["RMSE"],
+        "secondary": ["MAE", "MAPE", "R2", "Spearman correlation with actual"],
+        "baseline": "DummyRegressor(strategy='mean') and 'median'"
+      }
+    },
+    "binary_classification": {
+      "labels": ["next_interval_turning_flag", "next_interval_large_loss_flag"],
+      "metrics": {
+        "primary": ["PR-AUC"],
+        "secondary": ["ROC-AUC", "F1 at optimal threshold", "calibration (ECE, reliability plot)", "precision@k (top decile)", "class-weighted accuracy"],
+        "baseline": "DummyClassifier(strategy='most_frequent') and 'prior'"
+      },
+      "imbalance_rule": "imbalance is evaluated via PR-AUC and precision@k; do NOT resample away from population prevalence in baseline phase"
+    },
+    "survival": {
+      "labels": ["time_to_next_turning_days + censored_flag"],
+      "metrics": {
+        "primary": ["Harrell concordance index (C-index)"],
+        "secondary": ["integrated Brier score", "calibration plot at fixed horizons (30/90/180/365 d)", "KM strata by predicted risk group"],
+        "baseline": "predict population median time-to-event for all rows (C-index = 0.5 sanity)"
+      }
+    }
+  },
+  "reporting": {
+    "artifact_dir": "models/baseline_v1/",
+    "per_model_outputs": ["metrics.json", "predictions.parquet", "threshold_analysis.json", "feature_attribution_rank.md"],
+    "cross_model_outputs": ["comparison.csv", "comparison_summary.md"],
+    "error_analysis": "worst-100-rows diagnostics stratified by shed, wheel profile, interval length, turning events, missing RTIS, extreme wear (Phase 4, not SHAP-only)"
+  },
+  "governance": {
+    "freeze_rule": "evaluation outputs are versioned and never overwritten; new data/features produce a new evaluation run, not an in-place edit",
+    "eligibility": "models may consume only features released through the Training Eligibility Filter"
+  }
+}

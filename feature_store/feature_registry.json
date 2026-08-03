@@ -69,14 +69,98 @@
         "static_locomotive_axle_load",
         "static_locomotive_axle_count"
       ]
+    },
+    {
+      "feature_id": "wheel_position_1_12",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Measured",
+      "columns": [
+        "wheel_position_1_12"
+      ]
+    },
+    {
+      "feature_id": "axle_position_1_6",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Measured",
+      "columns": [
+        "axle_position_1_6"
+      ]
+    },
+    {
+      "feature_id": "inspection_count_through_interval_end",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Derived",
+      "columns": [
+        "inspection_count_through_interval_end"
+      ]
+    },
+    {
+      "feature_id": "wheel_profile_2class",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "columns": [
+        "wheel_profile_2class"
+      ]
+    },
+    {
+      "feature_id": "wheel_schedule_id",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "columns": [
+        "wheel_schedule_id"
+      ]
+    },
+    {
+      "feature_id": "home_shed",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "columns": [
+        "home_shed"
+      ]
+    },
+    {
+      "feature_id": "defect_zone",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "columns": [
+        "defect_zone"
+      ]
+    },
+    {
+      "feature_id": "defect_division",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Measured",
+      "columns": [
+        "defect_division"
+      ]
+    },
+    {
+      "feature_id": "wheel_age_days_proxy",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Derived",
+      "columns": [
+        "wheel_age_days_proxy",
+        "wheel_age_date_source"
+      ]
+    },
+    {
+      "feature_id": "turning_indicator_raw",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Observed",
+      "columns": [
+        "turning_indicator_raw"
+      ]
+    },
+    {
+      "feature_id": "days_since_turning",
+      "status": "READY_WITH_CAVEAT",
+      "evidence_level": "Derived",
+      "columns": [
+        "days_since_turning"
+      ]
     }
   ],
   "excluded_features": [
-    {
-      "feature_id": "turning_indicator_raw",
-      "status": "PENDING",
-      "reason": "status_not_approved_for_feature_store"
-    },
     {
       "feature_id": "wear_rate_mm_per_day",
       "status": "BLOCKED",
@@ -104,7 +188,7 @@
     },
     {
       "feature_id": "wheel_health_index",
-      "status": "BLOCKED",
+      "status": "FUTURE",
       "reason": "status_not_approved_for_feature_store"
     }
   ]

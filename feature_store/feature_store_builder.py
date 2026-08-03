@@ -36,16 +36,18 @@ def build_feature_store() -> dict[str, Path]:
 
     exposure_path = PROJECT_ROOT / "data/gold/operational_exposure/v1.0/inspection_interval_operational_exposure.parquet"
     interval_path = PROJECT_ROOT / "data/gold/inspection_intervals/v1.0/inspection_intervals_gold_b.parquet"
+    interval_context_path = PROJECT_ROOT / "data/gold/interval_context/v1.0/inspection_interval_context.parquet"
     loco_type_path = PROJECT_ROOT / "data/bronze/loco_types.parquet"
     exposure = pd.read_parquet(exposure_path)
     intervals = pd.read_parquet(interval_path)
+    interval_context = pd.read_parquet(interval_context_path)
     identity_columns = ["interval_start_measurement_id", "interval_end_measurement_id", "timeline_quality_tier", "LocoType"]
     if intervals.duplicated(["interval_start_measurement_id", "interval_end_measurement_id"]).any():
         raise ValueError("Inspection interval keys must be unique for Feature Store v1.0")
     store = exposure[["operational_exposure_id", "interval_start_measurement_id", "interval_end_measurement_id", "wheelset_equipment_id", "locomotive_id", "locomotive_number", "interval_start_timestamp", "interval_end_timestamp"]].merge(
         intervals[identity_columns], on=["interval_start_measurement_id", "interval_end_measurement_id"], how="left", validate="one_to_one"
     )
-    sources = {"operational_exposure": exposure, "inspection_intervals": intervals}
+    sources = {"operational_exposure": exposure, "inspection_intervals": intervals, "interval_context": interval_context}
     materialised: list[dict] = []
     for feature in approved:
         mapping = feature["materialization"]
@@ -72,7 +74,7 @@ def build_feature_store() -> dict[str, Path]:
         "quality_verdict": "PASS" if not store.duplicated(["operational_exposure_id"]).any() else "FAIL"
     }
     registry = {"feature_specification_id": spec["specification_id"], "feature_specification_version": spec["specification_version"], "approved_statuses": sorted(APPROVED_STATUSES), "materialised_features": materialised, "excluded_features": [{"feature_id": item["feature_id"], "status": item["status"], "reason": "status_not_approved_for_feature_store"} for item in unapproved]}
-    lineage = {"feature_store_version": "1.0.0", "generated_at_utc": datetime.now(timezone.utc).isoformat(), "input_sha256": {"feature_specification": _sha256(PROJECT_ROOT / "configs/engineering_feature_specification_v1.json"), "operational_exposure": _sha256(exposure_path), "inspection_intervals": _sha256(interval_path), "loco_types": _sha256(loco_type_path)}, "point_in_time_rule": spec["governance"]["point_in_time_rule"], "grain": "one released Gold-B inspection interval"}
+    lineage = {"feature_store_version": "1.0.0", "generated_at_utc": datetime.now(timezone.utc).isoformat(), "input_sha256": {"feature_specification": _sha256(PROJECT_ROOT / "configs/engineering_feature_specification_v1.json"), "operational_exposure": _sha256(exposure_path), "inspection_intervals": _sha256(interval_path), "interval_context": _sha256(interval_context_path), "loco_types": _sha256(loco_type_path)}, "point_in_time_rule": spec["governance"]["point_in_time_rule"], "grain": "one released Gold-B inspection interval"}
     documentation = ["# Generated Feature Store v1.0 catalog", "", "Generated from `configs/engineering_feature_specification_v1.json`; do not edit manually.", "", "| Feature | Status | Evidence | Owner | Formula |", "| --- | --- | --- | --- | --- |"]
     for feature in approved:
         documentation.append(f"| {feature['name']} | {feature['status']} | {feature['evidence_level']} | {feature['owning_layer']} | {feature['formula']} |")

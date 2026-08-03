@@ -1,0 +1,192 @@
+{
+  "binary": [
+    {
+      "label": "next_interval_large_loss_flag",
+      "experiment": "experiment_0032",
+      "model": "hist_gradient_boosting",
+      "test_n": 28066,
+      "worst_100_saved": "worst_binary_next_interval_large_loss_flag_rows.csv",
+      "stratification_saved": "strat_binary_next_interval_large_loss_flag.csv",
+      "top_enriched_strata": [
+        {
+          "stratum": "home shed",
+          "value": "NGCD",
+          "worst_n": 7,
+          "enrichment": 27.67
+        },
+        {
+          "stratum": "home shed",
+          "value": "BZAE",
+          "worst_n": 17,
+          "enrichment": 3.64
+        },
+        {
+          "stratum": "home shed",
+          "value": "BIAE",
+          "worst_n": 5,
+          "enrichment": 3.38
+        },
+        {
+          "stratum": "home shed",
+          "value": "GMOE ",
+          "worst_n": 7,
+          "enrichment": 3.15
+        },
+        {
+          "stratum": "wheel profile",
+          "value": "-1.0",
+          "worst_n": 2,
+          "enrichment": 3.0
+        },
+        {
+          "stratum": "home shed",
+          "value": "KJMD",
+          "worst_n": 9,
+          "enrichment": 2.82
+        }
+      ]
+    },
+    {
+      "label": "next_interval_turning_flag",
+      "experiment": "experiment_0024",
+      "model": "hist_gradient_boosting",
+      "test_n": 28066,
+      "worst_100_saved": "worst_binary_next_interval_turning_flag_rows.csv",
+      "stratification_saved": "strat_binary_next_interval_turning_flag.csv",
+      "top_enriched_strata": [
+        {
+          "stratum": "home shed",
+          "value": "IZNE",
+          "worst_n": 7,
+          "enrichment": 10.79
+        },
+        {
+          "stratum": "home shed",
+          "value": "RPME",
+          "worst_n": 7,
+          "enrichment": 5.9
+        },
+        {
+          "stratum": "home shed",
+          "value": "BGKD",
+          "worst_n": 7,
+          "enrichment": 3.36
+        },
+        {
+          "stratum": "home shed",
+          "value": "KYNE ",
+          "worst_n": 8,
+          "enrichment": 2.69
+        },
+        {
+          "stratum": "home shed",
+          "value": "PADX",
+          "worst_n": 4,
+          "enrichment": 2.46
+        },
+        {
+          "stratum": "home shed",
+          "value": "BNDL",
+          "worst_n": 5,
+          "enrichment": 2.42
+        }
+      ]
+    }
+  ],
+  "regression": [
+    {
+      "label": "next_interval_dia_delta_mm",
+      "experiment": "experiment_0020",
+      "model": "hist_gradient_boosting",
+      "test_n": 28066,
+      "worst_100_saved": "worst_regression_next_interval_dia_delta_mm_rows.csv",
+      "stratification_saved": "strat_regression_next_interval_dia_delta_mm.csv",
+      "top_enriched_strata": [
+        {
+          "stratum": "home shed",
+          "value": "PADX",
+          "worst_n": 18,
+          "enrichment": 11.05
+        },
+        {
+          "stratum": "home shed",
+          "value": "ETE",
+          "worst_n": 6,
+          "enrichment": 6.4
+        },
+        {
+          "stratum": "home shed",
+          "value": "KYNE ",
+          "worst_n": 8,
+          "enrichment": 2.69
+        },
+        {
+          "stratum": "RTIS reporting coverage %",
+          "value": "coverage Q3",
+          "worst_n": 43,
+          "enrichment": 2.15
+        },
+        {
+          "stratum": "home shed",
+          "value": "CNBE",
+          "worst_n": 2,
+          "enrichment": 2.07
+        },
+        {
+          "stratum": "home shed",
+          "value": "<NA>",
+          "worst_n": 0,
+          "enrichment": 1.83
+        }
+      ]
+    }
+  ],
+  "survival": [
+    {
+      "label": "time_to_next_turning_days",
+      "experiment": "experiment_0008",
+      "model": "hist_gradient_boosting_observed_only",
+      "test_n": 28066,
+      "worst_100_saved": "worst_survival_time_to_next_turning_days_rows.csv",
+      "stratification_saved": "strat_survival_time_to_next_turning_days.csv",
+      "top_enriched_strata": [
+        {
+          "stratum": "turning event this interval",
+          "value": "1",
+          "worst_n": 9,
+          "enrichment": 8.23
+        },
+        {
+          "stratum": "home shed",
+          "value": "<NA>",
+          "worst_n": 0,
+          "enrichment": 3.29
+        },
+        {
+          "stratum": "wheel profile",
+          "value": "0.0",
+          "worst_n": 53,
+          "enrichment": 3.06
+        },
+        {
+          "stratum": "wheel profile",
+          "value": "-1.0",
+          "worst_n": 2,
+          "enrichment": 3.0
+        },
+        {
+          "stratum": "interval wear, side 2 (mm)",
+          "value": "wear2 Q2",
+          "worst_n": 39,
+          "enrichment": 1.95
+        },
+        {
+          "stratum": "interval wear, side 1 (mm)",
+          "value": "wear1 Q2",
+          "worst_n": 38,
+          "enrichment": 1.9
+        }
+      ]
+    }
+  ]
+}

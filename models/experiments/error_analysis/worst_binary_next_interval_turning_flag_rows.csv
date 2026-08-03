@@ -1,0 +1,101 @@
+operational_exposure_id,split_x,y_true,y_prob,split_y,interval_days,diameter_delta_raw_mm_side_1,diameter_delta_raw_mm_side_2,rtis_reporting_coverage_pct,turning_indicator_raw,days_since_turning,wheel_profile_2class,locomotive_number,home_shed,defect_zone,defect_division,interval_days_bucket,rtis_coverage_bucket,wear_side1_bucket,wear_side2_bucket,error
+OE-699075-811191,test,1,0.0004,test,101.0,-2.0,-2.0,92.0792,0,315.0,1.0,37718,BGKD,16.0,66.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9996
+OE-699077-811193,test,1,0.0004,test,101.0,-1.0,-1.0,92.0792,0,315.0,1.0,37718,BGKD,16.0,66.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9996
+OE-699078-811194,test,1,0.0004,test,101.0,-2.0,-2.0,92.0792,0,315.0,1.0,37718,BGKD,16.0,66.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9996
+OE-699080-811196,test,1,0.0005,test,101.0,-2.0,-2.0,92.0792,0,315.0,1.0,37718,BGKD,16.0,66.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9995
+OE-699079-811195,test,1,0.0006,test,101.0,-2.0,-2.0,92.0792,0,315.0,1.0,37718,BGKD,16.0,66.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9994
+OE-786406-908135,test,1,0.0006,test,106.0,-4.5,-5.5,94.3396,0,315.0,1.0,37412,KYNE ,5.0,20.0,interval Q5,coverage Q4,wear1 Q1,wear2 Q1,0.9994
+OE-702830-752234,test,1,0.0008,test,55.0,-0.5,-0.5,0.0,0,315.0,0.0,37827,,,,interval Q4,coverage Q1,wear1 Q2,wear2 Q2,0.9992
+OE-786404-908133,test,1,0.001,test,106.0,-6.0,-5.6,94.3396,0,315.0,1.0,37412,KYNE ,5.0,20.0,interval Q5,coverage Q4,wear1 Q1,wear2 Q1,0.999
+OE-917640-991977,test,1,0.0011,test,69.0,-1.11,-0.57,0.0,0,315.0,0.0,39520,,,,interval Q4,coverage Q2,wear1 Q2,wear2 Q2,0.9989
+OE-795703-849978,test,1,0.0011,test,44.0,0.0,0.0,100.0,0,315.0,1.0,37283,TATE,6.0,21.0,interval Q3,coverage Q5,wear1 Q3,wear2 Q3,0.9989
+OE-730066-847409,test,1,0.0011,test,102.0,0.0,0.0,95.098,0,315.0,1.0,30277,GZBE ,3.0,11.0,interval Q5,coverage Q4,wear1 Q3,wear2 Q3,0.9989
+OE-917642-991979,test,1,0.0012,test,69.0,-1.08,-0.8,0.0,0,315.0,0.0,39520,,,,interval Q4,coverage Q2,wear1 Q2,wear2 Q2,0.9988
+OE-1051609-1120557,test,1,0.0013,test,47.0,-8.5,-7.5,0.0,0,315.0,0.0,30605,BZAE,3.0,13.0,interval Q4,coverage Q2,wear1 Q1,wear2 Q1,0.9987
+OE-1069827-1107877,test,1,0.0013,test,32.0,0.0,0.0,0.0,0,315.0,0.0,39112,GMOE ,5.0,18.0,interval Q3,coverage Q1,wear1 Q3,wear2 Q3,0.9987
+OE-786402-908131,test,1,0.0014,test,106.0,-5.0,-4.5,94.3396,0,315.0,1.0,37412,KYNE ,5.0,20.0,interval Q5,coverage Q4,wear1 Q1,wear2 Q1,0.9986
+OE-786403-908132,test,1,0.0014,test,106.0,-5.0,-5.0,94.3396,0,315.0,1.0,37412,KYNE ,5.0,20.0,interval Q5,coverage Q4,wear1 Q1,wear2 Q1,0.9986
+OE-1153621-1192315,test,1,0.0015,test,37.0,-4.2,-5.0,0.0,0,315.0,1.0,39050,KYNE ,10.0,38.0,interval Q3,coverage Q2,wear1 Q1,wear2 Q1,0.9985
+OE-1153622-1192316,test,1,0.0015,test,37.0,-3.9,-3.5,0.0,0,315.0,1.0,39050,KYNE ,10.0,38.0,interval Q3,coverage Q2,wear1 Q1,wear2 Q1,0.9985
+OE-786401-908130,test,1,0.0015,test,106.0,-5.5,-6.0,94.3396,0,315.0,1.0,37412,KYNE ,5.0,20.0,interval Q5,coverage Q4,wear1 Q1,wear2 Q1,0.9985
+OE-982783-988805,test,1,0.0015,test,6.0,0.0,0.0,100.0,0,315.0,1.0,39208,GMOE ,4.0,17.0,interval Q1,coverage Q5,wear1 Q3,wear2 Q3,0.9985
+OE-1153623-1192317,test,1,0.0016,test,37.0,-3.2,-3.2,0.0,0,315.0,1.0,39050,KYNE ,10.0,38.0,interval Q3,coverage Q2,wear1 Q1,wear2 Q1,0.9984
+OE-760225-867087,test,1,0.0016,test,93.0,-1.0,-1.0,0.0,0,315.0,1.0,39454,,11.0,44.0,interval Q5,coverage Q2,wear1 Q2,wear2 Q2,0.9984
+OE-1128003-1166966,test,1,0.0016,test,36.0,-3.41,-2.99,0.0,0,315.0,1.0,30757,BLEE,9.0,35.0,interval Q3,coverage Q1,wear1 Q1,wear2 Q1,0.9984
+OE-1039709-1069826,test,1,0.0018,test,27.0,0.0,0.0,29.6296,0,315.0,0.0,39177,HWHE ,4.0,14.0,interval Q3,coverage Q3,wear1 Q5,wear2 Q5,0.9982
+OE-1022355-1106227,test,1,0.0018,test,75.0,2.37,2.43,28.0,0,315.0,1.0,37871,EDE,14.0,58.0,interval Q4,coverage Q3,wear1 Q5,wear2 Q5,0.9982
+OE-760224-867086,test,1,0.002,test,93.0,-2.0,-2.0,0.0,0,315.0,1.0,39454,,11.0,44.0,interval Q5,coverage Q2,wear1 Q2,wear2 Q2,0.998
+OE-1189657-1192142,test,1,0.002,test,2.0,3.64,2.3,0.0,0,315.0,1.0,37482,EDE,14.0,58.0,interval Q1,coverage Q2,wear1 Q5,wear2 Q5,0.998
+OE-1189658-1192143,test,1,0.002,test,2.0,3.08,2.21,0.0,0,315.0,1.0,37482,EDE,14.0,58.0,interval Q1,coverage Q2,wear1 Q5,wear2 Q5,0.998
+OE-1189659-1192144,test,1,0.002,test,2.0,2.91,2.01,0.0,0,315.0,1.0,37482,EDE,14.0,58.0,interval Q1,coverage Q2,wear1 Q5,wear2 Q5,0.998
+OE-807840-825317,test,1,0.0021,test,14.0,0.0,0.0,100.0,0,315.0,0.0,39468,,,,interval Q2,coverage Q5,wear1 Q4,wear2 Q4,0.9979
+OE-701115-748738,test,1,0.0022,test,97.0,-2.0,-2.0,83.5052,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9978
+OE-1189655-1192140,test,1,0.0022,test,2.0,2.41,2.08,0.0,0,315.0,1.0,37482,EDE,14.0,58.0,interval Q1,coverage Q2,wear1 Q5,wear2 Q5,0.9978
+OE-1155246-1168479,test,1,0.0022,test,10.0,0.0,0.0,0.0,0,315.0,1.0,39400,,3.0,11.0,interval Q2,coverage Q1,wear1 Q4,wear2 Q4,0.9978
+OE-701118-748741,test,1,0.0022,test,97.0,-2.0,-2.0,83.5052,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9978
+OE-593106-844442,test,1,0.0024,test,270.0,1.0,0.0,78.1481,0,315.0,1.0,37533,GMOE ,2.0,7.0,interval Q5,coverage Q4,wear1 Q5,wear2 Q3,0.9976
+OE-864688-913429,test,1,0.0026,test,69.0,-2.0,-2.0,0.0,0,315.0,1.0,39463,,,,interval Q4,coverage Q2,wear1 Q2,wear2 Q2,0.9974
+OE-1035486-1102778,test,1,0.0026,test,73.0,0.0,0.0,30.137,0,315.0,1.0,30685,LGDE,10.0,39.0,interval Q4,coverage Q3,wear1 Q5,wear2 Q5,0.9974
+OE-765542-810722,test,1,0.0028,test,241.0,0.0,0.0,53.527,0,315.0,0.0,37147,PADX,9.0,33.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9972
+OE-765543-810723,test,1,0.0028,test,241.0,0.0,0.0,53.527,0,315.0,0.0,37147,PADX,9.0,33.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9972
+OE-645350-853896,test,1,0.003,test,210.0,-13.0,-13.0,83.8095,0,315.0,1.0,37654,BGKD,,,interval Q5,coverage Q4,wear1 Q1,wear2 Q1,0.997
+OE-615051-792489,test,1,0.003,test,191.0,-10.0,-9.7,72.7749,0,315.0,1.0,37722,BGKD,7.0,25.0,interval Q5,coverage Q3,wear1 Q1,wear2 Q1,0.997
+OE-1196085-1205889,test,1,0.0031,test,8.0,0.0,0.0,0.0,0,315.0,1.0,39147,LGDE,10.0,42.0,interval Q2,coverage Q2,wear1 Q5,wear2 Q5,0.9969
+OE-1194301-1205397,test,1,0.0033,test,13.0,0.0,0.0,0.0,0,315.0,0.0,39480,IZNE,4.0,14.0,interval Q2,coverage Q2,wear1 Q4,wear2 Q4,0.9967
+OE-1161727-1194268,test,1,0.0033,test,30.0,-2.38,-1.95,0.0,0,315.0,1.0,39458,,8.0,31.0,interval Q3,coverage Q2,wear1 Q1,wear2 Q2,0.9967
+OE-690443-792481,test,1,0.0033,test,96.0,-1.0,-1.0,47.9167,0,315.0,0.0,37759,,,,interval Q5,coverage Q3,wear1 Q2,wear2 Q2,0.9967
+OE-765544-810724,test,1,0.0034,test,241.0,0.0,0.0,53.527,0,315.0,0.0,37147,PADX,9.0,33.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9966
+OE-1161726-1194267,test,1,0.0034,test,30.0,-2.08,-2.22,0.0,0,315.0,1.0,39458,,8.0,31.0,interval Q3,coverage Q2,wear1 Q1,wear2 Q1,0.9966
+OE-765545-810725,test,1,0.0035,test,241.0,0.0,0.0,53.527,0,315.0,0.0,37147,PADX,9.0,33.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9965
+OE-899141-907993,test,1,0.0035,test,12.0,0.0,0.0,0.0,0,315.0,1.0,39458,,4.0,16.0,interval Q2,coverage Q2,wear1 Q4,wear2 Q4,0.9965
+OE-899138-907990,test,1,0.0036,test,12.0,0.0,0.0,0.0,0,315.0,1.0,39458,,4.0,16.0,interval Q2,coverage Q2,wear1 Q4,wear2 Q4,0.9964
+OE-899137-907989,test,1,0.0036,test,12.0,0.0,0.0,0.0,0,315.0,1.0,39458,,4.0,16.0,interval Q2,coverage Q2,wear1 Q4,wear2 Q4,0.9964
+OE-755080-848060,test,1,0.0038,test,82.0,-4.6,-4.95,100.0,0,315.0,1.0,30465,AQE  ,15.0,62.0,interval Q4,coverage Q5,wear1 Q1,wear2 Q1,0.9962
+OE-854047-880931,test,1,0.0038,test,18.0,0.0,0.0,0.0,0,315.0,0.0,37799,,7.0,27.0,interval Q2,coverage Q2,wear1 Q5,wear2 Q5,0.9962
+OE-854046-880930,test,1,0.0039,test,18.0,0.0,0.0,0.0,0,315.0,0.0,37799,,7.0,27.0,interval Q2,coverage Q2,wear1 Q5,wear2 Q5,0.9961
+OE-717881-746674,test,1,0.0041,test,74.0,-0.24,-0.57,0.0,0,315.0,1.0,37797,,,,interval Q4,coverage Q1,wear1 Q2,wear2 Q2,0.9959
+OE-717882-746675,test,1,0.0041,test,74.0,-0.32,-0.5,0.0,0,315.0,1.0,37797,,,,interval Q4,coverage Q1,wear1 Q2,wear2 Q2,0.9959
+OE-1036166-1102076,test,1,0.0041,test,61.0,0.0,0.0,0.0,0,315.0,1.0,37904,,2.0,10.0,interval Q4,coverage Q2,wear1 Q5,wear2 Q5,0.9959
+OE-993843-1101081,test,1,0.0041,test,102.0,0.0,0.0,0.0,0,315.0,1.0,37921,,9.0,33.0,interval Q5,coverage Q2,wear1 Q5,wear2 Q5,0.9959
+OE-1201767-1208380,test,1,0.0041,test,2.0,1.89,2.1,0.0,0,315.0,1.0,30447,EDE,14.0,55.0,interval Q1,coverage Q1,wear1 Q5,wear2 Q5,0.9959
+OE-717880-746673,test,1,0.0042,test,74.0,-0.26,-1.28,0.0,0,315.0,1.0,37797,,,,interval Q4,coverage Q1,wear1 Q2,wear2 Q2,0.9958
+OE-1155285-1208665,test,1,0.0043,test,47.0,-1.0,-1.0,0.0,0,315.0,1.0,37921,,9.0,33.0,interval Q4,coverage Q2,wear1 Q2,wear2 Q2,0.9957
+OE-660105-652341,test,1,0.0043,test,35.0,-43.7,-43.6,2.8571,0,315.0,0.0,30230,,5.0,18.0,interval Q3,coverage Q3,wear1 Q1,wear2 Q1,0.9957
+OE-842355-848929,test,1,0.0043,test,5.0,0.0,0.0,0.0,0,315.0,1.0,30365,GZBE ,5.0,18.0,interval Q1,coverage Q1,wear1 Q3,wear2 Q3,0.9957
+OE-701114-748737,test,1,0.0043,test,97.0,-1.5,-1.5,83.5052,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9957
+OE-754548-754566,test,1,0.0043,test,5.0,-2.0,-1.5,60.0,0,315.0,1.0,37593,SPJD ,9.0,36.0,interval Q1,coverage Q3,wear1 Q2,wear2 Q2,0.9957
+OE-870549-871912,test,1,0.0043,test,1.0,-1.3,-0.7,100.0,0,315.0,1.0,37842,BNDL,14.0,54.0,interval Q1,coverage Q5,wear1 Q2,wear2 Q2,0.9957
+OE-870546-871909,test,1,0.0044,test,1.0,-1.1,-1.0,100.0,0,315.0,1.0,37842,BNDL,14.0,54.0,interval Q1,coverage Q5,wear1 Q2,wear2 Q2,0.9956
+OE-1171120-1194320,test,1,0.0045,test,21.0,-1.34,-2.16,0.0,0,315.0,1.0,39588,,2.0,10.0,interval Q3,coverage Q3,wear1 Q2,wear2 Q1,0.9955
+OE-870550-871913,test,1,0.0045,test,1.0,-1.2,-0.5,100.0,0,315.0,1.0,37842,BNDL,14.0,54.0,interval Q1,coverage Q5,wear1 Q2,wear2 Q2,0.9955
+OE-701117-748740,test,1,0.0046,test,97.0,-1.0,-1.0,83.5052,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q5,coverage Q4,wear1 Q2,wear2 Q2,0.9954
+OE-1079346-1100626,test,1,0.0047,test,20.0,0.0,0.0,0.0,0,315.0,1.0,37150,WATE ,3.0,13.0,interval Q2,coverage Q1,wear1 Q3,wear2 Q3,0.9953
+OE-1186505-1203745,test,1,0.0047,test,20.0,0.0,0.0,0.0,0,315.0,1.0,30498,WATE ,3.0,11.0,interval Q2,coverage Q1,wear1 Q3,wear2 Q3,0.9953
+OE-1155286-1208666,test,1,0.0047,test,47.0,-2.0,-2.0,0.0,0,315.0,1.0,37921,,9.0,33.0,interval Q4,coverage Q2,wear1 Q2,wear2 Q2,0.9953
+OE-757285-871667,test,1,0.0048,test,100.0,-7.88,-8.2,46.0,0,315.0,1.0,30218,GZBE ,5.0,18.0,interval Q5,coverage Q3,wear1 Q1,wear2 Q1,0.9952
+OE-1200569-1211026,test,1,0.0048,test,30.0,0.0,0.0,0.0,0,315.0,1.0,37771,IZNE,,,interval Q3,coverage Q1,wear1 Q4,wear2 Q4,0.9952
+OE-870547-871910,test,1,0.0048,test,1.0,-1.2,-0.1,100.0,0,315.0,1.0,37842,BNDL,14.0,54.0,interval Q1,coverage Q5,wear1 Q2,wear2 Q3,0.9952
+OE-870548-871911,test,1,0.0048,test,1.0,-1.0,0.0,100.0,0,315.0,1.0,37842,BNDL,14.0,54.0,interval Q1,coverage Q5,wear1 Q2,wear2 Q4,0.9952
+OE-504264-871845,test,1,0.0049,test,435.0,0.0,0.0,76.7816,0,315.0,1.0,37248,ETE,15.0,61.0,interval Q5,coverage Q4,wear1 Q3,wear2 Q3,0.9951
+OE-690444-792482,test,1,0.005,test,96.0,0.0,-1.0,47.9167,0,315.0,0.0,37759,,,,interval Q5,coverage Q3,wear1 Q3,wear2 Q2,0.995
+OE-1200531-1203423,test,1,0.005,test,3.0,-1.0,-1.0,0.0,0,315.0,1.0,30730,WATE ,3.0,13.0,interval Q1,coverage Q1,wear1 Q2,wear2 Q2,0.995
+OE-1200530-1203422,test,1,0.005,test,3.0,-1.0,-1.0,0.0,0,315.0,1.0,30730,WATE ,3.0,13.0,interval Q1,coverage Q1,wear1 Q2,wear2 Q2,0.995
+OE-1200572-1211029,test,1,0.005,test,30.0,0.0,0.0,0.0,0,315.0,1.0,37771,IZNE,,,interval Q3,coverage Q1,wear1 Q4,wear2 Q4,0.995
+OE-1200573-1211030,test,1,0.005,test,30.0,0.0,0.0,0.0,0,315.0,1.0,37771,IZNE,,,interval Q3,coverage Q1,wear1 Q4,wear2 Q4,0.995
+OE-1200574-1211031,test,1,0.005,test,30.0,0.0,0.0,0.0,0,315.0,1.0,37771,IZNE,,,interval Q3,coverage Q1,wear1 Q4,wear2 Q4,0.995
+OE-504262-871843,test,1,0.0051,test,435.0,0.0,0.0,76.7816,0,315.0,1.0,37248,ETE,15.0,61.0,interval Q5,coverage Q4,wear1 Q3,wear2 Q3,0.9949
+OE-1200570-1211027,test,1,0.0052,test,30.0,0.0,0.0,0.0,0,315.0,1.0,37771,IZNE,,,interval Q3,coverage Q1,wear1 Q4,wear2 Q4,0.9948
+OE-1200571-1211028,test,1,0.0052,test,30.0,0.0,0.0,0.0,0,315.0,1.0,37771,IZNE,,,interval Q3,coverage Q1,wear1 Q4,wear2 Q4,0.9948
+OE-764844-848412,test,1,0.0052,test,75.0,0.0,0.0,100.0,0,315.0,1.0,30495,WATE ,3.0,13.0,interval Q4,coverage Q5,wear1 Q4,wear2 Q4,0.9948
+OE-1186506-1203746,test,1,0.0052,test,20.0,0.0,0.0,0.0,0,315.0,1.0,30498,WATE ,3.0,11.0,interval Q2,coverage Q1,wear1 Q3,wear2 Q3,0.9948
+OE-738559-854013,test,1,0.0053,test,183.0,0.0,0.0,44.2623,0,315.0,1.0,39304,KJMD,16.0,68.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9947
+OE-812064-843770,test,1,0.0053,test,25.0,0.0,0.0,100.0,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q3,coverage Q5,wear1 Q4,wear2 Q4,0.9947
+OE-812060-843766,test,1,0.0054,test,25.0,0.0,0.0,100.0,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q3,coverage Q5,wear1 Q4,wear2 Q4,0.9946
+OE-812061-843767,test,1,0.0054,test,25.0,0.0,0.0,100.0,0,315.0,0.0,30359,RPME,14.0,59.0,interval Q3,coverage Q5,wear1 Q4,wear2 Q4,0.9946
+OE-760781-809147,test,1,0.0054,test,45.0,0.0,0.0,100.0,0,561.0,1.0,30501,WATE ,5.0,20.0,interval Q3,coverage Q4,wear1 Q3,wear2 Q3,0.9946
+OE-760783-809149,test,1,0.0054,test,45.0,0.0,0.0,100.0,0,561.0,1.0,30501,WATE ,5.0,20.0,interval Q3,coverage Q4,wear1 Q3,wear2 Q3,0.9946
+OE-738560-854014,test,1,0.0056,test,183.0,0.0,0.0,44.2623,0,315.0,1.0,39304,KJMD,16.0,68.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9944
+OE-738561-854015,test,1,0.0056,test,183.0,0.0,0.0,44.2623,0,315.0,1.0,39304,KJMD,16.0,68.0,interval Q5,coverage Q3,wear1 Q4,wear2 Q4,0.9944
+OE-1186507-1203747,test,1,0.0057,test,20.0,0.0,0.0,0.0,0,315.0,1.0,30498,WATE ,3.0,11.0,interval Q2,coverage Q1,wear1 Q3,wear2 Q3,0.9943
+OE-1053019-1101125,test,1,0.0058,test,45.0,0.0,-0.7,0.0,0,315.0,0.0,37850,,9.0,34.0,interval Q4,coverage Q2,wear1 Q4,wear2 Q2,0.9942
+OE-764840-848408,test,1,0.0058,test,75.0,0.0,0.0,100.0,0,315.0,1.0,30495,WATE ,3.0,13.0,interval Q4,coverage Q5,wear1 Q4,wear2 Q4,0.9942

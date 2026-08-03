@@ -1,0 +1,9 @@
+{
+  "phase": "3B",
+  "task": "survival",
+  "label": "time_to_next_turning_days",
+  "model": "hist_gradient_boosting_observed_only",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "risk_definition": "-predicted_time",
+  "note": "GBM trained on observed (uncensored) rows only; proper survival models (Cox/survival forests) are future work"
+}

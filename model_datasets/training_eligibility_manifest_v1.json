@@ -1,0 +1,145 @@
+{
+  "generated_at_utc": "2026-08-03T07:38:39.365552+00:00",
+  "input_sha256": {
+    "feature_spec": "a0048069d98588bf0bff257a1f2161854abffb93126a78bc782f39268ba20f45",
+    "label_spec": "dc1c7ec713ea020e094ce348b814f9c153216073e1427bf4698c6c901b1b9f32",
+    "feature_store": "0c522150c29570ccfea983f96366a6accee2166430b45d7bf265bc5d8fe920b2"
+  },
+  "approved_features": [
+    "interval_days",
+    "assignment_quality_tier",
+    "diameter_delta_raw_mm",
+    "rtis_source_event_count",
+    "maintenance_jobcard_creation_count",
+    "rtis_reporting_coverage_pct",
+    "static_locomotive_axle_load",
+    "wheel_position_1_12",
+    "axle_position_1_6",
+    "inspection_count_through_interval_end",
+    "wheel_profile_2class",
+    "wheel_schedule_id",
+    "home_shed",
+    "defect_zone",
+    "defect_division",
+    "wheel_age_days_proxy",
+    "turning_indicator_raw",
+    "days_since_turning"
+  ],
+  "eligible_columns": [
+    "interval_days",
+    "diameter_delta_raw_mm_side_1",
+    "diameter_delta_raw_mm_side_2",
+    "rtis_source_event_count",
+    "rtis_source_event_type_count",
+    "maintenance_jobcard_creation_count",
+    "rtis_reporting_coverage_pct",
+    "rtis_report_count",
+    "rtis_reporting_days",
+    "rtis_duplicate_report_count",
+    "wheel_position_1_12",
+    "axle_position_1_6",
+    "inspection_count_through_interval_end",
+    "wheel_profile_2class",
+    "wheel_schedule_id",
+    "home_shed",
+    "defect_zone",
+    "defect_division",
+    "wheel_age_days_proxy",
+    "turning_indicator_raw",
+    "days_since_turning"
+  ],
+  "dropped": {
+    "identity_or_provenance": [
+      "wheel_age_date_source"
+    ],
+    "non_predictive_payload": [
+      "rtis_source_event_types"
+    ],
+    "constant": [
+      "assignment_quality_tier"
+    ],
+    "above_missingness_threshold": [],
+    "non_numeric_free_text": [
+      "assignment_quality_tier"
+    ]
+  },
+  "encoding_policy": {
+    "interval_days": "numeric",
+    "diameter_delta_raw_mm_side_1": "numeric",
+    "diameter_delta_raw_mm_side_2": "numeric",
+    "rtis_source_event_count": "numeric",
+    "rtis_source_event_type_count": "numeric",
+    "maintenance_jobcard_creation_count": "numeric",
+    "rtis_reporting_coverage_pct": "numeric",
+    "rtis_report_count": "numeric",
+    "rtis_reporting_days": "numeric",
+    "rtis_duplicate_report_count": "numeric",
+    "wheel_position_1_12": "numeric",
+    "axle_position_1_6": "numeric",
+    "inspection_count_through_interval_end": "numeric",
+    "wheel_age_days_proxy": "numeric",
+    "turning_indicator_raw": "numeric",
+    "days_since_turning": "numeric",
+    "home_shed": "frequency",
+    "defect_zone": "one_hot",
+    "defect_division": "frequency",
+    "wheel_schedule_id": "one_hot",
+    "wheel_profile_2class": "ordinal_binary"
+  },
+  "missing_policy": {
+    "wheel_profile_2class": {
+      "pct_missing": 24.96,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "NA"
+    },
+    "wheel_schedule_id": {
+      "pct_missing": 2.44,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "NA"
+    },
+    "home_shed": {
+      "pct_missing": 50.12,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "NA"
+    },
+    "defect_zone": {
+      "pct_missing": 26.16,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "NA"
+    },
+    "defect_division": {
+      "pct_missing": 26.08,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "NA"
+    },
+    "wheel_age_days_proxy": {
+      "pct_missing": 20.87,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "NA"
+    },
+    "days_since_turning": {
+      "pct_missing": 81.57,
+      "policy": "NA_indicator_column + median_impute",
+      "semantics": "null = never turned on this wheelset; encode as separate never_turned indicator + 0 fill"
+    }
+  },
+  "policy": {
+    "approved_statuses": [
+      "READY",
+      "READY_FOR_MATERIALISATION",
+      "READY_WITH_CAVEAT"
+    ],
+    "max_missingness_pct": 85.0,
+    "one_hot_max_levels": 20,
+    "point_in_time_rule": "all eligible columns are available at interval_end_timestamp by feature-spec construction"
+  },
+  "leakage_check": {
+    "passed": true,
+    "label_columns_excluded": [
+      "next_interval_dia_delta_mm",
+      "next_interval_large_loss_flag",
+      "next_interval_turning_flag",
+      "time_to_next_turning_days"
+    ]
+  }
+}

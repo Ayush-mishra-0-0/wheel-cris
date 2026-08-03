@@ -1,0 +1,13 @@
+{
+  "val": {
+    "pr_auc": 0.0132,
+    "roc_auc": 0.5,
+    "f1_at_best": NaN,
+    "best_threshold": 0.0,
+    "precision_at_k": 0.0132,
+    "brier": 0.0132,
+    "ece": 0.0132,
+    "n": 29743,
+    "positive_rate": 0.0132
+  }
+}

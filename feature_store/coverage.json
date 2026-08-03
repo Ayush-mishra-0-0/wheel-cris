@@ -54,5 +54,53 @@
   "static_locomotive_axle_count": {
     "non_null_rows": 225262,
     "coverage_pct": 100.0
+  },
+  "wheel_position_1_12": {
+    "non_null_rows": 225243,
+    "coverage_pct": 99.9916
+  },
+  "axle_position_1_6": {
+    "non_null_rows": 225243,
+    "coverage_pct": 99.9916
+  },
+  "inspection_count_through_interval_end": {
+    "non_null_rows": 225262,
+    "coverage_pct": 100.0
+  },
+  "wheel_profile_2class": {
+    "non_null_rows": 169042,
+    "coverage_pct": 75.0424
+  },
+  "wheel_schedule_id": {
+    "non_null_rows": 219757,
+    "coverage_pct": 97.5562
+  },
+  "home_shed": {
+    "non_null_rows": 112369,
+    "coverage_pct": 49.8837
+  },
+  "defect_zone": {
+    "non_null_rows": 166341,
+    "coverage_pct": 73.8433
+  },
+  "defect_division": {
+    "non_null_rows": 166510,
+    "coverage_pct": 73.9184
+  },
+  "wheel_age_days_proxy": {
+    "non_null_rows": 178243,
+    "coverage_pct": 79.127
+  },
+  "wheel_age_date_source": {
+    "non_null_rows": 178243,
+    "coverage_pct": 79.127
+  },
+  "turning_indicator_raw": {
+    "non_null_rows": 225243,
+    "coverage_pct": 99.9916
+  },
+  "days_since_turning": {
+    "non_null_rows": 41517,
+    "coverage_pct": 18.4305
   }
 }

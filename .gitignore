@@ -3,7 +3,6 @@
 .vscode/
 data/
 data.zip
-models/
 extract/
 __pycache__/
 *.pyc

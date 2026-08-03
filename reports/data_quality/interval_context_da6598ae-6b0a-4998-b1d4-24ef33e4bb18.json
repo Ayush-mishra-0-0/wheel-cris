@@ -1,0 +1,78 @@
+{
+  "run_id": "da6598ae-6b0a-4998-b1d4-24ef33e4bb18",
+  "contract_version": "v1.0",
+  "generated_at_utc": "2026-08-03T06:55:50.742395+00:00",
+  "point_in_time_rule": "interval_end_timestamp; only source facts with business time at or before interval end",
+  "input_sha256": {
+    "intervals": "48bc4c172c77eb63ef6c3fa82ba0805b816106cfecefda6785c3c31123c9e495",
+    "wheel_measurements": "9c9b1e0c958ac821c0dadbfde9a391cc5092c1dd8e86b4721ff1960f9393ce00",
+    "formation": "241598c26c1fecbab7b7ef424ae8d058f078e1378d7a6912acd4144fe361e05a",
+    "wheel_register": "2fe77f9832fb4d34250ea6d44fbcb93c3a34181b9fd4870532b38752d8eb3c03",
+    "daily_overdue": "81d6964c5cfc8dd54a08333e3824c4a6d63dbbf4db1f8d5b5880f1ff77eae356",
+    "defects": "c107b1d1d1fcf28a48624b0f152db63d53cddcfdd619bc0d8284cdd9a03a2c30",
+    "equipment_master": "6b10b0c2478ef6193a4e42e2af0e27096ceb027f4201bd7163492dbeadc6420d"
+  },
+  "rows": 225262,
+  "coverage": {
+    "axle_position_1_6": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "wheel_wr_id": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "turning_indicator_raw": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "wheel_position_1_12": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "inspection_count_through_interval_end": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    },
+    "days_since_turning": {
+      "non_null_rows": 41517,
+      "coverage_pct": 18.4305
+    },
+    "wheel_profile_2class": {
+      "non_null_rows": 169042,
+      "coverage_pct": 75.0424
+    },
+    "wheel_schedule_id": {
+      "non_null_rows": 219757,
+      "coverage_pct": 97.5562
+    },
+    "wheel_skid_flag": {
+      "non_null_rows": 225219,
+      "coverage_pct": 99.9809
+    },
+    "home_shed": {
+      "non_null_rows": 112369,
+      "coverage_pct": 49.8837
+    },
+    "defect_zone": {
+      "non_null_rows": 166341,
+      "coverage_pct": 73.8433
+    },
+    "defect_division": {
+      "non_null_rows": 166510,
+      "coverage_pct": 73.9184
+    },
+    "wheel_age_days_proxy": {
+      "non_null_rows": 178621,
+      "coverage_pct": 79.2948
+    },
+    "wheel_age_date_source": {
+      "non_null_rows": 178621,
+      "coverage_pct": 79.2948
+    },
+    "interval_context_contract_version": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    }
+  }
+}

@@ -1,0 +1,43 @@
+stratum,feature,value,worst_n,worst_fraction,full_test_fraction,enrichment
+home shed,home_shed,<NA>,0,0.27,0.2739,0.99
+home shed,home_shed,BZAE,17,0.17,0.0467,3.64
+home shed,home_shed,KJMD,9,0.09,0.0319,2.82
+home shed,home_shed,HWHE ,9,0.09,0.0414,2.17
+home shed,home_shed,GMOE ,7,0.07,0.0222,3.15
+home shed,home_shed,NGCD,7,0.07,0.0025,27.67
+home shed,home_shed,BIAE,5,0.05,0.0148,3.38
+home shed,home_shed,LDHE ,5,0.05,0.0234,2.14
+home shed,home_shed,SGUD,3,0.03,0.0152,1.98
+home shed,home_shed,BGKD,3,0.03,0.0208,1.44
+home shed,home_shed,BNDL,2,0.02,0.0206,0.97
+home shed,home_shed,LGDE,1,0.01,0.035,0.29
+home shed,home_shed,SPJD ,1,0.01,0.0099,1.01
+home shed,home_shed,EDE,1,0.01,0.0359,0.28
+home shed,home_shed,WATE ,1,0.01,0.1076,0.09
+home shed,home_shed,SDAD ,1,0.01,0.0113,0.89
+home shed,home_shed,GZBE ,1,0.01,0.0491,0.2
+wheel profile,wheel_profile_2class,1.0,78,0.78,0.82,0.95
+wheel profile,wheel_profile_2class,0.0,20,0.2,0.1733,1.15
+wheel profile,wheel_profile_2class,-1.0,2,0.02,0.0067,3.0
+interval length (days),interval_days_bucket,interval Q4,28,0.28,0.2,1.4
+interval length (days),interval_days_bucket,interval Q5,24,0.24,0.2,1.2
+interval length (days),interval_days_bucket,interval Q2,18,0.18,0.2,0.9
+interval length (days),interval_days_bucket,interval Q3,16,0.16,0.2,0.8
+interval length (days),interval_days_bucket,interval Q1,14,0.14,0.2,0.7
+turning event this interval,turning_indicator_raw,0,98,0.98,0.9891,0.99
+turning event this interval,turning_indicator_raw,1,2,0.02,0.0109,1.83
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q1,28,0.28,0.2,1.4
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q4,23,0.23,0.2,1.15
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q5,19,0.19,0.2,0.95
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q3,15,0.15,0.2,0.75
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q2,15,0.15,0.2,0.75
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q5,33,0.33,0.2,1.65
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q2,27,0.27,0.2,1.35
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q1,24,0.24,0.2,1.2
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q4,13,0.13,0.2,0.65
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q3,3,0.03,0.2,0.15
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q5,34,0.34,0.2,1.7
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q2,27,0.27,0.2,1.35
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q1,24,0.24,0.2,1.2
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q4,12,0.12,0.2,0.6
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q3,3,0.03,0.2,0.15

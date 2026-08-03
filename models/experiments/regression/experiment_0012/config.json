@@ -1,0 +1,8 @@
+{
+  "phase": "3A",
+  "task": "regression",
+  "label": "next_interval_dia_delta_mm",
+  "model": "dummy_median",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "random_state": 42
+}
