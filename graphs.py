@@ -34,6 +34,7 @@ from pathlib import Path
 
 import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 from sklearn.ensemble import HistGradientBoostingRegressor
 
@@ -51,6 +52,13 @@ RANDOM_STATE = 42
 SPLIT_COLORS = {"train": "#4C72B0", "val": "#DD8452", "test": "#55A868"}
 # Show only the holdout split for a fair actual-vs-predicted comparison.
 PLOT_SPLITS = ["test"]
+
+
+def _eval_dataset(dataset: pd.DataFrame) -> pd.DataFrame:
+    """Filter to the evaluation split and keep rows with a measured next diameter."""
+    return dataset.loc[
+        dataset["split"].isin(PLOT_SPLITS) & dataset["actual_next_dia1"].notna() & dataset["predicted_next_dia1"].notna()
+    ].copy()
 
 
 def load_dataset_with_predictions() -> pd.DataFrame:
@@ -187,12 +195,95 @@ def plot_fleet_monthly_aggregate(dataset: pd.DataFrame) -> Path:
     return out_path
 
 
+def plot_prediction_scatter(dataset: pd.DataFrame) -> Path:
+    """Scatter of actual vs predicted diameter for the selected evaluation split."""
+    df = _eval_dataset(dataset)
+    fig, ax = plt.subplots(figsize=(7, 7))
+    ax.scatter(df["predicted_next_dia1"], df["actual_next_dia1"], s=20, alpha=0.5, color=SPLIT_COLORS[PLOT_SPLITS[0]])
+
+    min_val = min(df["predicted_next_dia1"].min(), df["actual_next_dia1"].min())
+    max_val = max(df["predicted_next_dia1"].max(), df["actual_next_dia1"].max())
+    ax.plot([min_val, max_val], [min_val, max_val], color="black", linestyle="--", linewidth=1, label="Perfect fit")
+
+    ax.set_xlabel("Predicted diameter (mm)")
+    ax.set_ylabel("Actual diameter (mm)")
+    ax.set_title("Prediction vs actual — holdout split")
+    ax.legend(loc="best")
+    ax.grid(alpha=0.25)
+    fig.tight_layout()
+
+    out_path = OUTPUT_DIR / "prediction_vs_actual_scatter.png"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return out_path
+
+
+def plot_residuals(dataset: pd.DataFrame) -> Path:
+    """Residuals vs predicted values to inspect bias and spread."""
+    df = _eval_dataset(dataset)
+    df["residual"] = df["actual_next_dia1"] - df["predicted_next_dia1"]
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.axhline(0, color="black", linestyle="--", linewidth=1)
+    ax.scatter(df["predicted_next_dia1"], df["residual"], s=20, alpha=0.5, color=SPLIT_COLORS[PLOT_SPLITS[0]])
+
+    ax.set_xlabel("Predicted diameter (mm)")
+    ax.set_ylabel("Residual = actual - predicted (mm)")
+    ax.set_title("Residuals vs predicted values")
+    ax.grid(alpha=0.25)
+    fig.tight_layout()
+
+    out_path = OUTPUT_DIR / "residuals_vs_predicted.png"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return out_path
+
+
+def plot_error_by_interval_length(dataset: pd.DataFrame) -> Path:
+    """RMSE by interval length bucket to check whether longer gaps are harder to predict."""
+    df = _eval_dataset(dataset)
+    df["error"] = df["actual_next_dia1"] - df["predicted_next_dia1"]
+    df["error_sq"] = df["error"] ** 2
+
+    bins = [0, 30, 60, 90, 120, 180, np.inf]
+    labels = ["0-30", "30-60", "60-90", "90-120", "120-180", "180+"]
+    df["interval_bin"] = pd.cut(df["interval_days"], bins=bins, labels=labels, include_lowest=True)
+
+    summary = (
+        df.groupby("interval_bin")
+        .agg(rmse=("error_sq", lambda s: np.sqrt(s.mean())))
+        .reset_index()
+    )
+
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.bar(summary["interval_bin"], summary["rmse"], color=SPLIT_COLORS[PLOT_SPLITS[0]], alpha=0.85)
+    ax.set_xlabel("Interval length (days)")
+    ax.set_ylabel("RMSE (mm)")
+    ax.set_title("RMSE by interval length bucket")
+    ax.grid(axis="y", alpha=0.25)
+    fig.tight_layout()
+
+    out_path = OUTPUT_DIR / "rmse_by_interval_length.png"
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out_path, dpi=150)
+    plt.close(fig)
+    return out_path
+
+
 def main() -> None:
     dataset = load_dataset_with_predictions()
     single_path = plot_single_wheelset(dataset)
     fleet_path = plot_fleet_monthly_aggregate(dataset)
+    scatter_path = plot_prediction_scatter(dataset)
+    residual_path = plot_residuals(dataset)
+    rmse_path = plot_error_by_interval_length(dataset)
     print(f"Saved: {single_path}")
     print(f"Saved: {fleet_path}")
+    print(f"Saved: {scatter_path}")
+    print(f"Saved: {residual_path}")
+    print(f"Saved: {rmse_path}")
 
 
 if __name__ == "__main__":
