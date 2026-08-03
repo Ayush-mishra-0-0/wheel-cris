@@ -1,0 +1,13 @@
+make data analysis ipynb 
+and train a model on available field data to test out
+
+
+i wanna make a baseline model using whatever features we have how should we proceed
+
+yeah that'w what i was also thinking, we have collected enough data to build baseline models and as more data will come as days pass, we will make the project evolve , so it is kind of not just linear growth project, it's back and forth
+
+can you tell me next steps? and how to do it in structured manner
+also one more important thing, i wanna build a notebook after building dataset for Version1.0 to visulaise what my data will be before it going to model training
+so that's there one more work
+
+
