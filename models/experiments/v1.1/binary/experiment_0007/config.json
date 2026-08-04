@@ -1,0 +1,9 @@
+{
+  "phase": "v1.1",
+  "task": "binary",
+  "label": "next_interval_turning_flag",
+  "model": "hist_gradient_boosting",
+  "feature_set": "v1.0",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "random_state": 42
+}

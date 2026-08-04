@@ -1,0 +1,9 @@
+{
+  "phase": "v1.1",
+  "task": "regression",
+  "label": "next_interval_dia_delta_mm",
+  "model": "hist_gradient_boosting",
+  "feature_set": "v1.1",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "random_state": 42
+}

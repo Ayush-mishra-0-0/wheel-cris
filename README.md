@@ -40,7 +40,7 @@ Everything is versioned and auditable: every derived value traces to source reco
 | `feature_store/` | Spec-driven feature-store builder + released v1.0 store |
 | `validation/` | Formal evidence packs (identity, temporal integrity, business rules, join coverage) |
 | `docs/` | Semantics (degradation, RTIS distance), distance-recovery plan, research backlog, status table |
-| `reports/` | Immutable data-quality and lineage reports |
+| `reports/` | Immutable data-quality/lineage reports + `plots/{v1.0,v1.1,compare}/` model charts |
 | `releases/` | Release notes per product/version |
 | `tests/` | Pipeline tests |
 

@@ -18,6 +18,7 @@ Emits a validation report JSON with a per-check verdict and an overall verdict.
 """
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from datetime import datetime, timezone
@@ -29,14 +30,15 @@ import pandas as pd
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
-DATASET_DIR = PROJECT_ROOT / "model_datasets" / "v1.0"
-DATASET_PATH = DATASET_DIR / "model_dataset_v1.0.parquet"
-MANIFEST_PATH = DATASET_DIR / "model_dataset_manifest_v1.0.json"
+DEFAULT_VERSION = "v1.0"
 
 
-def _run_checks() -> dict:
-    dataset = pd.read_parquet(DATASET_PATH)
-    manifest = json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+def _run_checks(version: str = DEFAULT_VERSION) -> dict:
+    dataset_dir = PROJECT_ROOT / "model_datasets" / version
+    dataset_path = dataset_dir / f"model_dataset_{version}.parquet"
+    manifest_path = dataset_dir / f"model_dataset_manifest_{version}.json"
+    dataset = pd.read_parquet(dataset_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     roles = manifest["column_roles"]
     x_columns = [c for c, role in roles.items() if role == "feature"]
     y_columns = [c for c, role in roles.items() if role == "label"]
@@ -128,9 +130,13 @@ def _run_checks() -> dict:
 
 
 if __name__ == "__main__":
-    report = _run_checks()
-    out = DATASET_DIR / "validation_report.json"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--version", default=DEFAULT_VERSION, help="dataset version dir under model_datasets/ (e.g. v1.1)")
+    args = parser.parse_args()
+    report = _run_checks(version=args.version)
+    dataset_dir = PROJECT_ROOT / "model_datasets" / args.version
+    out = dataset_dir / "validation_report.json"
     out.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
-    print(f"VERDICT: {report['verdict']}")
+    print(f"VERDICT: {report['verdict']} ({out.relative_to(PROJECT_ROOT)})")
     for name, check in report["checks"].items():
         print(f"  [{'PASS' if check.get('passed') else 'FAIL'}] {name}: {check}")

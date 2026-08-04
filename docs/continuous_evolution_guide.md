@@ -8,7 +8,7 @@ This document defines the operational rules for evolving the Wheel Health ML sys
 
 1. **Never Overwrite Historical Releases:**
    - Any released feature store artifact (`feature_store_vX.Y.parquet`), feature spec (`engineering_feature_specification_vX.json`), label spec (`label_specification_vX.json`), or model dataset (`model_datasets/vX.Y/`) is **immutable**.
-   - Experiments in `models/experiments/` are read-only once written and auto-increment.
+   - Experiments in `models/experiments/<version>/` (e.g. `models/experiments/v1.0/`) are read-only once written and auto-increment per task within that version root.
 
 2. **Decoupled Contracts:**
    - **Feature Store Versioning** (`v1.0.0`) is independent of **Model Dataset Versioning** (`v1.0.0`).

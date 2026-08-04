@@ -27,13 +27,13 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_ROOT))
 
 from models import evaluate  # noqa: E402
-from models.experiment_registry import create_run, write_feature_importance, write_manifest, write_metrics, write_predictions  # noqa: E402
+from models.experiment_registry import create_run, write_feature_importance, write_manifest, write_metrics, write_model, write_predictions  # noqa: E402
 
 DATA_DIR = PROJECT_ROOT / "model_datasets" / "v1.0"
 DATASET_PATH = DATA_DIR / "model_dataset_v1.0.parquet"
 MANIFEST_PATH = DATA_DIR / "model_dataset_manifest_v1.0.json"
 EVAL_SPEC_PATH = PROJECT_ROOT / "configs" / "evaluation_spec.json"
-EXPERIMENTS_ROOT = PROJECT_ROOT / "models" / "experiments"
+EXPERIMENTS_ROOT = PROJECT_ROOT / "models" / "experiments" / "v1.0"
 RANDOM_STATE = 42
 
 TASKS = ["regression", "binary", "survival"]
@@ -92,6 +92,7 @@ def _run_regression(dataset: pd.DataFrame, manifest: dict) -> list[dict]:
             experiment_id, run_dir = create_run(EXPERIMENTS_ROOT, "regression", config)
             write_metrics(run_dir, {split_name: metrics})
             write_feature_importance(run_dir, _feature_importance(estimator, features))
+            write_model(run_dir, estimator)
             write_predictions(run_dir, pd.DataFrame({
                 "operational_exposure_id": eval_set["operational_exposure_id"], "split": split_name, "y_true": eval_set[REGRESSION_LABEL], "y_pred": y_pred,
             }))
@@ -120,6 +121,7 @@ def _run_binary(dataset: pd.DataFrame, manifest: dict, label: str) -> list[dict]
             experiment_id, run_dir = create_run(EXPERIMENTS_ROOT, "binary", config)
             write_metrics(run_dir, {split_name: metrics})
             write_feature_importance(run_dir, _feature_importance(estimator, features))
+            write_model(run_dir, estimator)
             write_predictions(run_dir, pd.DataFrame({
                 "operational_exposure_id": eval_set["operational_exposure_id"], "split": split_name, "y_true": eval_set[label], "y_prob": y_prob,
             }))
@@ -156,6 +158,7 @@ def _run_survival(dataset: pd.DataFrame, manifest: dict) -> list[dict]:
             experiment_id, run_dir = create_run(EXPERIMENTS_ROOT, "survival", config)
             write_metrics(run_dir, {split_name: metrics})
             write_feature_importance(run_dir, _feature_importance(estimator, features) if estimator is not None else {"kind": "unavailable"})
+            write_model(run_dir, estimator)
             write_predictions(run_dir, pd.DataFrame({
                 "operational_exposure_id": eval_set["operational_exposure_id"], "split": split_name, "time_to_event": time_eval, "censored": censor_eval, "risk_score": risk,
             }))

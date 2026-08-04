@@ -1,0 +1,54 @@
+stratum,feature,value,n_test,mae_v1_0,mae_v1_1,mae_change_pct,rmse_v1_0,rmse_v1_1,worst100_share_v1_0,worst100_share_v1_1
+home shed,home_shed,GMOE ,623,20.487,10.766,-47.4,26.188,14.004,0.08,0.023
+home shed,home_shed,GZBE ,1379,16.627,10.938,-34.2,21.389,13.954,0.02,0.068
+home shed,home_shed,KYNE ,835,20.5,11.722,-42.8,26.426,15.381,0.16,0.045
+home shed,home_shed,LDHE ,656,15.232,11.682,-23.3,20.052,14.912,0.0,0.023
+home shed,home_shed,BLEE,604,14.287,11.387,-20.3,18.563,14.232,0.0,0.045
+home shed,home_shed,BRCE,567,16.277,11.937,-26.7,21.437,15.137,0.02,0.045
+home shed,home_shed,AQE  ,1697,17.401,11.204,-35.6,22.278,14.264,0.06,0.045
+home shed,home_shed,PADX,457,25.639,11.564,-54.9,31.244,14.905,0.36,0.0
+home shed,home_shed,LGDE,983,12.093,10.98,-9.2,16.417,13.997,0.0,0.0
+home shed,home_shed,BZAE,1310,15.365,11.517,-25.0,20.026,14.845,0.0,0.114
+home shed,home_shed,TATE,748,14.96,11.551,-22.8,19.592,14.612,0.02,0.023
+home shed,home_shed,SRCE,579,15.263,10.114,-33.7,20.07,13.165,0.02,0.023
+home shed,home_shed,WATE ,3019,16.399,11.581,-29.4,27.33,18.981,0.04,0.205
+home shed,home_shed,ETE,263,28.883,14.875,-48.5,56.319,24.995,0.12,0.068
+home shed,home_shed,HWHE ,1162,13.883,11.163,-19.6,18.06,14.467,0.02,0.023
+home shed,home_shed,CNBE,271,17.247,9.365,-45.7,22.67,11.985,0.04,0.0
+home shed,home_shed,EDE,1008,16.586,11.505,-30.6,20.801,14.521,0.0,0.045
+home shed,home_shed,BIAE,415,11.896,10.688,-10.2,15.797,13.446,0.0,0.0
+home shed,home_shed,RPME,333,13.317,11.785,-11.5,18.928,15.281,0.02,0.045
+home shed,home_shed,SPJD ,278,19.534,11.35,-41.9,24.872,15.143,0.0,0.0
+home shed,home_shed,BGKD,584,19.233,11.968,-37.8,24.522,18.053,0.0,0.023
+home shed,home_shed,SDAD ,316,17.093,12.753,-25.4,22.2,16.036,0.0,0.0
+home shed,home_shed,BNDL,579,13.29,11.276,-15.1,17.19,14.554,0.0,0.068
+home shed,home_shed,KJMD,895,16.816,11.772,-30.0,21.065,14.842,0.0,0.023
+home shed,home_shed,IZNE,182,14.736,10.886,-26.1,19.051,13.676,0.0,0.0
+home shed,home_shed,TKDE,74,12.412,12.301,-0.9,17.88,13.283,0.0,0.0
+home shed,home_shed,SGUD,426,18.657,11.565,-38.0,24.057,14.655,0.02,0.023
+home shed,home_shed,NGCD,71,13.103,14.795,12.9,16.881,17.098,0.0,0.0
+wheel profile,wheel_profile_2class,-1.0,187,20.37,17.049,-16.3,25.243,20.222,0.0,0.03
+wheel profile,wheel_profile_2class,0.0,4864,16.753,11.737,-29.9,21.962,15.505,0.14,0.24
+wheel profile,wheel_profile_2class,1.0,23015,16.462,11.626,-29.4,23.319,15.702,0.86,0.73
+interval length (days),interval_days_bucket,interval Q5,5613,16.506,11.906,-27.9,22.167,15.964,0.36,0.23
+interval length (days),interval_days_bucket,interval Q4,5613,16.423,11.815,-28.1,21.565,15.21,0.23,0.23
+interval length (days),interval_days_bucket,interval Q3,5613,16.681,11.615,-30.4,25.11,17.303,0.06,0.23
+interval length (days),interval_days_bucket,interval Q1,5614,17.15,11.938,-30.4,25.096,15.221,0.23,0.21
+interval length (days),interval_days_bucket,interval Q2,5613,15.934,11.132,-30.1,21.263,14.682,0.12,0.1
+turning event this interval,turning_indicator_raw,0,27759,16.518,11.669,-29.4,23.101,15.697,1.0,0.99
+turning event this interval,turning_indicator_raw,1,307,18.414,12.819,-30.4,23.315,16.145,0.0,0.01
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q1,5614,15.312,10.777,-29.6,22.467,13.826,0.1,0.23
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q4,5613,18.976,12.881,-32.1,24.702,17.052,0.29,0.25
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q3,5613,16.645,11.769,-29.3,26.209,17.935,0.43,0.33
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q5,5613,17.583,12.377,-29.6,22.601,15.737,0.11,0.12
+RTIS reporting coverage %,rtis_coverage_bucket,coverage Q2,5613,14.178,10.601,-25.2,18.871,13.476,0.07,0.07
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q2,5613,15.499,11.876,-23.4,20.979,15.657,0.21,0.22
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q1,5614,17.874,12.441,-30.4,29.012,18.014,0.34,0.23
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q3,5613,17.289,11.866,-31.4,22.384,15.262,0.11,0.23
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q5,5613,15.244,10.708,-29.8,20.086,14.576,0.09,0.14
+"interval wear, side 1 (mm)",wear_side1_bucket,wear1 Q4,5613,16.789,11.515,-31.4,21.965,14.757,0.25,0.18
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q2,5613,15.322,11.812,-22.9,20.685,15.268,0.19,0.23
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q1,5614,17.882,12.625,-29.4,29.074,19.124,0.34,0.26
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q3,5613,17.317,11.811,-31.8,22.415,15.2,0.12,0.21
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q5,5613,15.393,10.657,-30.8,20.278,13.638,0.1,0.12
+"interval wear, side 2 (mm)",wear_side2_bucket,wear2 Q4,5613,16.779,11.501,-31.5,21.953,14.728,0.25,0.18

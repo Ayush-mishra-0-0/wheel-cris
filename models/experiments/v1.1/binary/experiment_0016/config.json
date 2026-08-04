@@ -1,0 +1,9 @@
+{
+  "phase": "v1.1",
+  "task": "binary",
+  "label": "next_interval_large_loss_flag",
+  "model": "random_forest",
+  "feature_set": "v1.0",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "random_state": 42
+}

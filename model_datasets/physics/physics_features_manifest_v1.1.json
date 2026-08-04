@@ -1,0 +1,136 @@
+{
+  "physics_version": "v1.1",
+  "generated_at_utc": "2026-08-04T05:42:26.766853+00:00",
+  "input_sha256": {
+    "wheel_measurements": "9c9b1e0c958ac821c0dadbfde9a391cc5092c1dd8e86b4721ff1960f9393ce00"
+  },
+  "fingerprint": "8b68522c1fad0ad0",
+  "rows": 1141282,
+  "wheelsets": 109694,
+  "columns": [
+    "wsmId",
+    "wheelset_equipment_id",
+    "measurement_timestamp",
+    "phys_initial_dia_mm_s1",
+    "phys_remaining_material_mm_s1",
+    "phys_wear_fraction_s1",
+    "phys_material_consumed_pct_s1",
+    "phys_cumulative_wear_mm_s1",
+    "phys_interval_wear_rate_s1",
+    "phys_wear_acceleration_s1",
+    "phys_ema_wear_rate_s1",
+    "phys_remaining_budget_days_s1",
+    "phys_initial_dia_mm_s2",
+    "phys_remaining_material_mm_s2",
+    "phys_wear_fraction_s2",
+    "phys_material_consumed_pct_s2",
+    "phys_cumulative_wear_mm_s2",
+    "phys_interval_wear_rate_s2",
+    "phys_wear_acceleration_s2",
+    "phys_ema_wear_rate_s2",
+    "phys_remaining_budget_days_s2",
+    "phys_turning_events_cumulative",
+    "phys_wheelset_age_days",
+    "geom_wsmDia1",
+    "geom_wsmDia2",
+    "geom_wsmRoot1",
+    "geom_wsmRoot2",
+    "geom_wsmFlange1",
+    "geom_wsmFlange2",
+    "geom_wsmFlangeThickness1",
+    "geom_wsmFlangeThickness2",
+    "geom_wsmWear",
+    "geom_wsmWear2",
+    "geom_wsmWearRate",
+    "geom_wsmWearRate2",
+    "geom_wsmTireThikness1",
+    "geom_wsmTireThikness2",
+    "geom_wsmThread1",
+    "geom_wsmThread2",
+    "geom_wsmKvalue1",
+    "geom_wsmSDistance1"
+  ],
+  "geometry_columns": {
+    "wsmDia1": [
+      1016.0,
+      1096.0
+    ],
+    "wsmDia2": [
+      1016.0,
+      1096.0
+    ],
+    "wsmRoot1": [
+      0.0,
+      50.0
+    ],
+    "wsmRoot2": [
+      0.0,
+      50.0
+    ],
+    "wsmFlange1": [
+      0.0,
+      40.0
+    ],
+    "wsmFlange2": [
+      0.0,
+      40.0
+    ],
+    "wsmFlangeThickness1": [
+      10.0,
+      45.0
+    ],
+    "wsmFlangeThickness2": [
+      10.0,
+      45.0
+    ],
+    "wsmWear": [
+      -60.0,
+      60.0
+    ],
+    "wsmWear2": [
+      -60.0,
+      60.0
+    ],
+    "wsmWearRate": [
+      -20.0,
+      20.0
+    ],
+    "wsmWearRate2": [
+      -20.0,
+      20.0
+    ],
+    "wsmTireThikness1": [
+      20.0,
+      80.0
+    ],
+    "wsmTireThikness2": [
+      20.0,
+      80.0
+    ],
+    "wsmThread1": [
+      0.0,
+      10.0
+    ],
+    "wsmThread2": [
+      0.0,
+      10.0
+    ],
+    "wsmKvalue1": [
+      0.0,
+      400.0
+    ],
+    "wsmSDistance1": [
+      0.0,
+      200.0
+    ]
+  },
+  "constants": {
+    "condemning_dia_mm": 1016.0,
+    "dia_plausible": [
+      1016.0,
+      1096.0
+    ],
+    "ema_halflife": 3
+  },
+  "note": "Engineering assumptions (condemning dia, plausible window) are NOT approved; see docs/degradation_semantics.md."
+}

@@ -43,8 +43,8 @@ if str(PROJECT_ROOT) not in sys.path:
 DATASET_PATH = PROJECT_ROOT / "model_datasets" / "v1.0" / "model_dataset_v1.0.parquet"
 MANIFEST_PATH = PROJECT_ROOT / "model_datasets" / "v1.0" / "model_dataset_manifest_v1.0.json"
 STORE_PATH = PROJECT_ROOT / "feature_store" / "feature_store_v1.parquet"
-COMPARISON_PATH = PROJECT_ROOT / "models" / "experiments" / "comparison.csv"
-ERROR_DIR = PROJECT_ROOT / "models" / "experiments" / "error_analysis"
+COMPARISON_PATH = PROJECT_ROOT / "models" / "experiments" / "v1.0" / "comparison.csv"
+ERROR_DIR = PROJECT_ROOT / "models" / "experiments" / "v1.0" / "error_analysis"
 
 print("Setup completed successfully.")
 """))

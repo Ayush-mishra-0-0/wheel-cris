@@ -1,0 +1,35 @@
+{
+  "regression": {
+    "rmse": 37.2712,
+    "mae": 30.7391,
+    "mape": NaN,
+    "r2": 0.2915,
+    "spearman": 0.29142348117220557,
+    "n": 1793
+  },
+  "next_interval_turning_flag": {
+    "pr_auc": NaN,
+    "roc_auc": NaN,
+    "f1_at_best": NaN,
+    "precision_at_k": NaN,
+    "brier": NaN,
+    "ece": NaN,
+    "n": 1793,
+    "positive_rate": 0.0
+  },
+  "next_interval_large_loss_flag": {
+    "pr_auc": 0.7412,
+    "roc_auc": 0.6803,
+    "f1_at_best": 0.6774,
+    "best_threshold": 0.7324,
+    "precision_at_k": 0.6068,
+    "brier": 0.2264,
+    "ece": 0.0999,
+    "n": 1793,
+    "positive_rate": 0.6068
+  },
+  "survival": {
+    "c_index": null,
+    "n": 1793
+  }
+}

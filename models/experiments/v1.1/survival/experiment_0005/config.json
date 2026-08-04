@@ -1,0 +1,10 @@
+{
+  "phase": "v1.1",
+  "task": "survival",
+  "label": "time_to_next_turning_days",
+  "model": "hist_gradient_boosting_observed_only",
+  "feature_set": "v1.0",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "risk_definition": "-predicted_time",
+  "note": "GBM/RF trained on observed (uncensored) rows only"
+}

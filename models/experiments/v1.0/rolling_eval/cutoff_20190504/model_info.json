@@ -1,0 +1,9 @@
+{
+  "model_format": "joblib",
+  "artifacts": [
+    "model_regression.joblib",
+    "model_next_interval_turning_flag.joblib",
+    "model_next_interval_large_loss_flag.joblib",
+    "model_survival.joblib"
+  ]
+}

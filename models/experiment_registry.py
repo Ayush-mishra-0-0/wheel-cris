@@ -16,6 +16,7 @@ import re
 from datetime import datetime, timezone
 from pathlib import Path
 
+import joblib
 import pandas as pd
 
 
@@ -53,3 +54,25 @@ def write_feature_importance(run_dir: Path, importance: dict) -> None:
 def write_manifest(run_dir: Path, manifest: dict) -> None:
     manifest.setdefault("generated_at_utc", datetime.now(timezone.utc).isoformat())
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2, default=str) + "\n", encoding="utf-8")
+
+
+def write_model(run_dir: Path, model, model_format: str = "joblib") -> None:
+    """Persist the fitted estimator so the experiment is reproducible/deployable.
+
+    Default is joblib (a binary — the "bin file" people expect after training).
+    A pickle fallback is provided in case an estimator is not joblib-serializable.
+    """
+    if model is None:
+        return
+    if model_format == "joblib":
+        joblib.dump(model, run_dir / "model.joblib")
+    else:
+        import pickle
+        with open(run_dir / "model.pkl", "wb") as fh:
+            pickle.dump(model, fh)
+    # Record which artifact exists for easy discovery.
+    info_path = run_dir / "model_info.json"
+    existing = json.loads(info_path.read_text(encoding="utf-8")) if info_path.exists() else {}
+    existing["model_format"] = model_format
+    existing["artifact"] = "model.joblib" if model_format == "joblib" else "model.pkl"
+    info_path.write_text(json.dumps(existing, indent=2) + "\n", encoding="utf-8")

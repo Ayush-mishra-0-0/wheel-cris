@@ -1,0 +1,13 @@
+task,label,variant,n_features,mae,rmse,spearman,pr_auc,roc_auc
+regression,next_interval_dia_delta_mm,v1_0,58,16.5387,23.1034,0.3529713762994204,,
+regression,next_interval_dia_delta_mm,plus_geom,76,11.6107,15.6483,0.6412832617066384,,
+regression,next_interval_dia_delta_mm,plus_phys,78,12.0013,16.4989,0.6312539592120084,,
+regression,next_interval_dia_delta_mm,plus_all,96,11.6811,15.7024,0.6362566341110003,,
+binary,next_interval_large_loss_flag,v1_0,58,,,,0.8446,0.7014
+binary,next_interval_large_loss_flag,plus_geom,76,,,,0.9278,0.8521
+binary,next_interval_large_loss_flag,plus_phys,78,,,,0.9218,0.8362
+binary,next_interval_large_loss_flag,plus_all,96,,,,0.9266,0.8513
+binary,next_interval_turning_flag,v1_0,58,,,,0.0127,0.5566
+binary,next_interval_turning_flag,plus_geom,76,,,,0.0137,0.5631
+binary,next_interval_turning_flag,plus_phys,78,,,,0.0162,0.5566
+binary,next_interval_turning_flag,plus_all,96,,,,0.0135,0.5317

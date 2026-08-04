@@ -1,0 +1,5 @@
+cutoff=2019-05-04
+n_train=3897
+n_eval=1974
+features=58
+protocol=rolling temporal production simulation

@@ -24,7 +24,7 @@ sys.path.insert(0, str(PROJECT_ROOT))
 DATA_DIR = PROJECT_ROOT / "model_datasets" / "v1.0"
 DATASET_PATH = DATA_DIR / "model_dataset_v1.0.parquet"
 STORE_PATH = PROJECT_ROOT / "feature_store" / "feature_store_v1.parquet"
-EXPERIMENTS_ROOT = PROJECT_ROOT / "models" / "experiments"
+EXPERIMENTS_ROOT = PROJECT_ROOT / "models" / "experiments" / "v1.0"
 OUT_DIR = EXPERIMENTS_ROOT / "error_analysis"
 
 SUBJECT_KEY = "operational_exposure_id"

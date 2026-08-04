@@ -1,0 +1,5 @@
+cutoff=2022-12-28
+n_train=32858
+n_eval=4607
+features=58
+protocol=rolling temporal production simulation

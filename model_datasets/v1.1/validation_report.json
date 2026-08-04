@@ -1,0 +1,172 @@
+{
+  "verdict": "PASS",
+  "generated_at_utc": "2026-08-04T06:20:54.376656+00:00",
+  "checks": {
+    "duplicate_keys": {
+      "passed": true,
+      "duplicate_rows": 0
+    },
+    "wheelset_split_overlap": {
+      "passed": true,
+      "wheelsets_spanning_splits": 0
+    },
+    "label_leakage": {
+      "passed": true,
+      "leaked_columns": []
+    },
+    "x_missingness": {
+      "passed": true,
+      "na_cells_in_x": 0
+    },
+    "constant_columns": {
+      "passed": true,
+      "constant_columns": []
+    },
+    "label_sanity": {
+      "passed": true,
+      "labels": {
+        "next_interval_dia_delta_mm": {
+          "n": 202237,
+          "null_pct": 0.0,
+          "mean": 0.5856,
+          "std": 33.0522,
+          "min": -1090.0,
+          "max": 1095.0
+        },
+        "next_interval_root_delta_mm": {
+          "n": 202237,
+          "null_pct": 0.0,
+          "mean": 0.1074,
+          "std": 5.1291,
+          "min": -2046.7,
+          "max": 45.0
+        },
+        "next_interval_turning_flag": {
+          "n": 202237,
+          "null_pct": 0.0,
+          "mean": 0.0113,
+          "std": 0.1057,
+          "min": 0.0,
+          "max": 1.0
+        },
+        "next_interval_large_loss_flag": {
+          "n": 202237,
+          "null_pct": 0.0,
+          "mean": 0.616,
+          "std": 0.4864,
+          "min": 0.0,
+          "max": 1.0
+        },
+        "time_to_next_turning_days": {
+          "n": 17494,
+          "null_pct": 91.35,
+          "mean": 192.0452,
+          "std": 227.8844,
+          "min": 1.0,
+          "max": 3099.0
+        },
+        "censored_flag": {
+          "n": 202237,
+          "null_pct": 0.0,
+          "mean": 0.9135,
+          "std": 0.2811,
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "turning_positive_rate": 0.0113,
+      "censored_rate": 0.9135
+    },
+    "temporal_coverage": {
+      "passed": true,
+      "note": "overlap expected for grouped temporal split",
+      "min": {
+        "test": "2019-06-25",
+        "train": "2015-01-18",
+        "val": "2015-06-01"
+      },
+      "max": {
+        "test": "2026-07-22",
+        "train": "2026-07-22",
+        "val": "2026-07-20"
+      },
+      "count": {
+        "test": "28066",
+        "train": "144428",
+        "val": "29743"
+      }
+    },
+    "cardinality": {
+      "passed": true,
+      "one_hot_columns": 39,
+      "max_levels_in_one_hot_col": 2
+    },
+    "correlations": {
+      "passed": true,
+      "top_feature_feature": [
+        [
+          "phys_material_consumed_pct_s2",
+          "phys_wear_fraction_s2",
+          1.0
+        ],
+        [
+          "geom_wsmDia2",
+          "phys_remaining_material_mm_s2",
+          1.0
+        ],
+        [
+          "phys_material_consumed_pct_s1",
+          "phys_wear_fraction_s1",
+          1.0
+        ],
+        [
+          "geom_wsmDia1",
+          "phys_remaining_material_mm_s1",
+          1.0
+        ],
+        [
+          "axle_position_1_6",
+          "wheel_position_1_12",
+          1.0
+        ],
+        [
+          "geom_wsmTireThikness1",
+          "geom_wsmTireThikness2",
+          0.999
+        ],
+        [
+          "geom_wsmDia1",
+          "phys_remaining_material_mm_s2",
+          0.998
+        ],
+        [
+          "geom_wsmDia1",
+          "geom_wsmDia2",
+          0.998
+        ],
+        [
+          "geom_wsmDia2",
+          "phys_remaining_material_mm_s1",
+          0.998
+        ],
+        [
+          "phys_remaining_material_mm_s1",
+          "phys_remaining_material_mm_s2",
+          0.998
+        ]
+      ],
+      "feature_label_abs_top5": {
+        "phys_remaining_material_mm_s2": 0.609,
+        "geom_wsmDia2": 0.609,
+        "phys_remaining_material_mm_s1": 0.609,
+        "geom_wsmDia1": 0.609,
+        "geom_wsmTireThikness2": 0.609
+      }
+    },
+    "label_horizon": {
+      "passed": true,
+      "rows_violating_horizon": 0
+    }
+  },
+  "dataset_version": "v1.1"
+}
