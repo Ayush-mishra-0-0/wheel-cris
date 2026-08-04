@@ -212,15 +212,15 @@ imp_turn = pd.Series(p_turn.importances_mean, index=x_cols).sort_values(ascendin
 
 fig, axes = plt.subplots(1, 3, figsize=(18, 6))
 
-sns.barplot(x=imp_reg.head(10).values, y=imp_reg.head(10).index, ax=axes[0], palette="Viridis")
+sns.barplot(x=imp_reg.head(10).values, y=imp_reg.head(10).index, ax=axes[0], palette="viridis")
 axes[0].set_title("Top 10 Features: Regression\\n(Dia Loss Delta mm)")
 axes[0].set_xlabel("Permutation Importance (R² drop)")
 
-sns.barplot(x=imp_loss.head(10).values, y=imp_loss.head(10).index, ax=axes[1], palette="Plasma")
+sns.barplot(x=imp_loss.head(10).values, y=imp_loss.head(10).index, ax=axes[1], palette="plasma")
 axes[1].set_title("Top 10 Features: Binary Large Loss\\n(>= 2mm Dia Loss)")
 axes[1].set_xlabel("Permutation Importance (PR-AUC drop)")
 
-sns.barplot(x=imp_turn.head(10).values, y=imp_turn.head(10).index, ax=axes[2], palette="Magma")
+sns.barplot(x=imp_turn.head(10).values, y=imp_turn.head(10).index, ax=axes[2], palette="magma")
 axes[2].set_title("Top 10 Features: Binary Turning Flag\\n(Wheel Turned Event)")
 axes[2].set_xlabel("Permutation Importance (PR-AUC drop)")
 
