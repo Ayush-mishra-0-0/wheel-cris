@@ -26,15 +26,26 @@ v1.1 dataset with the identical grouped-temporal split:
 
 ## Figure-by-figure guide
 
-### 01_predicted_vs_actual_scatter.png — **technical review**
-Predicted vs actual next-interval diameter change on the delta scale, side-by-side, with the
-y=x line and R²/RMSE/MAE annotated. The v1.1 cloud is visibly tighter around y=x. The
-scatter uses the **delta** (change) axis because the raw diameter is dominated by wheelset
-level — on a raw-diameter axis both models hug y=x and hide the improvement.
+### 00_ecdf_headline.png — **executive (hero figure)**
+The one-slide plot. ECDF of absolute error: at any error budget, v1.1 covers more of the
+fleet. The headline is annotated directly on the chart — **84% of v1.1 predictions fall
+within ±20 mm vs 69% for v1.0** (and ±10 mm: 52.5% vs 41.6%). Use this first, everywhere.
+
+### 01_predicted_vs_actual_scatter.png — **technical review (main)**
+Predicted vs actual next-interval diameter change, side-by-side, y=x line, R²/RMSE/MAE
+annotated. **Sentinels quarantined** (|label| > 100 mm) and axes fixed at ±100 mm so the
+cloud tightening is visible. The v1.1 cloud is visibly tighter around y=x.
+
+### 01b_predicted_vs_actual_scatter_all.png — **appendix**
+Same scatter with **all** points, axes expanded. Title states the sentinel count retained
+in Label Spec v1.0 (1 row in this test split) so the appendix is transparent without
+letting one bad label hide the real behavior. The scatter uses the **delta** (change) axis
+because raw diameter is dominated by wheelset level — on raw diameter both models hug y=x.
 
 ### 02_residual_distribution.png — **technical review**
-Histogram + KDE of residuals. v1.1's distribution is narrower (σ lower) and more peaked at 0;
-both are centered near zero (no bias shift), the win is variance reduction, not re-centering.
+Histogram + KDE of residuals (sentinels excluded). v1.1's distribution is narrower (σ lower)
+and more peaked at 0; both are centered near zero — the win is variance reduction, not
+re-centering.
 
 ### 03_residual_vs_actual_diameter.png — **technical review**
 Binned mean residual vs the actual next diameter. v1.0 shows systematic under/over-prediction
@@ -70,10 +81,9 @@ Horizontal bar of MAE change by home shed (28 sheds, n≥50). Every shed improve
 worst v1.0 shed (PADX, −55%) leaves the worst-100 entirely. One slide line: "every depot
 got better, the weakest improved the most."
 
-### 08_cumulative_error_ecdf.png — **executive**
-ECDF of |error|. At any error budget, v1.1 covers a larger fraction of the fleet — e.g.
-±20 mm covers 84% of intervals vs 69% for v1.0. Good for "what does this mean for
-maintenance planning" conversations.
+### 08_cumulative_error_ecdf.png — **executive (technical companion to 00)**
+ECDF of |error| with ±5/±10/±20 mm threshold markers. More thresholds than the hero
+figure, for review contexts; 00 is the cleaned-up presentation version.
 
 ### 09_permutation_importance.png — **technical review**
 Permutation importance (test, HGB v1.1), color-coded: physics (green), measured geometry
@@ -84,6 +94,14 @@ the answer to "why did it improve" in one chart.
 Ablation (v1.0 / +geom / +phys / +all) for regression RMSE and large-loss PR-AUC.
 `+geom` alone delivers nearly the full gain (RMSE 23.10 → 15.65; PR-AUC 0.845 → 0.928);
 `+phys` alone is smaller; `+all` ≈ `+geom` (overlap ~1.0). Justifies the v1.1 feature set.
+
+### 11_current_diameter_vs_predicted_wear.png — **executive + technical**
+The engineering story in one figure. x = current measured diameter `geom_wsmDia1`,
+y = predicted next-interval wear, points colored by |prediction error| (shared scale).
+v1.0's predictions are a flat, error-dense band — it never saw the wheel's current
+geometry. v1.1's predictions *track the wear state* (lower error, physically consistent
+gradient). Caption: "Once the model knows the current diameter, prediction becomes
+physically consistent."
 
 ---
 

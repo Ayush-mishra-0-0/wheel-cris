@@ -15,7 +15,9 @@ notebooks/graphs.py):
 Output: models/experiments/v1.1/plots/*.png (300 DPI) + plots_summary.md
 
 Figures:
-  01 predicted vs actual scatter (side-by-side, delta scale, R2/RMSE/MAE annotated)
+  00 ECDF headline (management hero figure)
+  01 predicted vs actual scatter (main, sentinels quarantined, ±100 mm axis)
+  01b predicted vs actual scatter (appendix, all points, axes expanded)
   02 residual distribution (KDE + histogram overlay)
   03 residual vs actual next diameter (binned bias)
   04 residual vs current measured diameter geom_wsmDia1 (binned bias + MAE)
@@ -25,6 +27,7 @@ Figures:
   08 cumulative error ECDF (fraction within +/-5/10/20 mm)
   09 permutation importance (color-coded by feature family)
   10 ablation (RMSE + PR-AUC)
+  11 current diameter vs predicted wear, colored by prediction error
 """
 from __future__ import annotations
 
@@ -50,6 +53,10 @@ OUT_DIR = EXPERIMENTS_V1_1 / "plots"
 
 LABEL = "next_interval_dia_delta_mm"
 RANDOM_STATE = 42
+
+# Sentinel labels retained in Label Spec v1.0 (impossible wheel-wear magnitudes).
+# |y_true| above this is a documented outlier, not a physically meaningful interval.
+SENTINEL_MAX_ABS = 100.0
 
 # Consistent palette (matches notebooks/graphs.py VERSION_COLORS)
 C_V1_0 = "#8C8C8C"
@@ -115,6 +122,7 @@ def load_test_comparison() -> pd.DataFrame:
     df["residual11"] = df["y_true"] - df["y_pred11"]
     df["abs_residual10"] = df["residual10"].abs()
     df["abs_residual11"] = df["residual11"].abs()
+    df["is_sentinel"] = df["y_true"].abs() > SENTINEL_MAX_ABS
     return df.reset_index(drop=True)
 
 
@@ -141,27 +149,100 @@ def _save(fig, name: str) -> Path:
     return out
 
 
+def _scatter_panel(ax, df, col_pred, color, limits=None, sentinels_quarantined=False):
+    x = df[col_pred]
+    y = df["y_true"]
+    ax.scatter(x, y, s=12, alpha=0.35, color=color, edgecolors="none")
+    lo = min(x.min(), y.min())
+    hi = max(x.max(), y.max())
+    ax.plot([lo, hi], [lo, hi], color="black", linestyle="--", linewidth=1.2, zorder=5)
+    if limits is not None:
+        ax.set_xlim(limits)
+        ax.set_ylim(limits)
+    return lo, hi
+
+
+def fig00_ecdf_headline(df: pd.DataFrame) -> Path:
+    """Management hero figure: ECDF of |error| with the ±20 mm story annotated."""
+    thresholds = np.array([0, 1, 2, 3, 5, 10, 15, 20, 30, 40, 60, 100])
+    fig, ax = plt.subplots(figsize=(10, 6))
+    for col, color, tag in [("abs_residual10", C_V1_0, "v1.0"), ("abs_residual11", C_V1_1, "v1.1")]:
+        r = df[col].dropna()
+        fracs = np.array([(r <= t).mean() for t in thresholds])
+        ax.plot(thresholds, fracs, marker="o", markersize=5, color=color, linewidth=2.2,
+                label=tag)
+
+    for t in [5, 10, 20]:
+        f10 = (df["abs_residual10"] <= t).mean() * 100
+        f11 = (df["abs_residual11"] <= t).mean() * 100
+        ax.axvline(t, color="0.55", linestyle=":", linewidth=1)
+        ax.plot([t], [f11 / 100], marker="o", markersize=7, color=C_V1_1, zorder=6)
+        ax.annotate(f"±{t} mm\n{f10:.0f}% → {f11:.0f}%", xy=(t, f11 / 100),
+                    xytext=(t + 1, f11 / 100 - 0.13), fontsize=10, color="0.15",
+                    arrowprops=dict(arrowstyle="-", color="0.4", lw=0.8))
+
+    # Highlight the ±20 mm band that carries the headline.
+    f20_10 = (df["abs_residual10"] <= 20).mean() * 100
+    f20_11 = (df["abs_residual11"] <= 20).mean() * 100
+    ax.axvspan(0, 20, color=C_V1_1, alpha=0.06, zorder=0)
+    ax.text(0.02, 0.94, f"**84%** of v1.1 predictions within ±20 mm\nvs **69%** for v1.0",
+            transform=ax.transAxes, fontsize=13, va="top", color="#1B5E20",
+            bbox=dict(boxstyle="round,pad=0.5", fc="#E8F5E9", ec=C_V1_1, lw=1.2))
+
+    ax.set_xlim(0, 100)
+    ax.set_ylim(0, 1.0)
+    ax.set_xlabel("Absolute prediction error  |actual − predicted|  (mm)")
+    ax.set_ylabel("Fraction of test intervals within threshold")
+    ax.set_title("Fraction of predictions within an error budget — v1.1 covers the fleet earlier", fontsize=13)
+    ax.legend(title="model", loc="lower right", fontsize=11)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    return _save(fig, "00_ecdf_headline.png")
+
+
 def fig01_scatter(df: pd.DataFrame) -> Path:
-    """Predicted vs actual interval wear, side-by-side, y=x + R2/RMSE/MAE."""
+    """Predicted vs actual interval wear, main (sentinels quarantined) + appendix (all)."""
+    main = df[~df["is_sentinel"]].copy()
+    n_sent = int(df["is_sentinel"].sum())
+
+    # ---- Figure A: main figure, ±100 mm axis, no sentinels ----
     fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), sharex=True, sharey=True)
     for ax, (tag, col_pred, color) in zip(
         axes, [("v1.0", "y_pred10", C_V1_0), ("v1.1", "y_pred11", C_V1_1)]
     ):
-        x = df[col_pred]
-        y = df["y_true"]
+        x = main[col_pred]
+        y = main["y_true"]
         ax.scatter(x, y, s=12, alpha=0.35, color=color, edgecolors="none")
-        lo = min(x.min(), y.min())
-        hi = max(x.max(), y.max())
-        ax.plot([lo, hi], [lo, hi], color="black", linestyle="--", linewidth=1.2, zorder=5)
+        ax.plot([-100, 100], [-100, 100], color="black", linestyle="--", linewidth=1.2, zorder=5)
         m = metrics(y, x)
         ax.set_title(f"{tag}   R²={m['r2']:.3f}  RMSE={m['rmse']:.2f} mm  MAE={m['mae']:.2f} mm", fontsize=11)
         ax.set_xlabel("Predicted interval wear (mm)")
         ax.set_ylabel("Actual interval wear (mm)")
+        ax.set_xlim(-100, 100)
+        ax.set_ylim(-100, 100)
         ax.text(0.03, 0.97, f"n={len(x):,}", transform=ax.transAxes, va="top", fontsize=9,
                 bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.7"))
-    fig.suptitle("Predicted vs actual next-interval diameter change — same test split (28,066 intervals)", fontsize=13)
+    fig.suptitle("Predicted vs actual next-interval diameter change — same test split (sentinels quarantined)", fontsize=13)
     fig.tight_layout(rect=(0, 0, 1, 0.95))
-    return _save(fig, "01_predicted_vs_actual_scatter.png")
+    p_main = _save(fig, "01_predicted_vs_actual_scatter.png")
+
+    # ---- Figure B: appendix, all points, axes expanded ----
+    fig, axes = plt.subplots(1, 2, figsize=(12, 5.5), sharex=True, sharey=True)
+    for ax, (tag, col_pred, color) in zip(
+        axes, [("v1.0", "y_pred10", C_V1_0), ("v1.1", "y_pred11", C_V1_1)]
+    ):
+        _scatter_panel(ax, df, col_pred, color)
+        ax.set_title(tag, fontsize=11)
+        ax.set_xlabel("Predicted interval wear (mm)")
+        ax.set_ylabel("Actual interval wear (mm)")
+        ax.text(0.03, 0.97, f"n={len(df):,}", transform=ax.transAxes, va="top", fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.7"))
+    fig.suptitle(
+        f"All points included — axes expanded by {n_sent} sentinel label(s) retained in Label Spec v1.0",
+        fontsize=13)
+    fig.tight_layout(rect=(0, 0, 1, 0.95))
+    p_all = _save(fig, "01b_predicted_vs_actual_scatter_all.png")
+    return p_main
 
 
 def fig02_residual_distribution(df: pd.DataFrame) -> Path:
@@ -171,7 +252,7 @@ def fig02_residual_distribution(df: pd.DataFrame) -> Path:
     for ax, (tag, col, color) in zip(
         axes, [("v1.0", "residual10", C_V1_0), ("v1.1", "residual11", C_V1_1)]
     ):
-        r = df[col].dropna()
+        r = df.loc[~df["is_sentinel"], col].dropna()
         ax.hist(r, bins=80, density=True, alpha=0.55, color=color, edgecolor="white", linewidth=0.3)
         try:
             kde = stats.gaussian_kde(r)
@@ -463,6 +544,38 @@ def fig10_ablation() -> Path:
     return _save(fig, "10_ablation.png")
 
 
+def fig11_current_diameter_vs_wear(df: pd.DataFrame) -> Path:
+    """Current measured diameter vs predicted wear, points colored by |error|.
+
+    The story: v1.0 never saw the wheel's current geometry, so its predicted wear is
+    flat and uncorrelated with wear state. v1.1 knows geom_wsmDia1, so predicted wear
+    tracks the physical relationship — and errors shrink (lighter colors).
+    """
+    q = df[~df["is_sentinel"]].dropna(subset=["geom_wsmDia1"]).copy()
+    # Shared error scale so both panels are directly comparable (cap at p99).
+    err_max = float(np.percentile(np.concatenate([q["abs_residual10"], q["abs_residual11"]]), 99))
+    norm = plt.Normalize(vmin=0, vmax=err_max)
+    cmap = plt.get_cmap("viridis")
+
+    fig, axes = plt.subplots(1, 2, figsize=(13, 5.6), sharey=True)
+    for ax, (tag, col_pred, col_err) in zip(
+        axes, [("v1.0", "y_pred10", "abs_residual10"), ("v1.1", "y_pred11", "abs_residual11")]
+    ):
+        sc = ax.scatter(q["geom_wsmDia1"], q[col_pred], s=9, c=q[col_err], cmap=cmap,
+                        norm=norm, alpha=0.6, edgecolors="none")
+        m = metrics(q["y_true"], q[col_pred])
+        ax.set_title(f"{tag}   MAE={m['mae']:.2f} mm", fontsize=11)
+        ax.set_xlabel("Current measured diameter geom_wsmDia1 (mm)")
+        ax.set_ylabel("Predicted next-interval wear (mm)")
+        ax.text(0.03, 0.05, f"n={len(q):,}", transform=ax.transAxes, fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.25", fc="white", ec="0.7"))
+    fig.colorbar(sc, ax=axes, label="|prediction error| (mm)")
+    fig.suptitle(
+        "Once the model sees the current diameter, predicted wear becomes physically consistent",
+        fontsize=13)
+    return _save(fig, "11_current_diameter_vs_predicted_wear.png")
+
+
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
@@ -470,11 +583,17 @@ def main() -> None:
     df = load_test_comparison()
     m10 = metrics(df["y_true"], df["y_pred10"])
     m11 = metrics(df["y_true"], df["y_pred11"])
-    print(f"test rows: {len(df)}")
+    q = df[~df["is_sentinel"]]
+    mq10 = metrics(q["y_true"], q["y_pred10"])
+    mq11 = metrics(q["y_true"], q["y_pred11"])
+    print(f"test rows: {len(df)}  (sentinels quarantined: {int(df['is_sentinel'].sum())})")
     print(f"v1.0: RMSE={m10['rmse']:.3f}  MAE={m10['mae']:.3f}  R2={m10['r2']:.4f}  Spearman={m10['spearman']:.4f}")
     print(f"v1.1: RMSE={m11['rmse']:.3f}  MAE={m11['mae']:.3f}  R2={m11['r2']:.4f}  Spearman={m11['spearman']:.4f}")
+    print(f"v1.0 (no sentinels): RMSE={mq10['rmse']:.3f}  MAE={mq10['mae']:.3f}")
+    print(f"v1.1 (no sentinels): RMSE={mq11['rmse']:.3f}  MAE={mq11['mae']:.3f}")
 
     paths = [
+        fig00_ecdf_headline(df),
         fig01_scatter(df),
         fig02_residual_distribution(df),
         fig03_residual_vs_actual(df),
@@ -485,6 +604,7 @@ def main() -> None:
         fig08_cumulative_error(df),
         fig09_permutation_importance(),
         fig10_ablation(),
+        fig11_current_diameter_vs_wear(df),
     ]
     for p in paths:
         print(f"Saved: {p}")
