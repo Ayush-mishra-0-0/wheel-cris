@@ -1,0 +1,172 @@
+{
+  "verdict": "PASS",
+  "generated_at_utc": "2026-08-04T08:41:48.108981+00:00",
+  "checks": {
+    "duplicate_keys": {
+      "passed": true,
+      "duplicate_rows": 0
+    },
+    "wheelset_split_overlap": {
+      "passed": true,
+      "wheelsets_spanning_splits": 0
+    },
+    "label_leakage": {
+      "passed": true,
+      "leaked_columns": []
+    },
+    "x_missingness": {
+      "passed": true,
+      "na_cells_in_x": 0
+    },
+    "constant_columns": {
+      "passed": true,
+      "constant_columns": []
+    },
+    "label_sanity": {
+      "passed": true,
+      "labels": {
+        "next_interval_dia_delta_mm": {
+          "n": 202172,
+          "null_pct": 0.0,
+          "mean": 0.5091,
+          "std": 27.5813,
+          "min": -79.9,
+          "max": 80.3
+        },
+        "next_interval_root_delta_mm": {
+          "n": 202172,
+          "null_pct": 0.0,
+          "mean": 0.1076,
+          "std": 5.1297,
+          "min": -2046.7,
+          "max": 45.0
+        },
+        "next_interval_turning_flag": {
+          "n": 202172,
+          "null_pct": 0.0,
+          "mean": 0.0113,
+          "std": 0.1057,
+          "min": 0.0,
+          "max": 1.0
+        },
+        "next_interval_large_loss_flag": {
+          "n": 202172,
+          "null_pct": 0.0,
+          "mean": 0.616,
+          "std": 0.4863,
+          "min": 0.0,
+          "max": 1.0
+        },
+        "time_to_next_turning_days": {
+          "n": 17463,
+          "null_pct": 91.36,
+          "mean": 188.4007,
+          "std": 203.3856,
+          "min": 1.0,
+          "max": 2939.0
+        },
+        "censored_flag": {
+          "n": 202172,
+          "null_pct": 0.0,
+          "mean": 0.9136,
+          "std": 0.2809,
+          "min": 0.0,
+          "max": 1.0
+        }
+      },
+      "turning_positive_rate": 0.0113,
+      "censored_rate": 0.9136
+    },
+    "temporal_coverage": {
+      "passed": true,
+      "note": "overlap expected for grouped temporal split",
+      "min": {
+        "test": "2019-06-25",
+        "train": "2015-01-18",
+        "val": "2015-06-01"
+      },
+      "max": {
+        "test": "2026-07-22",
+        "train": "2026-07-22",
+        "val": "2026-07-20"
+      },
+      "count": {
+        "test": "28065",
+        "train": "144373",
+        "val": "29734"
+      }
+    },
+    "cardinality": {
+      "passed": true,
+      "one_hot_columns": 39,
+      "max_levels_in_one_hot_col": 2
+    },
+    "correlations": {
+      "passed": true,
+      "top_feature_feature": [
+        [
+          "geom_wsmDia1",
+          "phys_remaining_material_mm_s1",
+          1.0
+        ],
+        [
+          "geom_wsmDia2",
+          "phys_remaining_material_mm_s2",
+          1.0
+        ],
+        [
+          "phys_material_consumed_pct_s1",
+          "phys_wear_fraction_s1",
+          1.0
+        ],
+        [
+          "phys_material_consumed_pct_s2",
+          "phys_wear_fraction_s2",
+          1.0
+        ],
+        [
+          "axle_position_1_6",
+          "wheel_position_1_12",
+          1.0
+        ],
+        [
+          "geom_wsmTireThikness1",
+          "geom_wsmTireThikness2",
+          0.999
+        ],
+        [
+          "phys_remaining_material_mm_s1",
+          "phys_remaining_material_mm_s2",
+          0.998
+        ],
+        [
+          "geom_wsmDia2",
+          "phys_remaining_material_mm_s1",
+          0.998
+        ],
+        [
+          "geom_wsmDia1",
+          "phys_remaining_material_mm_s2",
+          0.998
+        ],
+        [
+          "geom_wsmDia1",
+          "geom_wsmDia2",
+          0.998
+        ]
+      ],
+      "feature_label_abs_top5": {
+        "phys_remaining_material_mm_s1": 0.694,
+        "geom_wsmDia1": 0.694,
+        "geom_wsmDia2": 0.693,
+        "phys_remaining_material_mm_s2": 0.693,
+        "geom_wsmTireThikness1": 0.693
+      }
+    },
+    "label_horizon": {
+      "passed": true,
+      "rows_violating_horizon": 0
+    }
+  },
+  "dataset_version": "v1.2"
+}

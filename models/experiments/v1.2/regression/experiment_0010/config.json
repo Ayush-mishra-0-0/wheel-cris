@@ -1,0 +1,10 @@
+{
+  "phase": "v1.2",
+  "task": "regression",
+  "label": "next_interval_dia_delta_mm",
+  "model": "random_forest",
+  "train_condition": "v1_1_train",
+  "split_contract": "grouped temporal (v1.2 eval rows), train rows differ by quarantine",
+  "eval_set": "v1.2-test",
+  "random_state": 42
+}

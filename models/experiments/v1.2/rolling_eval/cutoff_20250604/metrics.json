@@ -1,0 +1,21 @@
+{
+  "regression": {
+    "rmse": 23.4313,
+    "mae": 19.4812,
+    "mape": NaN,
+    "r2": 0.3104,
+    "spearman": 0.5440080365885893,
+    "n": 11041
+  },
+  "large_loss": {
+    "pr_auc": 0.8832,
+    "roc_auc": 0.7742,
+    "f1_at_best": 0.7304,
+    "best_threshold": 0.6448,
+    "precision_at_k": 0.95,
+    "brier": 0.1761,
+    "ece": 0.0748,
+    "n": 11041,
+    "positive_rate": 0.6979
+  }
+}

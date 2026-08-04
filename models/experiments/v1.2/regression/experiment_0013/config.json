@@ -1,0 +1,10 @@
+{
+  "phase": "v1.2",
+  "task": "regression",
+  "label": "next_interval_dia_delta_mm",
+  "model": "elastic_net",
+  "train_condition": "v1_2_train",
+  "split_contract": "grouped temporal (v1.2 eval rows), train rows differ by quarantine",
+  "eval_set": "v1.2-val",
+  "random_state": 42
+}

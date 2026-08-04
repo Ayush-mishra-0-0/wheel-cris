@@ -1,0 +1,8 @@
+{
+  "dataset_version": "v1.2",
+  "train_dataset_version": "v1.2",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.1",
+  "generated_at_utc": "2026-08-04T08:56:43.089646+00:00"
+}

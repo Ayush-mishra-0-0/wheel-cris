@@ -1,0 +1,6 @@
+cutoff=2025-06-04
+n_train=105535
+n_eval=11041
+features=96
+protocol=rolling temporal production simulation
+dataset=v1.2 (label spec 1.0.1)
