@@ -1,0 +1,13 @@
+{
+  "dataset_version": "v1.2",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.1",
+  "experimental_features": [
+    "interval_distance_km_experimental",
+    "rtis_distance_coverage_days",
+    "rtis_distance_coverage_pct"
+  ],
+  "provenance": "models/run_v3_label_decomposition.py",
+  "generated_at_utc": "2026-08-04T10:25:44.642937+00:00"
+}

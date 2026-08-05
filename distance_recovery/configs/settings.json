@@ -1,0 +1,12 @@
+{
+  "earth_radius_km": 6371.0,
+  "grid_cell_degrees": 0.5,
+  "max_match_radius_km": 25.0,
+  "station_code_normalize": "upper-strip",
+  "timetable_validation_min_pairs": 50,
+  "raw_dir": "data/raw",
+  "processed_dir": "data/processed",
+  "reports_dir": "reports",
+  "track_history_parquet": "data/fois_trackhistory_wap7.parquet",
+  "$comment": "track_history_parquet is the full FOIS view_locolocation_trackhistory extract (see sql/extract_fois_trackhistory.sql). The 15.5M-row WAP7 extract is not committed; the mapper runs in sample mode if the file is absent."
+}

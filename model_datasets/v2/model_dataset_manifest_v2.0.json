@@ -1,0 +1,625 @@
+{
+  "dataset_version": "v2.0",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.1",
+  "generated_at_utc": "2026-08-05T06:22:12.238452+00:00",
+  "input_sha256": {
+    "parent_dataset_v1.2": "87f3f22278b0901586ce19c7084411e1c7760fc351f74738e35106c91491efd2",
+    "exposure_features_v2": "74aaf1bf49c49a69cf9743980d6a2a8cb8e4da7c6f3abcb86cc70f2bb3649631"
+  },
+  "fingerprint": "c01d6e55e800e0b5",
+  "rows": 202172,
+  "split_rows": {
+    "train": 144373,
+    "val": 29734,
+    "test": 28065
+  },
+  "labels": {
+    "next_interval_dia_delta_mm": {
+      "family": "regression",
+      "validation_status": "CANDIDATE"
+    },
+    "next_interval_turning_flag": {
+      "family": "binary",
+      "validation_status": "CANDIDATE"
+    },
+    "next_interval_large_loss_flag": {
+      "family": "binary",
+      "validation_status": "CANDIDATE"
+    },
+    "time_to_next_turning_days": {
+      "family": "survival",
+      "validation_status": "CANDIDATE"
+    }
+  },
+  "eligible_columns": [
+    "interval_days",
+    "diameter_delta_raw_mm_side_1",
+    "diameter_delta_raw_mm_side_2",
+    "rtis_source_event_count",
+    "rtis_source_event_type_count",
+    "maintenance_jobcard_creation_count",
+    "rtis_reporting_coverage_pct",
+    "rtis_report_count",
+    "rtis_reporting_days",
+    "rtis_duplicate_report_count",
+    "wheel_position_1_12",
+    "axle_position_1_6",
+    "inspection_count_through_interval_end",
+    "wheel_profile_2class",
+    "wheel_schedule_id",
+    "home_shed",
+    "defect_zone",
+    "defect_division",
+    "wheel_age_days_proxy",
+    "turning_indicator_raw",
+    "days_since_turning"
+  ],
+  "x_columns": [
+    "interval_days",
+    "diameter_delta_raw_mm_side_1",
+    "diameter_delta_raw_mm_side_2",
+    "rtis_source_event_count",
+    "rtis_source_event_type_count",
+    "maintenance_jobcard_creation_count",
+    "rtis_reporting_coverage_pct",
+    "rtis_report_count",
+    "rtis_reporting_days",
+    "rtis_duplicate_report_count",
+    "wheel_position_1_12",
+    "axle_position_1_6",
+    "inspection_count_through_interval_end",
+    "wheel_profile_2class",
+    "wheel_schedule_id__1.0",
+    "wheel_schedule_id__10.0",
+    "wheel_schedule_id__12.0",
+    "wheel_schedule_id__13.0",
+    "wheel_schedule_id__14.0",
+    "wheel_schedule_id__18.0",
+    "wheel_schedule_id__19.0",
+    "wheel_schedule_id__20.0",
+    "wheel_schedule_id__3.0",
+    "wheel_schedule_id__32.0",
+    "wheel_schedule_id__34.0",
+    "wheel_schedule_id__38.0",
+    "wheel_schedule_id__39.0",
+    "wheel_schedule_id__4.0",
+    "wheel_schedule_id__41.0",
+    "wheel_schedule_id__5.0",
+    "wheel_schedule_id__6.0",
+    "wheel_schedule_id__7.0",
+    "wheel_schedule_id__77.0",
+    "wheel_schedule_id__8.0",
+    "home_shed__freq",
+    "defect_zone__-1.0",
+    "defect_zone__1.0",
+    "defect_zone__10.0",
+    "defect_zone__11.0",
+    "defect_zone__12.0",
+    "defect_zone__13.0",
+    "defect_zone__14.0",
+    "defect_zone__15.0",
+    "defect_zone__16.0",
+    "defect_zone__18.0",
+    "defect_zone__2.0",
+    "defect_zone__20.0",
+    "defect_zone__3.0",
+    "defect_zone__4.0",
+    "defect_zone__5.0",
+    "defect_zone__6.0",
+    "defect_zone__7.0",
+    "defect_zone__8.0",
+    "defect_zone__9.0",
+    "defect_division__freq",
+    "wheel_age_days_proxy",
+    "turning_indicator_raw",
+    "days_since_turning",
+    "phys_initial_dia_mm_s1",
+    "phys_remaining_material_mm_s1",
+    "phys_wear_fraction_s1",
+    "phys_material_consumed_pct_s1",
+    "phys_cumulative_wear_mm_s1",
+    "phys_interval_wear_rate_s1",
+    "phys_wear_acceleration_s1",
+    "phys_ema_wear_rate_s1",
+    "phys_remaining_budget_days_s1",
+    "phys_initial_dia_mm_s2",
+    "phys_remaining_material_mm_s2",
+    "phys_wear_fraction_s2",
+    "phys_material_consumed_pct_s2",
+    "phys_cumulative_wear_mm_s2",
+    "phys_interval_wear_rate_s2",
+    "phys_wear_acceleration_s2",
+    "phys_ema_wear_rate_s2",
+    "phys_remaining_budget_days_s2",
+    "phys_turning_events_cumulative",
+    "phys_wheelset_age_days",
+    "geom_wsmDia1",
+    "geom_wsmDia2",
+    "geom_wsmRoot1",
+    "geom_wsmRoot2",
+    "geom_wsmFlange1",
+    "geom_wsmFlange2",
+    "geom_wsmFlangeThickness1",
+    "geom_wsmFlangeThickness2",
+    "geom_wsmWear",
+    "geom_wsmWear2",
+    "geom_wsmWearRate",
+    "geom_wsmWearRate2",
+    "geom_wsmTireThikness1",
+    "geom_wsmTireThikness2",
+    "geom_wsmThread1",
+    "geom_wsmThread2",
+    "geom_wsmKvalue1",
+    "geom_wsmSDistance1"
+  ],
+  "encoding": [
+    {
+      "column": "interval_days",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 30.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "diameter_delta_raw_mm_side_1",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 0.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "diameter_delta_raw_mm_side_2",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 0.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "rtis_source_event_count",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 0.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "rtis_source_event_type_count",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 0.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "maintenance_jobcard_creation_count",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 11.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "rtis_reporting_coverage_pct",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 58.666666666666664,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "rtis_report_count",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 5.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "rtis_reporting_days",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 3.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "rtis_duplicate_report_count",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 0.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "wheel_position_1_12",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 7.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "axle_position_1_6",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 4.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "inspection_count_through_interval_end",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 17.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "wheel_age_days_proxy",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 1118.5927083333333,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "turning_indicator_raw",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 0.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "days_since_turning",
+      "encoding_summary": {
+        "policy": "numeric",
+        "train_median_impute": 315.0,
+        "missing_fill": "median_on_train"
+      }
+    },
+    {
+      "column": "home_shed",
+      "encoding_summary": {
+        "policy": "frequency",
+        "train_unseen_encoding": 0.0
+      }
+    },
+    {
+      "column": "defect_zone",
+      "encoding_summary": {
+        "policy": "one_hot",
+        "train_levels": [
+          "-1.0",
+          "1.0",
+          "10.0",
+          "11.0",
+          "12.0",
+          "13.0",
+          "14.0",
+          "15.0",
+          "16.0",
+          "18.0",
+          "2.0",
+          "20.0",
+          "3.0",
+          "4.0",
+          "5.0",
+          "6.0",
+          "7.0",
+          "8.0",
+          "9.0"
+        ],
+        "na_bucket": "__NA__"
+      }
+    },
+    {
+      "column": "defect_division",
+      "encoding_summary": {
+        "policy": "frequency",
+        "train_unseen_encoding": 0.0
+      }
+    },
+    {
+      "column": "wheel_schedule_id",
+      "encoding_summary": {
+        "policy": "one_hot",
+        "train_levels": [
+          "1.0",
+          "10.0",
+          "12.0",
+          "13.0",
+          "14.0",
+          "18.0",
+          "19.0",
+          "20.0",
+          "3.0",
+          "32.0",
+          "34.0",
+          "38.0",
+          "39.0",
+          "4.0",
+          "41.0",
+          "5.0",
+          "6.0",
+          "7.0",
+          "77.0",
+          "8.0"
+        ],
+        "na_bucket": "__NA__"
+      }
+    },
+    {
+      "column": "wheel_profile_2class",
+      "encoding_summary": {
+        "policy": "ordinal_binary",
+        "train_levels": {
+          "1.0": 0,
+          "2.0": 1
+        },
+        "missing_sentinel": -1
+      }
+    }
+  ],
+  "column_roles": {
+    "operational_exposure_id": "meta",
+    "interval_start_measurement_id": "meta",
+    "interval_end_measurement_id": "meta",
+    "wheelset_equipment_id": "meta",
+    "locomotive_id": "meta",
+    "locomotive_number": "meta",
+    "interval_start_timestamp": "meta",
+    "interval_end_timestamp": "meta",
+    "timeline_quality_tier": "meta",
+    "LocoType": "meta",
+    "split": "meta",
+    "next_interval_available": "meta",
+    "next_interval_end_measurement_id": "meta",
+    "next_interval_end_timestamp": "meta",
+    "next_interval_dia_delta_mm": "label",
+    "next_interval_root_delta_mm": "label",
+    "next_interval_turning_flag": "label",
+    "next_interval_large_loss_flag": "label",
+    "time_to_next_turning_days": "label",
+    "censored_flag": "label",
+    "interval_days": "feature",
+    "diameter_delta_raw_mm_side_1": "feature",
+    "diameter_delta_raw_mm_side_2": "feature",
+    "rtis_source_event_count": "feature",
+    "rtis_source_event_type_count": "feature",
+    "maintenance_jobcard_creation_count": "feature",
+    "rtis_reporting_coverage_pct": "feature",
+    "rtis_report_count": "feature",
+    "rtis_reporting_days": "feature",
+    "rtis_duplicate_report_count": "feature",
+    "wheel_position_1_12": "feature",
+    "axle_position_1_6": "feature",
+    "inspection_count_through_interval_end": "feature",
+    "wheel_profile_2class": "feature",
+    "wheel_schedule_id__1.0": "feature",
+    "wheel_schedule_id__10.0": "feature",
+    "wheel_schedule_id__12.0": "feature",
+    "wheel_schedule_id__13.0": "feature",
+    "wheel_schedule_id__14.0": "feature",
+    "wheel_schedule_id__18.0": "feature",
+    "wheel_schedule_id__19.0": "feature",
+    "wheel_schedule_id__20.0": "feature",
+    "wheel_schedule_id__3.0": "feature",
+    "wheel_schedule_id__32.0": "feature",
+    "wheel_schedule_id__34.0": "feature",
+    "wheel_schedule_id__38.0": "feature",
+    "wheel_schedule_id__39.0": "feature",
+    "wheel_schedule_id__4.0": "feature",
+    "wheel_schedule_id__41.0": "feature",
+    "wheel_schedule_id__5.0": "feature",
+    "wheel_schedule_id__6.0": "feature",
+    "wheel_schedule_id__7.0": "feature",
+    "wheel_schedule_id__77.0": "feature",
+    "wheel_schedule_id__8.0": "feature",
+    "home_shed__freq": "feature",
+    "defect_zone__-1.0": "feature",
+    "defect_zone__1.0": "feature",
+    "defect_zone__10.0": "feature",
+    "defect_zone__11.0": "feature",
+    "defect_zone__12.0": "feature",
+    "defect_zone__13.0": "feature",
+    "defect_zone__14.0": "feature",
+    "defect_zone__15.0": "feature",
+    "defect_zone__16.0": "feature",
+    "defect_zone__18.0": "feature",
+    "defect_zone__2.0": "feature",
+    "defect_zone__20.0": "feature",
+    "defect_zone__3.0": "feature",
+    "defect_zone__4.0": "feature",
+    "defect_zone__5.0": "feature",
+    "defect_zone__6.0": "feature",
+    "defect_zone__7.0": "feature",
+    "defect_zone__8.0": "feature",
+    "defect_zone__9.0": "feature",
+    "defect_division__freq": "feature",
+    "wheel_age_days_proxy": "feature",
+    "turning_indicator_raw": "feature",
+    "days_since_turning": "feature",
+    "home_shed": "eda_context",
+    "defect_zone": "eda_context",
+    "defect_division": "eda_context",
+    "wheel_schedule_id": "eda_context",
+    "phys_initial_dia_mm_s1": "feature",
+    "phys_remaining_material_mm_s1": "feature",
+    "phys_wear_fraction_s1": "feature",
+    "phys_material_consumed_pct_s1": "feature",
+    "phys_cumulative_wear_mm_s1": "feature",
+    "phys_interval_wear_rate_s1": "feature",
+    "phys_wear_acceleration_s1": "feature",
+    "phys_ema_wear_rate_s1": "feature",
+    "phys_remaining_budget_days_s1": "feature",
+    "phys_initial_dia_mm_s2": "feature",
+    "phys_remaining_material_mm_s2": "feature",
+    "phys_wear_fraction_s2": "feature",
+    "phys_material_consumed_pct_s2": "feature",
+    "phys_cumulative_wear_mm_s2": "feature",
+    "phys_interval_wear_rate_s2": "feature",
+    "phys_wear_acceleration_s2": "feature",
+    "phys_ema_wear_rate_s2": "feature",
+    "phys_remaining_budget_days_s2": "feature",
+    "phys_turning_events_cumulative": "feature",
+    "phys_wheelset_age_days": "feature",
+    "geom_wsmDia1": "feature",
+    "geom_wsmDia2": "feature",
+    "geom_wsmRoot1": "feature",
+    "geom_wsmRoot2": "feature",
+    "geom_wsmFlange1": "feature",
+    "geom_wsmFlange2": "feature",
+    "geom_wsmFlangeThickness1": "feature",
+    "geom_wsmFlangeThickness2": "feature",
+    "geom_wsmWear": "feature",
+    "geom_wsmWear2": "feature",
+    "geom_wsmWearRate": "feature",
+    "geom_wsmWearRate2": "feature",
+    "geom_wsmTireThikness1": "feature",
+    "geom_wsmTireThikness2": "feature",
+    "geom_wsmThread1": "feature",
+    "geom_wsmThread2": "feature",
+    "geom_wsmKvalue1": "feature",
+    "geom_wsmSDistance1": "feature",
+    "interval_distance_km": "feature",
+    "rtis_distance_coverage_days_in_interval": "feature",
+    "rtis_distance_coverage_pct_in_interval": "feature",
+    "distance_per_day_km": "feature",
+    "distance_since_last_inspection_km": "feature",
+    "running_days": "feature",
+    "running_days_pct": "feature",
+    "running_hours_proxy": "feature",
+    "maintenance_density_per_day": "feature",
+    "maintenance_density_per_1000km": "feature",
+    "distance_since_turning_km": "feature",
+    "wear_per_1000km_s1": "feature",
+    "remaining_material_per_km_s1": "feature",
+    "projected_remaining_km_s1": "feature",
+    "exposure_index_s1": "feature",
+    "wear_per_1000km_s2": "feature",
+    "remaining_material_per_km_s2": "feature",
+    "projected_remaining_km_s2": "feature",
+    "exposure_index_s2": "feature"
+  },
+  "parent_dataset_version": "v1.2",
+  "physics_version": "v1.1",
+  "physics_constants": {
+    "condemning_dia_mm": 1016.0,
+    "dia_plausible": [
+      1016.0,
+      1096.0
+    ],
+    "ema_halflife": 3
+  },
+  "physics_added_columns": [
+    "phys_initial_dia_mm_s1",
+    "phys_remaining_material_mm_s1",
+    "phys_wear_fraction_s1",
+    "phys_material_consumed_pct_s1",
+    "phys_cumulative_wear_mm_s1",
+    "phys_interval_wear_rate_s1",
+    "phys_wear_acceleration_s1",
+    "phys_ema_wear_rate_s1",
+    "phys_remaining_budget_days_s1",
+    "phys_initial_dia_mm_s2",
+    "phys_remaining_material_mm_s2",
+    "phys_wear_fraction_s2",
+    "phys_material_consumed_pct_s2",
+    "phys_cumulative_wear_mm_s2",
+    "phys_interval_wear_rate_s2",
+    "phys_wear_acceleration_s2",
+    "phys_ema_wear_rate_s2",
+    "phys_remaining_budget_days_s2",
+    "phys_turning_events_cumulative",
+    "phys_wheelset_age_days"
+  ],
+  "geometry_added_columns": [
+    "geom_wsmDia1",
+    "geom_wsmDia2",
+    "geom_wsmRoot1",
+    "geom_wsmRoot2",
+    "geom_wsmFlange1",
+    "geom_wsmFlange2",
+    "geom_wsmFlangeThickness1",
+    "geom_wsmFlangeThickness2",
+    "geom_wsmWear",
+    "geom_wsmWear2",
+    "geom_wsmWearRate",
+    "geom_wsmWearRate2",
+    "geom_wsmTireThikness1",
+    "geom_wsmTireThikness2",
+    "geom_wsmThread1",
+    "geom_wsmThread2",
+    "geom_wsmKvalue1",
+    "geom_wsmSDistance1"
+  ],
+  "label_spec_path": "configs\\label_specification_v1.0.1.json",
+  "quarantine_rule": {
+    "id": "physical_endpoint_diameter_window",
+    "version": "1.0.1",
+    "rule": "Quarantine a supervised row if wsmDia1 of interval_end_measurement_id OR next_interval_end_measurement_id is outside [1000.0, 1100.0] mm.",
+    "rationale": "A railway wheel diameter outside [1000, 1100] mm is physically impossible in service (domain constants: condemning 1016 mm, new 1096 mm; tolerance absorbs measurement noise and in-service wheels near the condemning limit). Such rows carry measurement-garbage labels (e.g. |delta| up to ~1090 mm from bronze wsmDia1 values of 0 or >1e6 mm) that inflate regression RMSE and poison the training target distribution.",
+    "audit_basis": "models/experiments/v1.2/sentinel_audit_findings.md \u2014 65 rows (0.03%: train 55, val 9, test 1) quarantined; rule subsumes |next_interval_dia_delta_mm| > 100 (63 rows) with 100% recall.",
+    "effective_dataset_version": "v1.2"
+  },
+  "quarantine_counts": {
+    "train": 55,
+    "val": 9,
+    "test": 1
+  },
+  "rows_after_quarantine": 202172,
+  "max_abs_dia_delta_after_quarantine": 80.29999999999995,
+  "phase2": {
+    "workstream_1_exposure": [
+      "interval_distance_km",
+      "rtis_distance_coverage_days_in_interval",
+      "rtis_distance_coverage_pct_in_interval",
+      "distance_per_day_km",
+      "distance_since_last_inspection_km",
+      "running_days",
+      "running_days_pct",
+      "running_hours_proxy",
+      "maintenance_density_per_day",
+      "maintenance_density_per_1000km",
+      "distance_since_turning_km"
+    ],
+    "workstream_3_physics": [
+      "wear_per_1000km_s1",
+      "remaining_material_per_km_s1",
+      "projected_remaining_km_s1",
+      "exposure_index_s1",
+      "wear_per_1000km_s2",
+      "remaining_material_per_km_s2",
+      "projected_remaining_km_s2",
+      "exposure_index_s2"
+    ],
+    "weather_exposure_index": "NOT materialised (PENDING, no provider; blocked-value rule)",
+    "expected_missing_pct": {
+      "interval_distance_km": 37.32,
+      "rtis_distance_coverage_days_in_interval": 0.0,
+      "rtis_distance_coverage_pct_in_interval": 0.0,
+      "distance_per_day_km": 37.32,
+      "distance_since_last_inspection_km": 37.32,
+      "running_days": 0.0,
+      "running_days_pct": 0.0,
+      "running_hours_proxy": 82.79,
+      "maintenance_density_per_day": 0.0,
+      "maintenance_density_per_1000km": 39.56,
+      "distance_since_turning_km": 81.89,
+      "wear_per_1000km_s1": 46.97,
+      "remaining_material_per_km_s1": 86.14,
+      "projected_remaining_km_s1": 79.48,
+      "exposure_index_s1": 86.14,
+      "wear_per_1000km_s2": 46.97,
+      "remaining_material_per_km_s2": 86.14,
+      "projected_remaining_km_s2": 79.46,
+      "exposure_index_s2": 86.14
+    }
+  }
+}

@@ -1,0 +1,47 @@
+{
+  "exposure_version": "v2.0",
+  "generated_at_utc": "2026-08-05T06:20:02.301328+00:00",
+  "grain": "inspection interval (one Gold-B consecutive measurement pair), keyed by operational_exposure_id",
+  "point_in_time_rule": "daily reports with day <= interval_end only",
+  "boundary_rule": "(interval_start, interval_end] at day granularity",
+  "distance_rule": "owner-APPROVED (2026-08-05): deduped per-loco per-day SUM of division km, outliers rejected (07_safe_rtis_daily_aggregation.py)",
+  "input_sha256": {
+    "v1.2_dataset": "87f3f22278b0901586ce19c7084411e1c7760fc351f74738e35106c91491efd2",
+    "rtis_daily_safe": "cb7a9090f4c88fc582765715e26b8debfdc7caa999c830a8bd2b8acf529a4874",
+    "fois_transitions": "5e727b228b60cb5019a8c6957d8a88e07a22c5ba4064e105f52fbcb980ed6e3a",
+    "wheel_measurements": "cef889fdc4ddbaeb57fe8c1bdcf3df27bbb2cde096b253e988aa28f1fe372fb6"
+  },
+  "rows": 202172,
+  "columns": [
+    "operational_exposure_id",
+    "interval_distance_km",
+    "rtis_distance_coverage_days_in_interval",
+    "rtis_distance_coverage_pct_in_interval",
+    "distance_per_day_km",
+    "distance_since_last_inspection_km",
+    "maintenance_density_per_day",
+    "maintenance_density_per_1000km",
+    "running_days",
+    "running_days_pct",
+    "running_hours_proxy",
+    "distance_since_turning_km"
+  ],
+  "expected_missing_pct": {
+    "interval_distance_km": 37.32,
+    "rtis_distance_coverage_days_in_interval": 0.0,
+    "rtis_distance_coverage_pct_in_interval": 0.0,
+    "distance_per_day_km": 37.32,
+    "distance_since_last_inspection_km": 37.32,
+    "maintenance_density_per_day": 0.0,
+    "maintenance_density_per_1000km": 39.56,
+    "running_days": 0.0,
+    "running_days_pct": 0.0,
+    "running_hours_proxy": 82.79,
+    "distance_since_turning_km": 81.89
+  },
+  "notes": [
+    "weather_exposure_index NOT materialised (PENDING, no provider) - blocked-value rule",
+    "distance_since_turning_km uses wheel_measurements wsmturning=1 events; NULL where no turning in history",
+    "running_hours_proxy is FOIS-window limited (2025-10 -> 2026-06)"
+  ]
+}

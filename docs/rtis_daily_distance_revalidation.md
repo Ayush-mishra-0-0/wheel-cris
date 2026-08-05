@@ -26,8 +26,10 @@ overlap with `foisshedin`/`foisshedout` records.
 ## Current status
 
 `RlkdTotalDistance` is upgraded from “rejected interpretation” to
-**PENDING DAILY-AGGREGATION VALIDATION**. It remains blocked from Feature Store
-distance features until all release checks pass.
+**APPROVED DAILY-AGGREGATION (2026-08-05)**. The RTIS owner approved the
+deduped per-loco per-day SUM rule (`07_safe_rtis_daily_aggregation.py`) with the
+combined outlier rejection; feature-store distance features may now be built
+from the safe daily table.
 
 ## Fleet-level corroboration
 

@@ -1,0 +1,11 @@
+{
+  "phase": "v3.label-decomposition",
+  "task": "regression",
+  "feature_set": "baseline",
+  "split_contract": "grouped temporal (v1.2 train/val/test, identical rows)",
+  "eval_set": "v1.2-test",
+  "random_state": 42,
+  "stage": "stage2a_clean",
+  "label": "next_interval_dia_delta_mm",
+  "model": "hist_gradient_boosting"
+}

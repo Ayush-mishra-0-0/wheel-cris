@@ -1,0 +1,136 @@
+{
+  "metadata_file_version": "1.0.0",
+  "purpose": "Reconstruction record: what data was added to the model dataset, when, from what inputs.",
+  "dataset_version": "v2.0",
+  "parent_dataset_version": "v1.2",
+  "added_at_utc": "2026-08-05T06:22:15.093660+00:00",
+  "builders": {
+    "exposure": "model_datasets/build_exposure_features_v2.py",
+    "dataset": "model_datasets/build_model_dataset_v2.py",
+    "parent_builder": "model_datasets/build_model_dataset_v1_2.py"
+  },
+  "inputs": {
+    "v1.2_dataset": {
+      "path": "model_datasets\\v1.2\\model_dataset_v1.2.parquet",
+      "sha256": "87f3f22278b0901586ce19c7084411e1c7760fc351f74738e35106c91491efd2"
+    },
+    "exposure_features_v2": {
+      "path": "model_datasets\\v2\\exposure_features_v2.parquet",
+      "sha256": "74aaf1bf49c49a69cf9743980d6a2a8cb8e4da7c6f3abcb86cc70f2bb3649631"
+    },
+    "rtis_daily_safe": {
+      "path": "distance_recovery/data/processed/rtis_daily_safe.parquet"
+    },
+    "wheel_measurements": {
+      "path": "data/silver/wheel_measurements.parquet"
+    },
+    "fois_transitions": {
+      "path": "distance_recovery/data/processed/fois_transition_distances.parquet"
+    }
+  },
+  "reconstruct_commands": [
+    ".ayush\\Scripts\\python.exe model_datasets\\build_exposure_features_v2.py --force",
+    ".ayush\\Scripts\\python.exe model_datasets\\build_model_dataset_v2.py --force"
+  ],
+  "columns": {
+    "interval_distance_km": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 37.32
+    },
+    "distance_per_day_km": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 37.32
+    },
+    "distance_since_last_inspection_km": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 37.32
+    },
+    "running_days": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 0.0
+    },
+    "running_days_pct": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 0.0
+    },
+    "rtis_distance_coverage_days_in_interval": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 0.0
+    },
+    "rtis_distance_coverage_pct_in_interval": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_FOR_MATERIALISATION",
+      "expected_missing_pct": 0.0
+    },
+    "running_hours_proxy": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "expected_missing_pct": 82.79
+    },
+    "maintenance_density_per_day": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "expected_missing_pct": 0.0
+    },
+    "maintenance_density_per_1000km": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "expected_missing_pct": 39.56
+    },
+    "distance_since_turning_km": {
+      "workstream": "WS1 Exposure",
+      "status": "READY_WITH_CAVEAT",
+      "expected_missing_pct": 81.89
+    },
+    "wear_per_1000km_s1": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 46.97
+    },
+    "remaining_material_per_km_s1": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 86.14
+    },
+    "projected_remaining_km_s1": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 79.48
+    },
+    "exposure_index_s1": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 86.14
+    },
+    "wear_per_1000km_s2": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 46.97
+    },
+    "remaining_material_per_km_s2": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 86.14
+    },
+    "projected_remaining_km_s2": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 79.46
+    },
+    "exposure_index_s2": {
+      "workstream": "WS3 Physics",
+      "status": "EXPERIMENTAL (pending engineering wear sign-off)",
+      "expected_missing_pct": 86.14
+    }
+  },
+  "not_materialised": {
+    "weather_exposure_index": "PENDING - no weather provider/archive exists",
+    "track_curve_severity_index": "FUTURE - track geometry deferred (WS5)"
+  }
+}

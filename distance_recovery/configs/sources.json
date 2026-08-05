@@ -1,0 +1,37 @@
+{
+  "$comment": "Open-source registries for distance recovery. All entries are public open data (ODbL / MIT / Government Open Data License-India). Licences and caveats are recorded per source; nothing here is authoritative railway chainage.",
+  "station_reference": {
+    "name": "india_railway_stations",
+    "description": "Geo-referenced list of Indian Railway stations (code, name, lat, lon, state, zone).",
+    "url": "https://gist.githubusercontent.com/sankalpsharmaa/0c0587f3ae31277411960f70128d682f/raw/4932255724c3060c6e6269dcad307a2b0f7242a5/india_railway_stations.geojson",
+    "license": "Public domain / community (gist); verify provenance before production use",
+    "caveats": "Community-maintained; station codes may lag or contain transcription errors. Used only as a geocoding reference, never as authoritative chainage.",
+    "file": "stations.geojson"
+  },
+  "rail_network": {
+    "name": "india_railway_network_vmap",
+    "description": "Simplified operational railway line network of India (MultiLineStrings, ~2k features).",
+    "url": "https://gist.githubusercontent.com/sankalpsharmaa/0c0587f3ae31277411960f70128d682f/raw/8159b453c2115dd33e8fb0cebb3c6dc3bab3c7d7/railway_network.geojson",
+    "license": "Public domain / community (gist); derive from VMAP-type source",
+    "caveats": "Low-resolution network; vertex spacing is coarse so along-line distances are estimates. Good for station-to-station rail-distance estimation; too coarse for curvature/gradient.",
+    "file": "gist_rail_network.geojson"
+  },
+  "rail_network_osm": {
+    "name": "hotosm_ind_railways",
+    "description": "OSM railway export of India (monthly, from Humanitarian Data Exchange). Higher fidelity than the VMAP network; supports curvature/gradient derivation later.",
+    "url": "https://production-raw-data-api.s3.amazonaws.com/ISO3/IND/railways/hotosm_ind_railways_osm_geojson.zip",
+    "license": "Open Database License (ODbL)",
+    "caveats": "91 MB uncompressed; quality varies by region; used as an upgrade path for the map-matcher, not the default (default = gist network for speed).",
+    "file": "rail_geojson.zip",
+    "zip_member": "railways.geojson",
+    "optional": true
+  },
+  "timetable_distances": {
+    "name": "Indian-Railways-Data schedules",
+    "description": "Per-train station sequences with cumulative km from starting station (2858 trains). Used ONLY as validation ground-truth for station-pair rail distances.",
+    "url": "https://raw.githubusercontent.com/BhanuTeella/Indian-Railways-Data/main/schedules_dict.json",
+    "license": "CC0-1.0",
+    "caveats": "Distances are cumulative timetable km (not chainage) and may differ slightly from track-chart chainage; suitable as an independent cross-check, not a replacement.",
+    "file": "schedules_dict.json"
+  }
+}

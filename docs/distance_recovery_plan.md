@@ -13,7 +13,7 @@ No physical-distance feature is released. `distance_km` remains null with
 | 2 | `MovementRegister` | 453,287 WAP7 rows; 144,754 are `Under Maintenance`, 307,394 have null status, and only 274 are `In Use`. Meter/mileage values also have implausible outliers and continuity failures. | Maintenance/shed context only, subject to its own semantics. | Rejected as a fleet operational-distance ledger. Do not sum or difference its raw meter fields. |
 | 3 | `INTEG_FOIS_LocoLocation` GPS | Schema has event time and integer latitude/longitude fields, but the current table contains zero rows. | None. | Cannot calculate anything until the source is populated and coordinate scale/quality are verified. |
 | 4 | Section/block traversal catalogue search | No locomotive-time section/block/chainage traversal ledger was identified; candidates were maintenance/asset section tables. | None. | Blocked pending a real traffic-control, GIS, or infrastructure traversal feed. |
-| 5 | `RtisLocoKmDetails` | Multiple division reports and duplicates; tested aggregations yield physically implausible daily totals. | Reporting coverage only. | Blocked pending RTIS owner-approved grain, deduplication and aggregation rule. |
+| 5 | `RtisLocoKmDetails` | Multiple division reports and duplicates; tested aggregations yield physically implausible daily totals. | **APPROVED (2026-08-05)** daily ledger: dedupe + per-loco-day SUM with combined outlier rejection → `rtis_daily_safe.parquet` (1,325,675 loco-days). | **Resolved by owner sign-off** of the aggregation rule (grain = loco-day, dedupe on business key, multi-division sum, outliers adjudicated by FOIS). |
 
 ## GPS distance rule if a populated coordinate feed arrives
 

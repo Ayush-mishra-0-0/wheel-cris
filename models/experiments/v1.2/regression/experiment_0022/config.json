@@ -1,0 +1,11 @@
+{
+  "phase": "v2.distance-x",
+  "task": "regression",
+  "label": "next_interval_dia_delta_mm",
+  "model": "hist_gradient_boosting",
+  "feature_set": "baseline_plus_distance",
+  "split_contract": "grouped temporal (v1.2 train/test, identical rows)",
+  "eval_set": "v1.2-test",
+  "distance_status": "EXPERIMENTAL_NOT_RELEASED",
+  "random_state": 42
+}

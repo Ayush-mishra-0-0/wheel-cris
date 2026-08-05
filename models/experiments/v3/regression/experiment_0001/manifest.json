@@ -1,0 +1,9 @@
+{
+  "dataset_version": "v1.2",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.1",
+  "experimental_features": [],
+  "provenance": "models/run_v3_label_decomposition.py",
+  "generated_at_utc": "2026-08-04T10:24:48.301995+00:00"
+}

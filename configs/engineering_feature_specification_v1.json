@@ -671,31 +671,30 @@
       "feature_id": "interval_distance_km",
       "name": "Physical distance travelled",
       "owning_layer": "Exposure",
-      "status": "BLOCKED",
+      "status": "READY_FOR_MATERIALISATION",
       "evidence_level": "Observed",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "grain": "one inspection interval",
       "engineering_meaning": "Physical locomotive travel attributable to the interval.",
-      "formula": "owner-approved mileage aggregation or validated movement ledger",
+      "formula": "owner-approved (2026-08-05) daily aggregation: deduped per-loco per-day SUM of division km with combined outlier rejection (07_safe_rtis_daily_aggregation.py), summed over interval (start, end]",
       "unit": "km",
       "lineage": [
-        "data/silver/rtis_mileage.parquet:reported_distance_km"
+        "data/silver/rtis_mileage.parquet:reported_distance_km",
+        "distance_recovery/data/processed/rtis_daily_safe.parquet:rtis_km_safe"
       ],
       "validation_rules": [
-        "owner-approved business grain",
-        "duplicate/reload and reset rule",
-        "physical plausibility",
-        "coverage report",
+        "owner-approved business grain (signed off 2026-08-05: 'sum them')",
+        "duplicate/reload and reset rule (business-key dedupe + outlier rejection)",
+        "physical plausibility (max 3,292 km/day retained)",
+        "coverage report (RTIS window 2023-02-06 -> 2025-12-31)",
         "reproducible SQL implementation"
       ],
       "availability_time": "interval_end_timestamp",
-      "dependencies": [
-        "RTIS distance semantics approval or validated alternative movement ledger"
-      ],
-      "consumer_limit": "Must remain null with BLOCKED_PENDING_SOURCE_CONFIRMATION.",
+      "dependencies": [],
+      "consumer_limit": "Approved for materialisation as interval_distance_km in model_datasets/v2. The legacy experimental column interval_distance_km_experimental remains un-renamed.",
       "feature_family": "Operational",
       "point_in_time_safe": true,
-      "expected_missing_pct": null
+      "expected_missing_pct": 37.32
     },
     {
       "feature_id": "wear_rate_mm_per_km",

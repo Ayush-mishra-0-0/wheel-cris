@@ -1,0 +1,10 @@
+{
+  "phase": "v3.quantile-intervals",
+  "task": "regression",
+  "label": "next_interval_dia_delta_mm",
+  "model": "hist_gradient_boosting_quantile_0.05",
+  "feature_set": "baseline",
+  "split_contract": "grouped temporal (v1.2 train/test)",
+  "eval_set": "v1.2-test",
+  "random_state": 42
+}

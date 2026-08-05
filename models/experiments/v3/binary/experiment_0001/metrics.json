@@ -1,0 +1,13 @@
+{
+  "test": {
+    "pr_auc": 0.9274,
+    "roc_auc": 0.8523,
+    "f1_at_best": 0.8303,
+    "best_threshold": 0.6899,
+    "precision_at_k": 0.98,
+    "brier": 0.1335,
+    "ece": 0.0193,
+    "n": 28065,
+    "positive_rate": 0.7154
+  }
+}
