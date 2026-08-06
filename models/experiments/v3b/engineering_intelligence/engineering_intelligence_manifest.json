@@ -1,0 +1,35 @@
+{
+  "states": 271350,
+  "latest_wheels": 19167,
+  "sheds": 32,
+  "action_counts": {
+    "PLAN_TURNING_REPROFILING": 224699,
+    "SCHEDULE_INSPECTION": 44137,
+    "MONITOR": 2146,
+    "URGENT_ACTION": 368
+  },
+  "median_health_index": 72.8125,
+  "limiting_dimension_counts": {
+    "wsmWheelGauge": 233166,
+    "wsmRoot": 38184
+  },
+  "reference_thresholds": {
+    "wsmDia": [
+      1000.0,
+      1016.0
+    ],
+    "wsmFlangeThickness": [
+      10.0,
+      23.0
+    ],
+    "wsmRoot": [
+      0.0,
+      8.0
+    ],
+    "wsmWheelGauge": [
+      1357.0,
+      1340.0
+    ]
+  },
+  "note": "Estimated RUL is fleet-relative and rate-based; absolute condemning limits BLOCKED pending approved limit register. Health index is transparent rule-based (proximity + wear rate + maintenance)."
+}

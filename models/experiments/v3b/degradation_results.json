@@ -1,0 +1,98 @@
+{
+  "input": "model_datasets\\v3b\\degradation_pairs.parquet",
+  "n_train_pairs": 194699,
+  "n_test_pairs": 48674,
+  "split": "chronological 80/20",
+  "task": "predict NEXT measured engineering state (absolute, mm)",
+  "note": "Next-state regression; persistence (current state) is baseline. Exposure is duration-based (days), not km (RTIS km blocked). Reset-crossing pairs excluded.",
+  "per_dimension": {
+    "wsmDia": {
+      "test_ridge": {
+        "rmse": 20.1675,
+        "mae": 17.9511,
+        "spearman": -0.1742,
+        "r2": -0.9132,
+        "n": 48674
+      },
+      "test_randomforest": {
+        "rmse": 20.8842,
+        "mae": 18.2819,
+        "spearman": -0.149,
+        "r2": -1.0515,
+        "n": 48674
+      },
+      "persistence_baseline": {
+        "persistence_mae": 1.8383,
+        "persistence_rmse": 6.6638,
+        "n": 48674
+      },
+      "target_unit": "mm"
+    },
+    "wsmFlangeThickness": {
+      "test_ridge": {
+        "rmse": 1.1856,
+        "mae": 1.0209,
+        "spearman": -0.0068,
+        "r2": -2.7253,
+        "n": 48655
+      },
+      "test_randomforest": {
+        "rmse": 3.2733,
+        "mae": 2.6427,
+        "spearman": 0.0329,
+        "r2": -27.3952,
+        "n": 48655
+      },
+      "persistence_baseline": {
+        "persistence_mae": 0.264,
+        "persistence_rmse": 0.6076,
+        "n": 48655
+      },
+      "target_unit": "mm"
+    },
+    "wsmRoot": {
+      "test_ridge": {
+        "rmse": 1.1059,
+        "mae": 0.8042,
+        "spearman": 0.1039,
+        "r2": 0.0014,
+        "n": 48544
+      },
+      "test_randomforest": {
+        "rmse": 1.1147,
+        "mae": 0.8075,
+        "spearman": 0.0304,
+        "r2": -0.0146,
+        "n": 48544
+      },
+      "persistence_baseline": {
+        "persistence_mae": 0.6863,
+        "persistence_rmse": 1.1387,
+        "n": 48544
+      },
+      "target_unit": "mm"
+    },
+    "wsmWheelGauge": {
+      "test_ridge": {
+        "rmse": 0.4643,
+        "mae": 0.3319,
+        "spearman": 0.0345,
+        "r2": -0.1621,
+        "n": 48651
+      },
+      "test_randomforest": {
+        "rmse": 23.12,
+        "mae": 8.1544,
+        "spearman": -0.0508,
+        "r2": -2880.2154,
+        "n": 48651
+      },
+      "persistence_baseline": {
+        "persistence_mae": 0.0797,
+        "persistence_rmse": 0.2347,
+        "n": 48651
+      },
+      "target_unit": "mm"
+    }
+  }
+}

@@ -1,17 +1,17 @@
-"""Phase 3B - multi-output degradation regression.
+"""Phase 3B - Engineering State Evolution (next-state regression).
 
-Predicts per-dimension wear (delta over the inspection interval) from current
-engineering state + exposure. This is the "estimated engineering state
-evolution": predicted_next_state = current_state + predicted_delta.
+Predicts the NEXT measured engineering state (absolute value per dimension)
+from current state + exposure. This is "next wheel health": given today's
+inspection, what will the next inspection find.
 
-Rotating/rolling evaluation: train on early pairs, predict later pairs, so the
-accuracy statements are forward-looking (no leakage into the eviction window).
+Chronological / forward-looking evaluation (train early, predict later).
 
-Metrics per dimension: RMSE(mm), MAE(mm), Spearman (monotonic ranking of wear).
-Also reports the share of wear-delta variance attributable to exposure.
+Metrics per dimension: RMSE(mm), MAE(mm), Spearman (rank correlation), R2, and
+the persistence baseline (predicting current state unchanged) to show the
+value-add of exposure + history.
 
-Boundary-crossing pairs (resets) are EXCLUDED from wear learning; their rows
-carry no delta target for the reset-crossing window.
+Boundary-crossing pairs (turning/replacement resets) are excluded from training
+so the model learns within-life evolution only.
 """
 from __future__ import annotations
 
@@ -44,7 +44,7 @@ CATEGORICAL_COLUMNS = ["LocoType", "wheel_profile_2class", "home_shed",
                        "axle_position_1_6"]
 
 FEATURE_COLUMNS = STATE_COLUMNS + QUALITY_COLUMNS + EXPOSURE_COLUMNS + CATEGORICAL_COLUMNS
-TARGETS = [f"delta_{c}" for c in STATE_COLUMNS]
+TARGET_DIMS = DIMENSIONS
 
 
 def _label_encode_cats(df, encoders=None):
@@ -63,58 +63,63 @@ def _reg_metrics(y_true, y_pred):
     y_pred = np.asarray(y_pred, dtype=float)
     valid = np.isfinite(y_true) & np.isfinite(y_pred)
     if valid.sum() < 10:
-        return {"rmse": np.nan, "mae": np.nan, "spearman": np.nan, "n": int(valid.sum())}
+        return {"rmse": np.nan, "mae": np.nan, "spearman": np.nan, "r2": np.nan, "n": int(valid.sum())}
     yt, yp = y_true[valid], y_pred[valid]
     rmse = float(np.sqrt(np.mean((yt - yp) ** 2)))
     mae = float(np.mean(np.abs(yt - yp)))
     rho = np.nan if np.all(yp == yp[0]) else float(spearmanr(yt, yp)[0])
-    return {"rmse": round(rmse, 4), "mae": round(mae, 4), "spearman": round(rho, 4), "n": int(valid.sum())}
+    ss_res = float(np.sum((yt - yp) ** 2))
+    ss_tot = float(np.sum((yt - yt.mean()) ** 2))
+    r2 = 1 - ss_res / ss_tot if ss_tot > 0 else np.nan
+    return {"rmse": round(rmse, 4), "mae": round(mae, 4), "spearman": round(rho, 4),
+            "r2": round(r2, 4), "n": int(valid.sum())}
+
+
+def _persistence_metrics(y_true, y_base):
+    valid = np.isfinite(y_true) & np.isfinite(y_base)
+    yt, yb = y_true[valid], y_base[valid]
+    return {"persistence_mae": round(float(np.mean(np.abs(yt - yb))), 4),
+            "persistence_rmse": round(float(np.sqrt(np.mean((yt - yb) ** 2))), 4),
+            "n": int(valid.sum())}
 
 
 def main() -> None:
     pairs = pd.read_parquet(DATA_DIR / "degradation_pairs.parquet")
-    wear = pairs.loc[~pairs["crosses_reset"]].copy()  # only monotonic life pairs
+    wear = pairs.loc[~pairs["crosses_reset"]].copy()
     wear = wear.dropna(subset=["next_record_id"]).copy()
 
-    # Use the mean of both sides when both are observed-valid for the TARGET of a
-    # dimension; else drop the row for that dimension. Keep side-level features.
-    from numpy import isfinite
     for d in DIMENSIONS:
         t1, t2 = f"{d}1", f"{d}2"
         v1 = wear[f"{t1}_quality"].eq("OBSERVED_VALID")
         v2 = wear[f"{t2}_quality"].eq("OBSERVED_VALID")
-        wear[f"target_delta_{d}"] = np.where(
-            v1 & v2,
-            (wear[f"delta_{t1}"] + wear[f"delta_{t2}"]) / 2.0,
-            np.where(v1, wear[f"delta_{t1}"], np.where(v2, wear[f"delta_{t2}"], np.nan)))
+        wear[f"target_{d}"] = np.where(
+            v1 & v2, (wear[f"next_{t1}"] + wear[f"next_{t2}"]) / 2.0,
+            np.where(v1, wear[f"next_{t1}"], np.where(v2, wear[f"next_{t2}"], np.nan)))
+        wear[f"base_{d}"] = np.where(
+            v1 & v2, (wear[t1] + wear[t2]) / 2.0,
+            np.where(v1, wear[t1], np.where(v2, wear[t2], np.nan)))
 
-    TARGET_DIMS = DIMENSIONS
-    Y = wear[[f"target_delta_{d}" for d in TARGET_DIMS]].to_numpy(dtype=float)
+    Y = wear[[f"target_{d}" for d in TARGET_DIMS]].to_numpy(dtype=float)
+    B = wear[[f"base_{d}" for d in TARGET_DIMS]].to_numpy(dtype=float)
 
-    # Roll 0/1/2/3-accumulated chronology split for forward-looking evaluation.
     wear = wear.sort_values("measurement_timestamp")
     order = np.arange(len(wear))
-    split = order >= 0.8 * len(order)
-    tr_idx, te_idx = ~split, split
+    tr_idx = order < 0.8 * len(wear)
+    te_idx = order >= 0.8 * len(wear)
 
-    # Build feature matrix with train-only encoding.
-    Xtr_enc, encoders = _label_encode_cats(wear.iloc[np.where(tr_idx)[0]][FEATURE_COLUMNS])
-    Xte_enc, _ = _label_encode_cats(wear.iloc[np.where(te_idx)[0]][FEATURE_COLUMNS], encoders)
-    num_cols = STATE_COLUMNS + EXPOSURE_COLUMNS
-    # Quality codes are ordinal categories -> convert to integer codes.
+    Xtr_enc, encoders = _label_encode_cats(wear.loc[tr_idx, FEATURE_COLUMNS])
+    Xte_enc, _ = _label_encode_cats(wear.loc[te_idx, FEATURE_COLUMNS], encoders)
     for c in QUALITY_COLUMNS:
-        Xtr_enc[c + "_code"] = Xtr_enc[c].fillna("MISSING").map(
-            {"MISSING": 0, "NOT_APPLICABLE": 1, "SEMANTICS_BLOCKED": 2,
-             "IMPLAUSIBLE": 3, "OBSERVED_VALID": 4}).astype(float)
-        Xte_enc[c + "_code"] = Xte_enc[c].fillna("MISSING").map(
-            {"MISSING": 0, "NOT_APPLICABLE": 1, "SEMANTICS_BLOCKED": 2,
-             "IMPLAUSIBLE": 3, "OBSERVED_VALID": 4}).astype(float)
-    num_cols = num_cols + [c + "_code" for c in QUALITY_COLUMNS]
+        for enc, src in ((Xtr_enc, Xtr_enc), (Xte_enc, Xte_enc)):
+            enc[c + "_code"] = src[c].fillna("MISSING").map(
+                {"MISSING": 0, "NOT_APPLICABLE": 1, "SEMANTICS_BLOCKED": 2,
+                 "IMPLAUSIBLE": 3, "OBSERVED_VALID": 4}).astype(float)
+    num_cols = STATE_COLUMNS + EXPOSURE_COLUMNS + [c + "_code" for c in QUALITY_COLUMNS]
 
     Xtr = Xtr_enc[num_cols].astype(float).fillna(0.0)
     Xte = Xte_enc[num_cols].astype(float).fillna(0.0)
-    ytr = Y[tr_idx]
-    yte = Y[te_idx]
+    ytr, yte = Y[tr_idx], Y[te_idx]
+    bte = B[te_idx]
 
     ridge_pred_tr = np.full_like(ytr, np.nan)
     ridge_pred_te = np.full_like(yte, np.nan)
@@ -131,68 +136,57 @@ def main() -> None:
 
     results = {}
     for di, d in enumerate(TARGET_DIMS):
-        mtr = _reg_metrics(ytr[:, di], ridge_pred_tr[:, di])
         mte_ridge = _reg_metrics(yte[:, di], ridge_pred_te[:, di])
         mte_rf = _reg_metrics(yte[:, di], rf.predict(Xte)[:, di])
-        results[d] = {
-            "train_ridge": mtr,
-            "test_ridge": mte_ridge,
-            "test_randomforest": mte_rf,
-            "target_unit": "mm",
-        }
-        print(f"{d:18s} test Ridge  MAE={mte_ridge['mae']:.4f} RMSE={mte_ridge['rmse']:.4f} "
-              f"rho={mte_ridge['spearman']:.3f} | RF MAE={mte_rf['mae']:.4f} RMSE={mte_rf['rmse']:.4f}")
-
-    # Exposure importance for the primary wear dims (per-dim R i d g e coefficients).
-    exposure_importance = {}
-    for di, d in enumerate(TARGET_DIMS):
-        r = Ridge(alpha=10.0)
-        finite = np.isfinite(ytr[:, di])
-        r.fit(Xtr[finite], ytr[finite, di])
-        coef = np.abs(r.coef_)
-        idx_map = {c: i for i, c in enumerate(num_cols)}
-        exp_vals = {c: float(coef[idx_map[c]]) for c in EXPOSURE_COLUMNS if c in idx_map}
-        exposure_importance[d] = exp_vals
+        mte_persist = _persistence_metrics(yte[:, di], bte[:, di])
+        results[d] = {"test_ridge": mte_ridge, "test_randomforest": mte_rf,
+                      "persistence_baseline": mte_persist, "target_unit": "mm"}
+        print(f"{d:18s} Ridge MAE={mte_ridge['mae']:.4f} RMSE={mte_ridge['rmse']:.4f} "
+              f"R2={mte_ridge['r2']:.3f} rho={mte_ridge['spearman']:.3f} | "
+              f"persistence MAE={mte_persist['persistence_mae']:.4f}")
 
     out = {
         "input": str((DATA_DIR / "degradation_pairs.parquet").relative_to(ROOT)),
-        "n_wear_pairs": int(np.sum(~split)),
-        "n_test_pairs": int(np.sum(split)),
+        "n_train_pairs": int(np.sum(tr_idx)),
+        "n_test_pairs": int(np.sum(te_idx)),
         "split": "chronological 80/20",
+        "task": "predict NEXT measured engineering state (absolute, mm)",
+        "note": "Next-state regression; persistence (current state) is baseline. "
+                "Exposure is duration-based (days), not km (RTIS km blocked). "
+                "Reset-crossing pairs excluded.",
         "per_dimension": results,
-        "note": "Predicted wear is per inspection interval (days, not km; RTIS km blocked). "
-                "Next state = current state + predicted delta.",
     }
     OUTPUT.mkdir(parents=True, exist_ok=True)
     (OUTPUT / "degradation_results.json").write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
 
     lines = [
-        "# Phase 3B - Engineering State Evolution (degradation model)",
+        "# Phase 3B - Engineering State Evolution (next-state model)",
         "",
-        "Multi-output regression of per-dimension wear (delta mm over the inspection",
-        "interval) conditioned on current engineering state + exposure. Chronological",
-        "80/20 split (forward-looking, no leakage). Wear targets use observed-valid",
-        "sides only; reset-crossing pairs excluded (wear non-monotonic across reset).",
+        "Predicts the NEXT measured engineering state (absolute mm) from current",
+        "state + exposure. Chronological 80/20 (forward-looking). The **persistence**",
+        "baseline (predict current state unchanged) shows the value-add of exposure",
+        "+ history. Reset-crossing pairs excluded (within-life evolution only).",
         "",
-        "| Dimension | Test n | Ridge MAE (mm) | Ridge RMSE (mm) | Ridge Spearman | RF MAE (mm) |",
-        "| --- | ---: | ---: | ---: | ---: | ---: |",
+        "| Dimension | Test n | Ridge MAE (mm) | Ridge RMSE (mm) | Ridge R2 | Persist MAE (mm) | Persist RMSE (mm) |",
+        "| --- | ---: | ---: | ---: | ---: | ---: | ---: |",
     ]
     for d in TARGET_DIMS:
         r = results[d]
         lines.append(f"| {d} | {r['test_ridge']['n']:,} | {r['test_ridge']['mae']:.4f} "
-                     f"| {r['test_ridge']['rmse']:.4f} | {r['test_ridge']['spearman']:.3f} "
-                     f"| {r['test_randomforest']['mae']:.4f} |")
+                     f"| {r['test_ridge']['rmse']:.4f} | {r['test_ridge']['r2']:.3f} "
+                     f"| {r['persistence_baseline']['persistence_mae']:.4f} "
+                     f"| {r['persistence_baseline']['persistence_rmse']:.4f} |")
     lines += [
         "",
         "## Reading this",
         "",
-        "- MAE in mm is the prediction error on wear over one inspection gap.",
-        "- Spearman measures whether the model ranks high-wear wheels correctly",
-        "  (the prioritization signal).",
-        "- Exposure is currently **duration-based (days)**, not km: RTIS km semantics",
-        "  are blocked. Accuracy claims are per-inspection-interval, not per-km.",
-        "- Resets (turning/replacement) are excluded from wear learning, so the model",
-        "  learns within-life degradation only.",
+        "- MAE in mm = error in the NEXT measured value prediction (best accuracy of",
+        "  the estimated next wheel state).",
+        "- Persistence (predict current state unchanged) is the naive baseline; the",
+        "  model should match or beat it while also estimating *direction*.",
+        "- R2 / Spearman indicate whether predicted next state tracks the actual next",
+        "  measurement (supports prioritization).",
+        "- Exposure is duration-based (days), not km: RTIS km semantics blocked.",
     ]
     (OUTPUT / "degradation_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(OUTPUT.relative_to(ROOT))
