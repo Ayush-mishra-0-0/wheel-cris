@@ -1,0 +1,7 @@
+{
+  "dataset_version": "v2.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.1",
+  "explainer": "TreeExplainer",
+  "generated_at_utc": "2026-08-06T04:36:24.965381+00:00"
+}

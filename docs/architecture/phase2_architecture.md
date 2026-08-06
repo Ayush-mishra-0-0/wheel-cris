@@ -1,11 +1,13 @@
 # Phase 2 — Feature Engineering, Gold Datasets & Modeling: Architecture
 
-Status: **IN PROGRESS (2026-08-05)** · Principal ML Systems & Architecture Advisor context.
+Status: **IN PROGRESS (2026-08-06)** · Principal ML Systems & Architecture Advisor context.
 
 ## Scope decision (this sprint)
 
 - **WS1 (Exposure), WS2 (Gold v2), WS3 (Physics)** — BUILD, by *extending* the released
   v1.2 chain (no parallel rebuild).
+- **ML execution WS1-5 (benchmark / interpretability / error analysis / family
+  attribution / ablation)** — DONE on Gold Dataset v2.0 (results below).
 - **WS4 (Telemetry), WS5 (Track geometry)** — DEFERRED; only design sketches below, no build.
 - Distance subsystem: frozen (no further micro-optimisation). The RTIS safe daily
   aggregation is **owner-APPROVED (2026-08-05)**: `interval_distance_km` may be materialised.
@@ -30,6 +32,7 @@ Status: **IN PROGRESS (2026-08-05)** · Principal ML Systems & Architecture Advi
 | WS1 | Exposure layer: distance_since_last_inspection, distance_per_day, running days/hours, weather, maintenance_density | DONE (v2.0, weather PENDING) | Exposure |
 | WS2 | Gold Dataset v2: Wheel + Maintenance + Operational + Physics + Target | DONE (v2.0, extends v1.2) | Dataset |
 | WS3 | Physics-informed: wear_per_1000km, distance_since_turning, remaining_material_per_km, exposure_index | DONE (v2.0, experimental) | Degradation/Physics |
+| WS1-5 (ML) | Benchmark, interpretability, error analysis, family attribution, ablation on v2.0 | DONE (2026-08-06, results below) | Modeling |
 | WS4 | Telemetry architecture (bronze/silver/gold + feature store) | DEFERRED (design only) | Platform |
 | WS5 | Track geometry (schema, joins, identifiers, versioning) | DEFERRED (design only) | Route |
 
@@ -121,9 +124,71 @@ Joins: FOIS station/time sequence → station_chainage → track_edges (map-matc
 
 ## Next actions after this sprint
 
-1. Phase 2.4 benchmarking rig (RF/HGB/XGB/CatBoost/LightGBM/Linear + SHAP/permutation/
-   residuals) on v2.0 — see `models/` experiment harness (`evaluate.py`,
-   `experiment_registry.py`).
+1. ~~Phase 2.4 benchmarking rig~~ **DONE** — see WS1-5 results section above.
 2. Feature-store registration of approved WS1 columns (READY_FOR_MATERIALISATION set).
 3. Weather provider acquisition to close WS1 weather.
 4. WS4/WS5 when sources arrive.
+5. Engineering wear sign-off for `wear_per_1000km_*` release decision (availability-gated).
+
+## WS1-5 ML results on Gold v2.0 (2026-08-06)
+
+Scripts in `models/phase2/`; outputs in `models/experiments/v2/`. Missingness: native-NaN
+for trees; family-median impute + one indicator per family for Linear/RF.
+
+### WS1 benchmark (`benchmark_summary.md`; `run_benchmark.py`)
+
+| model | grouped RMSE (test) | rolling RMSE (median) |
+| --- | ---: | ---: |
+| random_forest | 14.537±0.005 | 28.932 |
+| linear | 14.968 | 29.121 |
+| catboost | 14.475±0.017 | 29.388 |
+| hist_gradient_boosting | 14.498±0.023 | 29.620 |
+| xgboost | 14.516±0.007 | 29.620 |
+| lightgbm | 14.533±0.010 | 29.686 |
+| dummy_mean | 23.604 | 36.234 |
+
+- Rolling ≈ 2× grouped (deployed-prediction realism; matches v1.2/v1.3).
+- All real models beat dummy by ~18% in both protocols. No single model dominates;
+  tree ensembles within ~1% of each other.
+- **LightGBM = interpretability workhorse**: within 0.24% of HGB grouped, 0.22% rolling
+  (owner gate ≤1-2% PASSED) → used for WS2/WS4.
+
+### WS2 interpretability (`interpretability/experiment_0001`; `interpretability.py`)
+
+- TreeSHAP test-split: `phys_remaining_material_mm_s1` dominates (|mean SHAP| 11.0),
+  then `geom_wsmTireThikness1` (4.5), `geom_wsmDia1` (2.2).
+- Family share of |SHAP|: physics 46%, geometry 27%, exposure_v2 9%, operational 9%,
+  maintenance 5%, rest <2%.
+- PDPs physically consistent: less remaining material / thinner tire → more predicted wear.
+- `running_hours_proxy` SHAP partly encodes "when in history" (time-marker confound).
+
+### WS3 error analysis (`error_analysis/`; `error_analysis.py`)
+
+- **Under-prediction dominates error**: negative-residual RMSE 17.7 vs positive 11.8 —
+  the model misses large wear events (asymmetric, safety-relevant).
+- Turning intervals slightly harder (RMSE 16.1 vs 14.5 non-turning, n=307) — weak signal.
+- Yearly confound visible: RMSE 18.6 (2024) / 16.8 (2025) vs 12.5 (2026); higher where
+  exposure_v2 present (15.5) than absent (14.3).
+
+### WS4 family attribution (`family_attribution/`; `family_attribution.py`)
+
+- SHAP: physics 46%, geometry 27% of total |SHAP|; physics dominant-row 90%.
+- Leave-one-in: geometry alone RMSE 14.9, physics alone 15.4 — nearly the full 14.47;
+  behavior/maintenance/operational alone near-dummy (22-24).
+- Drop-family displacement: operational (1.89), maintenance (1.87), exposure_v2 (1.62)
+  move predictions most; physics_v2 least (1.22).
+
+### WS5 ablation (`ablation/`; `ablation.py`)
+
+- LOO (RMSE rise when family removed): maintenance +0.23, operational +0.10,
+  exposure_v2 +0.045; physics_v2 and behavior ≈ 0 / slightly negative.
+- Forward (LightGBM): geometry → exposure_v2 → maintenance → operational reaches
+  14.42 (better than full 14.47); physics_v2/physics overfit if added late.
+- Availability-normalized (LOO delta on present-rows only): exposure_v2 +0.073 (vs
+  +0.045 diluted), confirming its post-2023-only contribution; physics_v2 still ≈0.
+
+### Cross-cutting finding
+
+Geometry + physics (v1.2 features) carry ~all signal; exposure_v2 adds a small real
+increment where available (post-2023), physics_v2 adds ~nothing yet. Under-prediction of
+large wear is the dominant error mode for intervention planning.

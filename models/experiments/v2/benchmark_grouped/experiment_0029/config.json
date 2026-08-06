@@ -1,0 +1,10 @@
+{
+  "phase": "phase2",
+  "workstream": "WS1_benchmark",
+  "protocol": "grouped",
+  "model": "random_forest",
+  "label": "next_interval_dia_delta_mm",
+  "split": "val",
+  "random_state": 1337,
+  "missingness": "family_median+indicators"
+}

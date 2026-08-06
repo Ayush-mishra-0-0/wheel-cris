@@ -1,0 +1,10 @@
+{
+  "phase": "phase2",
+  "workstream": "WS2_interpretability",
+  "model": "lightgbm",
+  "label": "next_interval_dia_delta_mm",
+  "split": "test",
+  "random_state": 42,
+  "missingness": "native_nan",
+  "shap": "TreeExplainer"
+}

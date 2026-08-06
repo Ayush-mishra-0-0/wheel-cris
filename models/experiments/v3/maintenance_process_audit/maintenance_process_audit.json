@@ -1,0 +1,45 @@
+{
+  "source": {
+    "raw_measurements": "data\\bronze\\wheel_measurements.parquet",
+    "timeline": "data\\gold\\wheel_timeline_gold_b.parquet",
+    "jobcards": "data\\bronze\\section_jobcards.parquet"
+  },
+  "turning_flag": {
+    "measurement_rows": 1141282,
+    "turn1_rows": 42492,
+    "turn1_row_rate": 0.037231814748677365,
+    "distinct_turning_equipment_days": 37739,
+    "same_day_duplicate_turning_rows": 4753,
+    "side_agreement_counts": {
+      "turn1_False_turn2_False": 1097516,
+      "turn1_False_turn2_True": 1274,
+      "turn1_True_turn2_False": 1138,
+      "turn1_True_turn2_True": 41354
+    },
+    "next_measurement_pattern_after_turn1": {
+      "followed_by_nonturn": 23285,
+      "followed_by_turn": 15244,
+      "last_measurement": 3963
+    }
+  },
+  "measurement_at_new_turn_flag": {
+    "n_valid_prior_measurement_pairs": 20838,
+    "median_dia_change_mm": -4.0,
+    "mean_dia_change_mm": -4.609978884729821,
+    "share_dia_drop_gt_3mm": 0.5704962088492178,
+    "share_dia_gain_gt_3mm": 0.024042614454362222,
+    "share_abs_change_le_3mm": 0.40546117669642
+  },
+  "fleet_and_jobcard_context": {
+    "turning_equipment_days_with_loco": 4928,
+    "share_co_turned_same_locomotive_day": 0.9776785714285714,
+    "median_wheelsets_turned_same_locomotive_day": 6.0,
+    "share_with_jobcard_same_day": 0.3628246753246753,
+    "share_with_jobcard_within_pm1_day": 0.5965909090909091,
+    "share_with_wheel_term_jobcard_same_day": 0.029829545454545456
+  },
+  "interpretation": {
+    "status": "INSUFFICIENT_TO_CONFIRM_ENGINEERING_TRIGGER",
+    "reason": "The turning flag is a measurement-level outcome. Jobcards are locomotive-level, lack a wheelset key and action/reason code, and creation time is not maintenance completion time."
+  }
+}

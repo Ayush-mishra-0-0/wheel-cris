@@ -1,0 +1,57 @@
+{
+  "source": "data\\bronze\\wheel_measurements.parquet",
+  "global_measurement_end": "2026-07-24T15:59:10.510000",
+  "rows_with_attributable_equipment_and_time": 1141282,
+  "turning_rows": 42492,
+  "distinct_turning_equipment_days": 37739,
+  "turn_flag_gap_buckets": {
+    "31_180d": 14573,
+    "first_turn_for_equipment": 11160,
+    "gt_180d": 9691,
+    "same_day": 4634,
+    "1_7d": 1764,
+    "8_30d": 670
+  },
+  "turn_side_agreement": {
+    "turn1_rows_with_turn2": 41354,
+    "turn1_rows_without_turn2": 1138
+  },
+  "observation_end": {
+    "n_equipment": 109694,
+    "median_days_before_global_end": 94.66609386574073,
+    "share_equipment_last_seen_more_than_365_days_before_global_end": 0.2341057851842398,
+    "share_equipment_last_seen_more_than_30_days_before_global_end": 0.8153682061006071
+  },
+  "horizon_followup": [
+    {
+      "horizon_days": 30,
+      "eligible_states": 988734,
+      "eligible_fraction": 0.8663362779751193,
+      "realized_turning_within_horizon": 22751,
+      "event_rate": 0.023010233288225143
+    },
+    {
+      "horizon_days": 90,
+      "eligible_states": 939210,
+      "eligible_fraction": 0.8229429711499875,
+      "realized_turning_within_horizon": 42441,
+      "event_rate": 0.0451879771297154
+    },
+    {
+      "horizon_days": 180,
+      "eligible_states": 826448,
+      "eligible_fraction": 0.7241400460184249,
+      "realized_turning_within_horizon": 71231,
+      "event_rate": 0.08618933072619209
+    },
+    {
+      "horizon_days": 365,
+      "eligible_states": 605499,
+      "eligible_fraction": 0.5305428456770545,
+      "realized_turning_within_horizon": 89993,
+      "event_rate": 0.14862617444454904
+    }
+  ],
+  "decision": "CENSORING_RULE_NOT_APPROVED",
+  "reason": "Per-equipment last measurement is observable, but may reflect withdrawal, reassignment, or missing capture rather than administrative study end. It cannot be assumed non-informative without owner confirmation."
+}

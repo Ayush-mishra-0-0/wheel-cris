@@ -1,0 +1,46 @@
+{
+  "total_states": 1141282,
+  "distinct_equipment": 109694,
+  "horizons": [
+    {
+      "horizon_days": 30,
+      "eligible_states": 990297,
+      "eligible_fraction": 0.8677057905057646,
+      "events": 24314,
+      "event_rate_of_eligible": 0.024552230290508806,
+      "censored_non_event": 965983,
+      "unknown_followup": 150985,
+      "unknown_fraction": 0.13229420949423543
+    },
+    {
+      "horizon_days": 90,
+      "eligible_states": 942869,
+      "eligible_fraction": 0.826149014879758,
+      "events": 46100,
+      "event_rate_of_eligible": 0.048893324523343114,
+      "censored_non_event": 896769,
+      "unknown_followup": 198413,
+      "unknown_fraction": 0.17385098512024197
+    },
+    {
+      "horizon_days": 180,
+      "eligible_states": 836518,
+      "eligible_fraction": 0.732963456884451,
+      "events": 81301,
+      "event_rate_of_eligible": 0.09718977953851561,
+      "censored_non_event": 755217,
+      "unknown_followup": 304764,
+      "unknown_fraction": 0.26703654311554903
+    },
+    {
+      "horizon_days": 365,
+      "eligible_states": 633225,
+      "eligible_fraction": 0.5548365785143374,
+      "events": 117719,
+      "event_rate_of_eligible": 0.18590390461526313,
+      "censored_non_event": 515506,
+      "unknown_followup": 508057,
+      "unknown_fraction": 0.4451634214856626
+    }
+  ]
+}

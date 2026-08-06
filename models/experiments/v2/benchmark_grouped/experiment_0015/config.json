@@ -1,0 +1,10 @@
+{
+  "phase": "phase2",
+  "workstream": "WS1_benchmark",
+  "protocol": "grouped",
+  "model": "dummy_mean",
+  "label": "next_interval_dia_delta_mm",
+  "split": "val",
+  "random_state": 42,
+  "missingness": "native_nan"
+}

@@ -1,0 +1,46 @@
+{
+  "source": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
+  "total_state_rows": 271350,
+  "horizons": [
+    {
+      "horizon_days": 30,
+      "rows": 271350,
+      "eligible": 243431,
+      "eligible_fraction": 0.8971107425833794,
+      "events": 4960,
+      "event_rate_of_eligible": 0.020375383578919694,
+      "excluded_unknown_followup": 27919,
+      "file": "turn_within_30d.parquet"
+    },
+    {
+      "horizon_days": 90,
+      "rows": 271350,
+      "eligible": 229939,
+      "eligible_fraction": 0.8473889810208218,
+      "events": 9088,
+      "event_rate_of_eligible": 0.03952352580466993,
+      "excluded_unknown_followup": 41411,
+      "file": "turn_within_90d.parquet"
+    },
+    {
+      "horizon_days": 180,
+      "rows": 271350,
+      "eligible": 201999,
+      "eligible_fraction": 0.7444223327805417,
+      "events": 15030,
+      "event_rate_of_eligible": 0.07440630894212348,
+      "excluded_unknown_followup": 69351,
+      "file": "turn_within_180d.parquet"
+    },
+    {
+      "horizon_days": 365,
+      "rows": 271350,
+      "eligible": 146295,
+      "eligible_fraction": 0.5391376451077944,
+      "events": 20054,
+      "event_rate_of_eligible": 0.13707918930927235,
+      "excluded_unknown_followup": 125055,
+      "file": "turn_within_365d.parquet"
+    }
+  ]
+}

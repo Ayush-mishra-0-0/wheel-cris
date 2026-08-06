@@ -1,0 +1,9 @@
+[
+  {
+    "n":73403,
+    "median_abs_delta":2.91,
+    "frac_gt_1mm":0.6345244745,
+    "frac_gt_3mm":0.4675285751,
+    "note":"true 1-day wear ~0.1mm; |delta| here is instrument\/process repeatability noise"
+  }
+]

@@ -6,7 +6,7 @@ The normative architecture contract is
 | Layer | Intended output namespace | Current state |
 | --- | --- | --- |
 | Identity | `data/engineering/identity/` | Business Truth v1.0 is the current source |
-| State | `data/engineering/state/` | Endpoint measurements available through Gold-B timeline |
+| State | `data/engineering/state/` | **FROZEN v1.0** — Wheel Engineering State v1.0 immutable |
 | Exposure | `data/engineering/exposure/` | Duration only; km blocked |
 | Behaviour | `data/engineering/behaviour/` | Inspection Intervals v1.0 released |
 | Degradation | `data/engineering/degradation/` | Blocked pending engineering rules |

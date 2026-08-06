@@ -1,0 +1,205 @@
+{
+  "source": "data\\bronze\\wheel_measurements.parquet",
+  "n_measurements": 1165641,
+  "dimensions": {
+    "diameter": {
+      "status": "MEASURED_READY_WITH_CAVEAT",
+      "meaning": "Tread diameter; unit and range are supported by existing owner constants, but stock/profile applicability remains to be versioned.",
+      "columns": {
+        "wsmDia1": {
+          "nonnull_n": 1162556,
+          "nonnull_pct": 0.9973533875352703,
+          "plausible_range": [
+            1000.0,
+            1100.0
+          ],
+          "plausible_n": 1149631,
+          "plausible_pct_of_nonnull": 0.9888822559945499,
+          "median_plausible": 1074.5
+        },
+        "wsmDia2": {
+          "nonnull_n": 1162557,
+          "nonnull_pct": 0.9973542454323415,
+          "plausible_range": [
+            1000.0,
+            1100.0
+          ],
+          "plausible_n": 1149751,
+          "plausible_pct_of_nonnull": 0.9889846261301597,
+          "median_plausible": 1074.5
+        }
+      }
+    },
+    "flange_thickness": {
+      "status": "MEASURED_READY_WITH_CAVEAT",
+      "meaning": "Direct flange-thickness measurement; no approved intervention limit in the repository.",
+      "columns": {
+        "wsmFlangeThickness1": {
+          "nonnull_n": 1151343,
+          "nonnull_pct": 0.9877337876756223,
+          "plausible_range": [
+            10.0,
+            50.0
+          ],
+          "plausible_n": 1032263,
+          "plausible_pct_of_nonnull": 0.8965729587099587,
+          "median_plausible": 31.5
+        },
+        "wsmFlangeThickness2": {
+          "nonnull_n": 1151349,
+          "nonnull_pct": 0.9877389350580497,
+          "plausible_range": [
+            10.0,
+            50.0
+          ],
+          "plausible_n": 1032258,
+          "plausible_pct_of_nonnull": 0.8965639436869273,
+          "median_plausible": 31.5
+        }
+      }
+    },
+    "root": {
+      "status": "MEASURED_READY_WITH_CAVEAT",
+      "meaning": "Direct root/fillet measurement with repeatability variance; no approved limit.",
+      "columns": {
+        "wsmRoot1": {
+          "nonnull_n": 1162501,
+          "nonnull_pct": 0.9973062031963529,
+          "plausible_range": [
+            0.0,
+            30.0
+          ],
+          "plausible_n": 1162158,
+          "plausible_pct_of_nonnull": 0.9997049464903686,
+          "median_plausible": 1.5
+        },
+        "wsmRoot2": {
+          "nonnull_n": 1162513,
+          "nonnull_pct": 0.9973164979612076,
+          "plausible_range": [
+            0.0,
+            30.0
+          ],
+          "plausible_n": 1162209,
+          "plausible_pct_of_nonnull": 0.9997384975479844,
+          "median_plausible": 1.5
+        }
+      }
+    },
+    "tire_thickness": {
+      "status": "MEASURED_READY_WITH_CAVEAT",
+      "meaning": "Measured tire-thickness field; convention and coupling to diameter remain unapproved.",
+      "columns": {
+        "wsmTireThikness1": {
+          "nonnull_n": 1142589,
+          "nonnull_pct": 0.980223756714117,
+          "plausible_range": [
+            5.0,
+            100.0
+          ],
+          "plausible_n": 1046425,
+          "plausible_pct_of_nonnull": 0.9158367531982191,
+          "median_plausible": 56.5
+        },
+        "wsmTireThikness2": {
+          "nonnull_n": 1142589,
+          "nonnull_pct": 0.980223756714117,
+          "plausible_range": [
+            5.0,
+            100.0
+          ],
+          "plausible_n": 1046514,
+          "plausible_pct_of_nonnull": 0.915914646473929,
+          "median_plausible": 56.51
+        }
+      }
+    },
+    "wheel_gauge": {
+      "status": "MEASURED_WHEELSET_CONTEXT",
+      "meaning": "Likely wheelset/back-to-back assembly geometry, not a per-wheel wear measure.",
+      "columns": {
+        "wsmWheelGauge1": {
+          "nonnull_n": 1161483,
+          "nonnull_pct": 0.9964328639778457,
+          "plausible_range": [
+            1300.0,
+            1700.0
+          ],
+          "plausible_n": 1126462,
+          "plausible_pct_of_nonnull": 0.9698480304920519,
+          "median_plausible": 1596.0
+        },
+        "wsmWheelGauge2": {
+          "nonnull_n": 1160463,
+          "nonnull_pct": 0.995557808965196,
+          "plausible_range": [
+            1300.0,
+            1700.0
+          ],
+          "plausible_n": 1124503,
+          "plausible_pct_of_nonnull": 0.9690123683391888,
+          "median_plausible": 1596.0
+        }
+      }
+    },
+    "flange_unknown": {
+      "status": "SEMANTICS_BLOCKED",
+      "meaning": "Physical meaning is unresolved: possible flange height, code, or legacy field.",
+      "columns": {
+        "wsmFlange1": {
+          "nonnull_n": 1162562,
+          "nonnull_pct": 0.9973585349176977,
+          "plausible_range": null,
+          "median_nonnull": 0.5
+        },
+        "wsmFlange2": {
+          "nonnull_n": 1162562,
+          "nonnull_pct": 0.9973585349176977,
+          "plausible_range": null,
+          "median_nonnull": 0.5
+        }
+      }
+    },
+    "tread_unknown": {
+      "status": "SEMANTICS_BLOCKED",
+      "meaning": "Likely tread/hollow measurement, but physical definition and direction are unresolved.",
+      "columns": {
+        "wsmThread1": {
+          "nonnull_n": 1162547,
+          "nonnull_pct": 0.9973456664616293,
+          "plausible_range": null,
+          "median_nonnull": 0.5
+        },
+        "wsmThread2": {
+          "nonnull_n": 1162547,
+          "nonnull_pct": 0.9973456664616293,
+          "plausible_range": null,
+          "median_nonnull": 0.5
+        }
+      }
+    },
+    "profile_parameters_unknown": {
+      "status": "SEMANTICS_BLOCKED",
+      "meaning": "Potential profile parameters; QR relationship is unconfirmed.",
+      "columns": {
+        "wsmKvalue1": {
+          "nonnull_n": 1133110,
+          "nonnull_pct": 0.9720917503759734,
+          "plausible_range": null,
+          "median_nonnull": 0.0
+        },
+        "wsmSDistance1": {
+          "nonnull_n": 1131178,
+          "nonnull_pct": 0.9704342932343664,
+          "plausible_range": null,
+          "median_nonnull": 0.0
+        }
+      }
+    }
+  },
+  "event_context": {
+    "turn1_rows": 45902,
+    "turn1_rate": 0.039379191363378606,
+    "skid_turn1_nonzero_rows": 55
+  }
+}
