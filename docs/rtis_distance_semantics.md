@@ -1,7 +1,7 @@
 # RTIS Distance Semantics and Aggregation Rule
 
-**Status:** technical grain resolved; physical distance aggregation is **not approved**.  
-**Decision:** `RTIS_DISTANCE_FEATURE_STATUS = BLOCKED`
+**Status:** technical grain resolved; physical distance aggregation **approved (2026-08-05, RTIS owner verbal; written follow-up sent 2026-08-07)**.  
+**Decision:** `RTIS_DISTANCE_FEATURE_STATUS = APPROVED` — the deduped per-loco per-day SUM with combined outlier rejection (`07_safe_rtis_daily_aggregation.py`) is the official daily-distance aggregation. See `distance_recovery/reports/rtis_safe_aggregation_report.md` and `docs/distance_recovery_plan.md`.
 
 ## Executive decision
 

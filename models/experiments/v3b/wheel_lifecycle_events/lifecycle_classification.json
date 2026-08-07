@@ -1,0 +1,12 @@
+{
+  "total_transitions": 1031581,
+  "counts": {
+    "WEAR": 715895,
+    "TURNING": 266497,
+    "REPLACEMENT": 37507,
+    "ANOMALY": 11682
+  },
+  "equipment_with_replacement": 27202,
+  "equipment_with_turning": 76740,
+  "equipment_with_anomaly": 9381
+}
