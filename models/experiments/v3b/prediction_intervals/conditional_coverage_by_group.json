@@ -1,0 +1,32 @@
+[
+  {
+    "dimension": "wsmDia",
+    "target_coverage": 0.8,
+    "actual_coverage": 0.8566,
+    "mean_width_mm": 11.041,
+    "turning_coverage": 0.852,
+    "turning_n": 7147,
+    "normal_coverage": 0.8574,
+    "normal_n": 41527
+  },
+  {
+    "dimension": "wsmFlangeThickness",
+    "target_coverage": 0.8,
+    "actual_coverage": 0.7916,
+    "mean_width_mm": 2.57,
+    "turning_coverage": 0.8198,
+    "turning_n": 7147,
+    "normal_coverage": 0.7867,
+    "normal_n": 41527
+  },
+  {
+    "dimension": "wsmRoot",
+    "target_coverage": 0.8,
+    "actual_coverage": 0.8636,
+    "mean_width_mm": 2.473,
+    "turning_coverage": 0.8676,
+    "turning_n": 7147,
+    "normal_coverage": 0.8628,
+    "normal_n": 41509
+  }
+]

@@ -1,0 +1,29 @@
+{
+  "model": "xgboost calibrated (isotonic), 90d maintenance risk",
+  "train_states": 183952,
+  "calibration_states": 45987,
+  "latest_wheels_scored": 19167,
+  "test_metrics": {
+    "pre_calibration": {
+      "pr_auc": 0.3422,
+      "roc_auc": 0.8764,
+      "brier": 0.0307
+    },
+    "post_calibration": {
+      "brier": 0.0291,
+      "pos_rate": 0.03788027051123143
+    }
+  },
+  "risk_bucket_counts": {
+    "LOW_RISK": 14598,
+    "MEDIUM_RISK": 3348,
+    "ELEVATED_RISK": 612,
+    "HIGH_RISK": 609
+  },
+  "learned_health": {
+    "median": 99.32,
+    "q25": 97.82,
+    "q75": 99.32
+  },
+  "note": "Learned health index = 100*(1 - calibrated P(turning within 90d)). Calibrated on held-out chronological period. Coexists with rule-based health_index; the learned one is empirically anchored to outcomes."
+}

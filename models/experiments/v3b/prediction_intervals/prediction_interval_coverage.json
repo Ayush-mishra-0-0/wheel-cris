@@ -1,0 +1,29 @@
+{
+  "wsmDia": {
+    "n_test": 48674,
+    "empirical_coverage": 0.8566,
+    "target_coverage": 0.8,
+    "coverage_gap_pts": 0.0566,
+    "mean_interval_width_mm": 11.0415,
+    "p90_interval_width_mm": 18.4217,
+    "mean_abs_error_point": 4.4705
+  },
+  "wsmFlangeThickness": {
+    "n_test": 48674,
+    "empirical_coverage": 0.7916,
+    "target_coverage": 0.8,
+    "coverage_gap_pts": -0.0084,
+    "mean_interval_width_mm": 2.5702,
+    "p90_interval_width_mm": 6.4778,
+    "mean_abs_error_point": 1.0898
+  },
+  "wsmRoot": {
+    "n_test": 48656,
+    "empirical_coverage": 0.8636,
+    "target_coverage": 0.8,
+    "coverage_gap_pts": 0.0636,
+    "mean_interval_width_mm": 2.4734,
+    "p90_interval_width_mm": 3.1483,
+    "mean_abs_error_point": 0.7121
+  }
+}

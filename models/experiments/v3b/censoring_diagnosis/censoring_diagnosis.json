@@ -1,0 +1,28 @@
+{
+  "global_measurement_end": "2026-07-24",
+  "sync_lag_days": 13,
+  "cadence_factor": 2.0,
+  "equipment_total": 109694,
+  "share_last_seen_within_30d_of_end": 0.19,
+  "cause_counts": {
+    "ACTIVE_AT_END": 50383,
+    "LIKELY_ENDED": 50018,
+    "SYNC_LAG": 9293
+  },
+  "cause_pct": {
+    "ACTIVE_AT_END": 45.9,
+    "LIKELY_ENDED": 45.6,
+    "SYNC_LAG": 8.5
+  },
+  "over30_subset_count": 88836,
+  "over30_cause_counts": {
+    "LIKELY_ENDED": 48380,
+    "ACTIVE_AT_END": 40456
+  },
+  "over30_cause_pct": {
+    "LIKELY_ENDED": 54.5,
+    "ACTIVE_AT_END": 45.5
+  },
+  "median_inspection_gap_days": 75.0,
+  "p90_inspection_gap_days": 143.0
+}

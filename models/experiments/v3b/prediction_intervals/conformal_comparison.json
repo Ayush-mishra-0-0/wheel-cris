@@ -1,0 +1,77 @@
+{
+  "wsmDia": {
+    "n_train": 145922,
+    "n_cal": 48674,
+    "n_test": 48676,
+    "methods": {
+      "plain_quantile": {
+        "coverage": 0.845,
+        "mean_width_mm": 12.2573,
+        "p90_width_mm": 19.946,
+        "conformal_shift_mm": 0.0
+      },
+      "cqr_quantile": {
+        "coverage": 0.9317,
+        "mean_width_mm": 13.2898,
+        "p90_width_mm": 20.9785,
+        "conformal_shift_mm": 0.5162
+      },
+      "cqr_mean": {
+        "coverage": 0.9136,
+        "mean_width_mm": 13.2919,
+        "p90_width_mm": 13.2919,
+        "conformal_shift_mm": 6.646
+      }
+    }
+  },
+  "wsmFlangeThickness": {
+    "n_train": 136328,
+    "n_cal": 48668,
+    "n_test": 48676,
+    "methods": {
+      "plain_quantile": {
+        "coverage": 0.8008,
+        "mean_width_mm": 2.9817,
+        "p90_width_mm": 8.274,
+        "conformal_shift_mm": 0.0
+      },
+      "cqr_quantile": {
+        "coverage": 0.9113,
+        "mean_width_mm": 3.1928,
+        "p90_width_mm": 8.4851,
+        "conformal_shift_mm": 0.1056
+      },
+      "cqr_mean": {
+        "coverage": 0.8449,
+        "mean_width_mm": 3.3399,
+        "p90_width_mm": 3.3399,
+        "conformal_shift_mm": 1.67
+      }
+    }
+  },
+  "wsmRoot": {
+    "n_train": 146019,
+    "n_cal": 48562,
+    "n_test": 48658,
+    "methods": {
+      "plain_quantile": {
+        "coverage": 0.8647,
+        "mean_width_mm": 2.5199,
+        "p90_width_mm": 3.175,
+        "conformal_shift_mm": 0.0
+      },
+      "cqr_quantile": {
+        "coverage": 0.9354,
+        "mean_width_mm": 2.8265,
+        "p90_width_mm": 3.4816,
+        "conformal_shift_mm": 0.1533
+      },
+      "cqr_mean": {
+        "coverage": 0.9082,
+        "mean_width_mm": 2.8921,
+        "p90_width_mm": 2.8921,
+        "conformal_shift_mm": 1.446
+      }
+    }
+  }
+}
