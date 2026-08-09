@@ -395,7 +395,7 @@ def main() -> None:
                       "defect_zone", "wheel_profile_2class"]:
         g = wes.loc[ev, group_col].astype(str)
         strata = {}
-        for val in sorted(g.unique()):
+        for val in sorted(g.unique(), key=str):
             sel = (g == val).to_numpy()
             n = int(sel.sum())
             if n < 1:
