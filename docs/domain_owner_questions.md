@@ -89,8 +89,27 @@ per-wheel manufacture dates. Coverage will be ~58% (EmrDoR) — a wheel-age feat
 - Turning preserves identity at the equipment level (7,368 equipment with ≥2 turnings on the
   same id). Register join `wsmWRId = LwrId` matches 99.98% of WAP7 interval endpoints.
 
+## Q8 — `wsmRoot1/2` and `wsmThread1/2`: defect-measurement semantics ✅ CONFIRMED
+
+**Owner answer (2026-08-08):** `wsmRoot` and `wsmThread` are **direct defect-severity
+measurements** on the wheel — root wear depth and tread (hollow/defect) depth. **3 mm is the
+maximum / condemning value; lower is better.** The same 3 mm limit applies to both fields.
+
+**Consequences:**
+
+- Both are **lower-is-better** defect measures (0 = no defect, 3 = at condemning limit). They are
+  **direct measured dimensions** (consistent with Q2/Q4 for root), not cumulative since-turning
+  indices.
+- Margin-to-condemning is now computable: `root_margin = 3.0 - wsmRoot`, `tread_margin = 3.0 - wsmThread`.
+  A negative margin means the wheel is **beyond the condemning limit** (defect present).
+- This **unblocks** the root/tread endpoint-delta and margin features in the candidate matrix
+  (A4, A6) and the root/tread contribution to the wheel health index, subject to the
+  unit/mm confirmation already applied across degradation fields.
+- `next_interval_large_loss_flag` (root delta <= -1.0 mm, label spec v1.0.1) remains valid:
+  a root drop toward 0 is consistent with a replacement/defect-reset event.
+
 ---
 
-**Status:** all seven questions closed. No further domain-owner input is required to build the
-turning (`days_since_turning`), root-wear (direct-depth), diameter (decrease-at-turning) and
-wheel-age (EmrDoR-anchored) features.
+**Status:** all eight questions closed. No further domain-owner input is required to build the
+turning (`days_since_turning`), root-wear (direct-depth), tread/root (defect-depth, 3 mm limit),
+diameter (decrease-at-turning) and wheel-age (EmrDoR-anchored) features.

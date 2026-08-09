@@ -1,0 +1,57 @@
+{
+  "dataset": "forecast_horizon_benchmark_pairs",
+  "version": "1.0.0",
+  "inputs": {
+    "v3c_pairs": "model_datasets\\v3c\\clean_benchmark_pairs.parquet",
+    "v3c_pairs_sha256": "2cf5e1615a951d37756db7f0a0412ea5375a57dc5b6452e24209c4d2be19f13e",
+    "v3c_cohort": "model_datasets\\v3c\\clean_benchmark_cohort.parquet",
+    "v3c_cohort_sha256": "fc746e22ce9f37f9cab5f6c38010049c4ba67c038b5a2b3448125fe8f133239e",
+    "ledger": "data\\gold\\engineering_event_ledger\\v1.0\\engineering_event_ledger.parquet",
+    "ledger_sha256": "fe0b32619743f0a82bd7be125f53fffa73e9219ff8e53035ec9ae8bde2642868"
+  },
+  "output_sha256": "08a1a97d89269257bc8104df0bfbd45f1a886dff8ffd66ae46d1c7551e858114",
+  "rows": 239684,
+  "equipment": 16050,
+  "within_lifecycle_rows": 239684,
+  "band_counts": {
+    "30d": 38060,
+    "60d": 27055,
+    "90d": 43046,
+    "180d": 4948,
+    "365d": 830,
+    "other": 125745
+  },
+  "replacement_before_counts": {
+    "replacement_before_30d": 237,
+    "replacement_before_60d": 744,
+    "replacement_before_90d": 1745,
+    "replacement_before_180d": 6273,
+    "replacement_before_365d": 16908
+  },
+  "row_identity_col": "measurement_record_id",
+  "horizon_windows": {
+    "30": [
+      20,
+      45
+    ],
+    "60": [
+      45,
+      80
+    ],
+    "90": [
+      70,
+      120
+    ],
+    "180": [
+      140,
+      240
+    ],
+    "365": [
+      300,
+      450
+    ]
+  },
+  "banding_algorithm": "nearest nominal horizon; tie broken to smaller window; unresolved rows -> other (train-only)",
+  "replacement_before_horizon": "Event Ledger CONFIRMED+LIKELY replacement inside (measurement_time, measurement_time+H]; censoring flag, no row drop",
+  "distance": "native NaN preserved + distance_available flag; no imputation"
+}

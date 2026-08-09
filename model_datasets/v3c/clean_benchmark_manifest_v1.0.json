@@ -1,0 +1,26 @@
+{
+  "dataset": "clean_benchmark_pairs",
+  "version": "1.0.0",
+  "inputs": {
+    "v3b_pairs": "model_datasets\\v3b\\degradation_pairs.parquet",
+    "v3b_pairs_sha256": "f7eb31e483071c851a1b40b58a574425bcf355f46f9c737db00d15b3c397c744",
+    "ledger": "data\\gold\\engineering_event_ledger\\v1.0\\engineering_event_ledger.parquet",
+    "ledger_sha256": "fe0b32619743f0a82bd7be125f53fffa73e9219ff8e53035ec9ae8bde2642868",
+    "exposure_v2": "model_datasets\\v2\\exposure_features_v2.parquet",
+    "exposure_v2_sha256": "74aaf1bf49c49a69cf9743980d6a2a8cb8e4da7c6f3abcb86cc70f2bb3649631"
+  },
+  "output_sha256": "2cf5e1615a951d37756db7f0a0412ea5375a57dc5b6452e24209c4d2be19f13e",
+  "rows": 252183,
+  "equipment": 16152,
+  "within_lifecycle_rows": 239684,
+  "crosses_reset_rows": 8810,
+  "crosses_replacement_rows": 3749,
+  "distance_available_rows": 126722,
+  "distance_coverage_pct": 50.25,
+  "lifecycle_segments": 7,
+  "row_identity_col": "measurement_record_id",
+  "within_lifecycle_definition": "~crosses_reset AND ~crosses_replacement",
+  "replacement_source": "Event Ledger CONFIRMED+LIKELY replacement only; ANOMALY/UNKNOWN never coerced into boundaries",
+  "distance_source": "approved interval_distance_km (RTIS owner-signed 2026-08-05); native NaN preserved + distance_available flag, no imputation",
+  "replacement_before_horizon": "added at consumption time per horizon (not precomputed here)"
+}

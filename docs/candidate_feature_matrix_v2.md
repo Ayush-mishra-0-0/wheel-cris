@@ -19,9 +19,9 @@
 | 1 | Interval duration (days) | `interval_start/end_timestamp` | 225,262 intervals | ✅ RELEASED |
 | 2 | Raw endpoint diameter change | `wsmDia1/wsmDia2` endpoint diff | 100% both sides | ✅ RELEASED (caveat) |
 | 3 | Flange-thickness endpoint change | `wsmFlangeThickness1/2` | 99.99% | 🟢 buildable |
-| 4 | Root-wear endpoint change | `wsmRoot1/2` | ⚠️ semantics unresolved (§7.3) | 🟡 pending domain decision |
+| 4 | Root-wear endpoint change | `wsmRoot1/2` | ✅ semantics resolved (Q8: direct defect depth, 3 mm max, lower better) | 🟢 buildable |
 | 5 | Wheel-gauge endpoint change | `wsmWheelGauge1/2` | present | 🟢 buildable |
-| 6 | Tire-thickness / thread change | `wsmTireThikness1/2`, `wsmThread1/2` | present | 🟢 buildable |
+| 6 | Tire-thickness / thread change | `wsmTireThikness1/2`, `wsmThread1/2` | ✅ tread resolved (Q8: defect depth, 3 mm max, lower better); tire-thickness unit caveat | 🟢 buildable |
 | 7 | Skid-turn source flag | `wsmSkidTurn1/2` | ~2% flagged | 🟢 buildable (caveat) |
 | 8 | Measurement analysis flag | `wsmWheelAnalysisFlag` | 0/1/2 | 🟢 buildable (metadata) |
 | 9 | Prior-measurement diff fields | `wsmPrvDia1/2`, `wsmDateDiff` | present | 🟢 buildable (metadata) |
@@ -85,6 +85,8 @@
    with `wheel_age_date_source`; negatives excluded by the at-or-before-interval-end rule.
 4. **C19–C20 (abnormal/failure events)** — needs event-code mapping at join time.
 5. **A3–A9 (geometry deltas)** — add after the measurement-unit/sign decision for each field.
+   **A4/A6 (root/tread) unblocked (Q8, 2026-08-08):** direct defect depth, 3 mm max, lower-is-better;
+   compute endpoint deltas and `margin = 3.0 - value` (negative = beyond condemning).
 
 ## Immediate confirmation needed from the user
 
