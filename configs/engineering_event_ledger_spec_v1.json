@@ -1,0 +1,121 @@
+{
+  "specification_id": "engineering-event-ledger",
+  "specification_version": "1.0.0",
+  "as_of_date": "2026-08-08",
+  "platform": "Railway Wheel Engineering Intelligence Platform",
+  "governance": {
+    "artifact": "data/gold/engineering_event_ledger/v1.0/engineering_event_ledger.parquet",
+    "grain": "one detected lifecycle / maintenance event per mounted position (wheelset_equipment_id)",
+    "point_in_time_rule": "Event detection uses only source facts with business time at or before the event measurement timestamp; no look-ahead across the event boundary.",
+    "no_single_signal_authority": "No lifecycle boundary is forced on a single signal. CONFIRMED replacement requires persistent diameter jump AND at least one independent corroborator.",
+    "source_of_truth": "Detection rules and taxonomy are governed by this specification; consumption semantics are docs/phase3c_plan.md Stage A."
+  },
+  "event_taxonomy": [
+    {
+      "event_type": "replacement",
+      "definition": "New physical wheel installed; persistent upward diameter jump (delta > +10 mm sustained >= 2 subsequent inspections)",
+      "confidence_states": ["CONFIRMED", "LIKELY"],
+      "is_lifecycle_boundary": true
+    },
+    {
+      "event_type": "turning",
+      "definition": "Material removed on lathe (wsmturning1 == 1 owner-confirmed)",
+      "confidence_states": ["RECORDED"],
+      "is_lifecycle_boundary": true
+    },
+    {
+      "event_type": "anomaly",
+      "definition": "Spurious measurement; diameter jump reverts within 1 inspection",
+      "confidence_states": ["ANOMALY"],
+      "is_lifecycle_boundary": false
+    },
+    {
+      "event_type": "unknown",
+      "definition": "Upward diameter change (delta > +3 mm) that persists but cannot be confidently resolved as a replacement (unresolved physical/lifecycle evidence). Quarantined from lifecycle-boundary claims but retained for investigation.",
+      "confidence_states": ["UNKNOWN"],
+      "is_lifecycle_boundary": false
+    }
+  ],
+  "detection_rules": {
+    "trajectory_driven": "Classification is driven by the diameter trajectory (does an upward change persist or revert?), not by the presence of metadata flags.",
+    "downward_change": "delta <= +3 mm is treated as normal within-segment wear / measurement variation and NEVER emits an event, even when wsmWheelAnalysisFlag==2 or wsmProvDate changes. Raw evidence is preserved in the evidence table.",
+    "upward_bands": {
+      "small_increase": "0 < delta <= +3 mm -> measurement variation, no event",
+      "ambiguous": "+3 < delta <= +10 mm -> investigate: persists >= 2 inspections -> UNKNOWN; reverts within 1 inspection -> ANOMALY",
+      "strong_jump": "delta > +10 mm -> replacement candidate: persists -> CONFIRMED/LIKELY; reverts -> ANOMALY; unverified -> UNKNOWN"
+    },
+    "primary_physical_signal": {
+      "name": "persistent_jump",
+      "formula": "dia_i - dia_prev > +10 mm AND number of subsequent inspections within +-5 mm of the post-jump level >= 2",
+      "diameter_source": "wsmDia1 preferred, else wsmDia2, restricted to plausibility window [1000, 1100] mm",
+      "persistence_band_mm": 5.0,
+      "jump_threshold_mm": 10.0,
+      "min_persistence": 2,
+      "variation_floor_mm": 3.0
+    },
+    "new_wheel_diameter_reference": {
+      "source": "data/bronze/loco_types.parquet LotWheelDiaNew resolved via LocoType",
+      "rule": "No global constant. The expected near-new wheel diameter is derived per locomotive type; a persistent upward jump that lands within +-10 mm of LotWheelDiaNew is a strong independent corroborator (signal: near_new_wheel_diameter).",
+      "near_new_band_mm": 10.0
+    },
+    "corroborators": [
+      {
+        "signal": "analysis_flag_2",
+        "source": "wsmWheelAnalysisFlag == 2 at the post-jump measurement",
+        "role": "evidence only; never automatic replacement"
+      },
+      {
+        "signal": "provision_change",
+        "source": "wsmProvDate differs from the previous inspection on the same position",
+        "role": "corroboration only"
+      },
+      {
+        "signal": "near_new_wheel_diameter",
+        "source": "post-jump diameter within +-10 mm of the locomotive type's LotWheelDiaNew",
+        "role": "independent physical corroborator (derived from geometry vs stock, not from metadata flags)"
+      }
+    ],
+    "classification": [
+      "delta <= +3 mm -> normal wear / variation, no event (regardless of flag2/provision)",
+      "ambiguous band + persists -> UNKNOWN (unresolved potential boundary)",
+      "ambiguous band + reverts within 1 inspection -> ANOMALY",
+      "strong jump + persists + >=1 corroborator (flag2 / provision / near_new_wheel) -> CONFIRMED replacement",
+      "strong jump + persists + no corroborator -> LIKELY replacement",
+      "strong jump + reverts within 1 inspection -> ANOMALY",
+      "strong jump + unverified, but a second upward transition lands within +-10 mm of the type's LotWheelDiaNew within the next 3 inspections -> UNKNOWN (sequential_replacement; unresolved research class, NOT forced to CONFIRMED)",
+      "strong jump + unverified (no persistence/reversion/sequential signal observable) -> UNKNOWN (unverified_jump)",
+      "wsmturning1 == 1 -> RECORDED turning event"
+    ],
+    "confidence_score_mapping": {
+      "CONFIRMED": 0.99,
+      "LIKELY": 0.8,
+      "RECORDED": 1.0,
+      "ANOMALY": 0.35,
+      "UNKNOWN": 0.15
+    },
+    "event_timestamp": "measurement_timestamp of the post-event measurement (wsmUpdatedOn resolved by Silver)"
+  },
+  "output_schema": {
+    "position_id": "int64 wheelset_equipment_id (wsmEquipmentId resolved)",
+    "event_date": "datetime64[ns] timestamp of the post-event measurement",
+    "event_type": "replacement | turning | anomaly | unknown",
+    "confidence": "CONFIRMED | LIKELY | RECORDED | ANOMALY | UNKNOWN",
+    "confidence_score": "float in (0, 1] per confidence_score_mapping",
+    "old_dia": "float pre-event diameter (mm)",
+    "new_dia": "float post-event diameter (mm)",
+    "persistence": "int count of verified subsequent inspections at the new level",
+    "loco_id": "int64 locomotive_id resolved via Business Truth v1.0 when available",
+    "signals": "list[str] corroborating signals that fired",
+    "is_lifecycle_boundary": "bool whether the event starts a new lifecycle segment"
+  },
+  "validation_rules": [
+    "event_type and confidence are within the enumerated taxonomy",
+    "CONFIRMED requires both persistent_jump and >=1 corroborator (never single-signal)",
+    "ANOMALY / UNKNOWN events set is_lifecycle_boundary=false",
+    "position_id and event_date are non-null",
+    "signals is a subset of {persistent_jump, analysis_flag_2, provision_change, near_new_wheel_diameter, transient_jump, ambiguous_upward_persist, ambiguous_upward_unverified, sequential_replacement, unverified_jump, owner_recorded_turning_flag}",
+    "manifest SHA256 recorded; inputs pinned by SHA256",
+    "delta <= +3 mm never emits an event, even with flag2/provision evidence"
+  ],
+  "release_status": "PENDING_3C_A"
+}

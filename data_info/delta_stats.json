@@ -1,0 +1,146 @@
+{
+  "wsmDia1": {
+    "count": 1031574,
+    "positive": 94164,
+    "negative": 528828,
+    "zero": 408582,
+    "positive_pct": 9.13,
+    "negative_pct": 51.26,
+    "zero_pct": 39.61
+  },
+  "wsmDia2": {
+    "count": 1031576,
+    "positive": 94518,
+    "negative": 528797,
+    "zero": 408261,
+    "positive_pct": 9.16,
+    "negative_pct": 51.26,
+    "zero_pct": 39.58
+  },
+  "wsmFlange1": {
+    "count": 1031586,
+    "positive": 351351,
+    "negative": 274930,
+    "zero": 405305,
+    "positive_pct": 34.06,
+    "negative_pct": 26.65,
+    "zero_pct": 39.29
+  },
+  "wsmFlange2": {
+    "count": 1031586,
+    "positive": 352585,
+    "negative": 275825,
+    "zero": 403176,
+    "positive_pct": 34.18,
+    "negative_pct": 26.74,
+    "zero_pct": 39.08
+  },
+  "wsmRoot1": {
+    "count": 1031482,
+    "positive": 466693,
+    "negative": 293973,
+    "zero": 270816,
+    "positive_pct": 45.24,
+    "negative_pct": 28.5,
+    "zero_pct": 26.26
+  },
+  "wsmRoot2": {
+    "count": 1031494,
+    "positive": 466570,
+    "negative": 294351,
+    "zero": 270573,
+    "positive_pct": 45.23,
+    "negative_pct": 28.54,
+    "zero_pct": 26.23
+  },
+  "wsmThread1": {
+    "count": 1031566,
+    "positive": 316703,
+    "negative": 193955,
+    "zero": 520908,
+    "positive_pct": 30.7,
+    "negative_pct": 18.8,
+    "zero_pct": 50.5
+  },
+  "wsmThread2": {
+    "count": 1031566,
+    "positive": 316359,
+    "negative": 194069,
+    "zero": 521138,
+    "positive_pct": 30.67,
+    "negative_pct": 18.81,
+    "zero_pct": 50.52
+  },
+  "wsmWheelGauge1": {
+    "count": 1030795,
+    "positive": 218916,
+    "negative": 198365,
+    "zero": 613514,
+    "positive_pct": 21.24,
+    "negative_pct": 19.24,
+    "zero_pct": 59.52
+  },
+  "wsmWheelGauge2": {
+    "count": 1029754,
+    "positive": 218837,
+    "negative": 197665,
+    "zero": 613252,
+    "positive_pct": 21.25,
+    "negative_pct": 19.2,
+    "zero_pct": 59.55
+  },
+  "wsmFlangeThickness1": {
+    "count": 1024294,
+    "positive": 262380,
+    "negative": 313106,
+    "zero": 448808,
+    "positive_pct": 25.62,
+    "negative_pct": 30.57,
+    "zero_pct": 43.82
+  },
+  "wsmFlangeThickness2": {
+    "count": 1024303,
+    "positive": 262902,
+    "negative": 313476,
+    "zero": 447925,
+    "positive_pct": 25.67,
+    "negative_pct": 30.6,
+    "zero_pct": 43.73
+  },
+  "wsmTireThikness1": {
+    "count": 1016039,
+    "positive": 84500,
+    "negative": 481789,
+    "zero": 449750,
+    "positive_pct": 8.32,
+    "negative_pct": 47.42,
+    "zero_pct": 44.27
+  },
+  "wsmTireThikness2": {
+    "count": 1016039,
+    "positive": 84811,
+    "negative": 481617,
+    "zero": 449611,
+    "positive_pct": 8.35,
+    "negative_pct": 47.4,
+    "zero_pct": 44.25
+  },
+  "wsmAxelDia1": {
+    "count": 998460,
+    "positive": 876,
+    "negative": 1353,
+    "zero": 996231,
+    "positive_pct": 0.09,
+    "negative_pct": 0.14,
+    "zero_pct": 99.78
+  },
+  "wsmAxelDia2": {
+    "count": 998465,
+    "positive": 618,
+    "negative": 1054,
+    "zero": 996793,
+    "positive_pct": 0.06,
+    "negative_pct": 0.11,
+    "zero_pct": 99.83
+  }
+}

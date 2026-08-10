@@ -1,0 +1,19 @@
+{
+  "dataset": "forecast_information_ladder",
+  "version": "1.0.0",
+  "inputs": {
+    "v3d": "model_datasets\\v3d\\forecast_horizon_benchmark_pairs.parquet",
+    "wes": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
+    "exposure": "model_datasets\\v2\\exposure_features_v2.parquet",
+    "ledger": "data\\gold\\engineering_event_ledger\\v1.0\\engineering_event_ledger.parquet"
+  },
+  "output_sha256": "0042d3744240820af7ce39f1bfd19eb3bf20651221dfae3eae23bcd7782e0830",
+  "rows": 239684,
+  "trajectory_windows": [
+    30,
+    90,
+    180
+  ],
+  "point_in_time": "history strictly < t; segment censored at last replacement",
+  "missingness": "NaN + availability flags; no imputation"
+}

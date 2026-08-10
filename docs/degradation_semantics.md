@@ -112,13 +112,13 @@ degradation_delta = end_value - start_value
 
 | Attribute | Value |
 |-----------|-------|
-| **Physical Meaning** | Wear at the wheel-root/fillet area. **RESOLVED (2026-08-03): direct measured depth/width with measurement variance — NOT a cumulative since-turning index.** Evidence: 38.8% of root changes on 64,729 long-history equipment are decreases (420,487 up→down flips); root resets to ~0 at provision changes (73.8%) = replacement, only 7.5% at flagged turning. |
+| **Physical Meaning** | Wear at the wheel-root/fillet area. **RESOLVED (2026-08-03): direct measured depth/width with measurement variance — NOT a cumulative since-turning index.** Evidence: 38.8% of root changes on 64,729 long-history equipment are decreases (420,487 up→down flips); root resets to ~0 at provision changes (73.8%) = replacement, only 7.5% at flagged turning. **RESOLVED (2026-08-08, Q8): direct defect-severity measurement; 3 mm = maximum/condemning value, lower is better.** |
 | **Expected Degradation Direction** | **Increases** with wear (root radius deepens/width grows); noisy, may decrease on re-measurement. |
 | **Observed Delta Evidence** | n=1,031,482. **Positive** (increase): 45.24%. **Negative**: 28.50%. **Zero**: 26.26%. Predominantly increasing; the negative tail is measurement variance + replacement resets, not cumulative resets. |
 | **Possible Intervention Effects** | Turning reduces root only modestly (~1.0, and in 24% of cases root *increases* at turning rows — direct-depth noise). **Replacement resets root to ~0.** |
-| **Required Engineering Confirmations** | 1. Unit (mm?). 2. Condemning/limit value. (Direct-vs-cumulative resolved.) |
-| **Safe Derived Calculations** | Raw delta (`end - start`) as **direct root-depth change**; treat replacement resets (provision-change) as boundaries, not wear. |
-| **Unsafe/Blocked Calculations** | Wear rate per distance. Any cumulative-since-turning index. Health score contribution. |
+| **Required Engineering Confirmations** | 1. Unit is mm (confirmed 2026-08-08). 2. Condemning/limit value = **3 mm** (confirmed 2026-08-08); lower is better; root > 3 mm = beyond condemning. (Direct-vs-cumulative resolved.) |
+| **Safe Derived Calculations** | Raw delta (`end - start`) as **direct root-depth change**; treat replacement resets (provision-change) as boundaries, not wear. **Margin-to-condemning now computable:** `root_margin = 3.0 - wsmRoot` (negative = beyond condemning). |
+| **Unsafe/Blocked Calculations** | Wear rate per distance. Any cumulative-since-turning index. |
 | **Dependencies Before Release** | `wear_rate_mm_per_day` blocked on (a) approved wear dimensions, (b) turning reset rule. |
 
 ---
@@ -127,14 +127,14 @@ degradation_delta = end_value - start_value
 
 | Attribute | Value |
 |-----------|-------|
-| **Physical Meaning** | Likely tread hollow depth or tread wear measurement. Field name `wsmThread` likely means "tread". |
-| **Expected Degradation Direction** | **Requires confirmation** — hollow tread typically **increases** with wear. |
+| **Physical Meaning** | Tread defect/hollow depth. **RESOLVED (2026-08-08, Q8): direct defect-severity measurement; 3 mm = maximum/condemning value, lower is better.** Field name `wsmThread` = "tread". |
+| **Expected Degradation Direction** | **Increases** with wear (hollow tread deepens with wear). |
 | **Observed Delta Evidence** | n=1,031,566. **Positive**: 30.70%. **Negative**: 18.80%. **Zero**: 50.50%. High zero rate suggests many inspections don't record this or it's not always applicable. |
 | **Possible Intervention Effects** | Turning/restores tread profile → should reduce hollow measurement. |
-| **Required Engineering Confirmations** | 1. Exact physical meaning (hollow depth? tread wear? profile parameter?). 2. Unit and measurement method. 3. Wear direction (increase = more hollow = more wear?). 4. Whether recorded for all wheel types or only specific profiles. |
-| **Safe Derived Calculations** | **None** — blocked until semantics confirmed. |
-| **Unsafe/Blocked Calculations** | Any differencing, wear rate, health contribution. |
-| **Dependencies Before Release** | All features blocked until domain owner defines field. |
+| **Required Engineering Confirmations** | 1. Exact physical meaning — **RESOLVED: tread defect/hollow depth (Q8)**. 2. Unit — mm (confirmed 2026-08-08). 3. Wear direction — **increases with wear (Q8)**. 4. Whether recorded for all wheel types or only specific profiles — open. |
+| **Safe Derived Calculations** | **Margin-to-condemning now computable:** `tread_margin = 3.0 - wsmThread` (negative = beyond condemning). |
+| **Unsafe/Blocked Calculations** | Wear rate per distance; health contribution until limits cross-validated across fleet. |
+| **Dependencies Before Release** | Feature release now gated only on remaining per-type applicability confirmation (Q8). |
 
 ---
 
@@ -349,8 +349,8 @@ For a valid engineering interval (same `wsmEquipmentId`, same locomotive, positi
 
 1. **Units & measurement plane:** Confirm diameter, flange thickness, tire thickness are in mm. Confirm measurement plane repeatability.
 2. **`wsmFlange1/2` vs `wsmFlangeThickness1/2`:** Same field at different system generations? Different physical measurements?
-3. **`wsmRoot1/2`:** Cumulative since-turning wear index or direct measured dimension? If cumulative, delta = incremental wear (no reset at turning). If direct, delta = change in depth (reset at turning).
-4. **`wsmThread1/2`:** Exact meaning (hollow depth? tread wear? profile parameter?). Wear direction?
+3. **`wsmRoot1/2`:** **RESOLVED (Q8, 2026-08-08): direct measured defect depth, 3 mm = max/condemning, lower is better.** (Direct-vs-cumulative resolved 2026-08-03.)
+4. **`wsmThread1/2`:** **RESOLVED (Q8, 2026-08-08): direct tread defect/hollow depth, 3 mm = max/condemning, lower is better.** Open: per-type applicability.
 5. **`wsmWheelGauge1/2`:** Confirm back-to-back gauge per wheelset. Condemning limits?
 6. **Turning flags:** Precise meaning of `wsmturning1/2` and `wsmSkidTurn1/2`. Reset rule for all wear dimensions.
 7. **Pre-computed wear fields:** Source formulas for `wsmWear`, `wsmWearRate`, `WsmFlWearRate*`, `WsmRtWearRate*`.
@@ -374,3 +374,4 @@ For a valid engineering interval (same `wsmEquipmentId`, same locomotive, positi
 | Date | Version | Change |
 |------|---------|--------|
 | 2026-07-29 | 1.0 | Initial version with observed delta statistics from Silver data (n≈1M intervals). |
+| 2026-08-08 | 1.1 | §3.3/§3.4: `wsmRoot1/2` and `wsmThread1/2` semantics confirmed (Q8) — direct defect depth, 3 mm max/condemning, lower is better. Root/tread margin-to-condemning unblocked. |

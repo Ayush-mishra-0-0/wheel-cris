@@ -1,0 +1,128 @@
+{
+  "task": "Phase 3C rolling contamination A/B + cadence honesty",
+  "n_windows": 4,
+  "seed": 42,
+  "rolling_contamination": {
+    "win0": {
+      "n": 63045,
+      "wsmDia": {
+        "full_mae": 9.423,
+        "clean_mae": 8.7145,
+        "delta_full_minus_clean": 0.7085
+      },
+      "wsmFlangeThickness": {
+        "full_mae": 0.4781,
+        "clean_mae": 0.4722,
+        "delta_full_minus_clean": 0.0059
+      },
+      "wsmRoot": {
+        "full_mae": 1.1649,
+        "clean_mae": 1.1573,
+        "delta_full_minus_clean": 0.0076
+      },
+      "wsmWheelGauge": {
+        "full_mae": 0.2069,
+        "clean_mae": 0.197,
+        "delta_full_minus_clean": 0.0099
+      }
+    },
+    "win1": {
+      "n": 63045,
+      "wsmDia": {
+        "full_mae": 5.3691,
+        "clean_mae": 5.1123,
+        "delta_full_minus_clean": 0.2568
+      },
+      "wsmFlangeThickness": {
+        "full_mae": 0.313,
+        "clean_mae": 0.3133,
+        "delta_full_minus_clean": -0.0003
+      },
+      "wsmRoot": {
+        "full_mae": 0.7787,
+        "clean_mae": 0.7767,
+        "delta_full_minus_clean": 0.002
+      },
+      "wsmWheelGauge": {
+        "full_mae": 0.1671,
+        "clean_mae": 0.1668,
+        "delta_full_minus_clean": 0.0003
+      }
+    },
+    "win2": {
+      "n": 63045,
+      "wsmDia": {
+        "full_mae": 3.1235,
+        "clean_mae": 3.0131,
+        "delta_full_minus_clean": 0.1104
+      },
+      "wsmFlangeThickness": {
+        "full_mae": 0.2629,
+        "clean_mae": 0.2632,
+        "delta_full_minus_clean": -0.0003
+      },
+      "wsmRoot": {
+        "full_mae": 0.6586,
+        "clean_mae": 0.6571,
+        "delta_full_minus_clean": 0.0015
+      },
+      "wsmWheelGauge": {
+        "full_mae": 0.142,
+        "clean_mae": 0.1417,
+        "delta_full_minus_clean": 0.0003
+      }
+    },
+    "win3": {
+      "n": 63045,
+      "wsmDia": {
+        "full_mae": 3.0791,
+        "clean_mae": 2.8221,
+        "delta_full_minus_clean": 0.257
+      },
+      "wsmFlangeThickness": {
+        "full_mae": 0.2366,
+        "clean_mae": 0.2371,
+        "delta_full_minus_clean": -0.0005
+      },
+      "wsmRoot": {
+        "full_mae": 0.6399,
+        "clean_mae": 0.6345,
+        "delta_full_minus_clean": 0.0054
+      },
+      "wsmWheelGauge": {
+        "full_mae": 0.1272,
+        "clean_mae": 0.1266,
+        "delta_full_minus_clean": 0.0006
+      }
+    }
+  },
+  "cadence_test_cohort": {
+    "n": 47937,
+    "interval_days_median": 29.0,
+    "interval_days_q25": 10.0,
+    "interval_days_q75": 70.0,
+    "interval_days_gt_90d_frac": 0.1423
+  },
+  "zero_delta_frac_test_cohort": {
+    "wsmDia": {
+      "n": 47937,
+      "frac_target_equals_base": 0.5402,
+      "frac_abs_delta_lt_0p01mm": 0.541
+    },
+    "wsmFlangeThickness": {
+      "n": 47937,
+      "frac_target_equals_base": 0.2582,
+      "frac_abs_delta_lt_0p01mm": 0.263
+    },
+    "wsmRoot": {
+      "n": 47919,
+      "frac_target_equals_base": 0.1685,
+      "frac_abs_delta_lt_0p01mm": 0.1702
+    },
+    "wsmWheelGauge": {
+      "n": 47923,
+      "frac_target_equals_base": 0.7852,
+      "frac_abs_delta_lt_0p01mm": 0.7872
+    }
+  }
+}

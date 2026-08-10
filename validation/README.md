@@ -11,6 +11,8 @@ Required evidence sequence:
 3. `business_rules.md` — measurement, turning, replacement and maintenance
    rules approved with engineering stakeholders.
 4. `join_coverage.md` — point-in-time coverage of every downstream join.
+5. `event_ledger_validation.md` — Engineering Event Ledger v1.0 evidence pack
+   (triangulation metrics, hand-labelled sample, exclusions).
 
 The source queries live in `sql/validation/`. Every report must state source
 snapshot, run time, query, denominator, exclusions and unresolved ambiguity.
