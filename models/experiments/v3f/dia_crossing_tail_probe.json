@@ -1,0 +1,190 @@
+{
+  "task": "safety-limit crossing as tail probability (NOT RUL)",
+  "question": "will the dimension cross its safety limit before the next planned intervention (horizon band)?",
+  "conventions": {
+    "root": "limit 3.0 mm MAX, root GROWS toward it (data-verified)",
+    "dia": "limit 1016.0 mm MIN, D FALLS toward it",
+    "band_90d": "rows whose next observation is in the 90d horizon window"
+  },
+  "note_dia_safety": "owner limit 1016 mm is a near-zero event in this fleet: test p1 margin 11.6 mm, wheels turned at ~1070 mm",
+  "eval": {
+    "wsmRoot": {
+      "3.0": {
+        "band": "90d",
+        "direction": "high",
+        "n_train": 34700,
+        "n_test": 8346,
+        "pos_test": 513,
+        "base_rate_train": 0.11911,
+        "base_rate_test": 0.06147,
+        "B0_prior": {
+          "brier": 0.06101,
+          "ece": 0.05764005742970974
+        },
+        "B1_margin_only": {
+          "auc": 0.8547054011754638,
+          "brier": 0.05356,
+          "ece": 0.04759958107438496,
+          "n_usable": 8346
+        },
+        "B2_xgb_full": {
+          "auc": 0.8622782007147747,
+          "brier": 0.04932,
+          "ece": 0.011618623658611863,
+          "n_usable": 8346
+        },
+        "B2_threshold_recall": {
+          "prec_top10": 0.3201,
+          "recall_top10": 0.5205
+        }
+      },
+      "2.8": {
+        "band": "90d",
+        "direction": "high",
+        "n_train": 34700,
+        "n_test": 8346,
+        "pos_test": 832,
+        "base_rate_train": 0.17089,
+        "base_rate_test": 0.09969,
+        "B0_prior": {
+          "brier": 0.09482,
+          "ece": 0.07120489823767591
+        },
+        "B1_margin_only": {
+          "auc": 0.8330440229520281,
+          "brier": 0.08312,
+          "ece": 0.08440596932260834,
+          "n_usable": 8346
+        },
+        "B2_xgb_full": {
+          "auc": 0.8415586578131078,
+          "brier": 0.07424,
+          "ece": 0.014886821463934592,
+          "n_usable": 8346
+        },
+        "B2_threshold_recall": {
+          "prec_top10": 0.4149,
+          "recall_top10": 0.4159
+        }
+      },
+      "2.5": {
+        "band": "90d",
+        "direction": "high",
+        "n_train": 34700,
+        "n_test": 8346,
+        "pos_test": 1252,
+        "base_rate_train": 0.22259,
+        "base_rate_test": 0.15001,
+        "B0_prior": {
+          "brier": 0.13278,
+          "ece": 0.07258167815468045
+        },
+        "B1_margin_only": {
+          "auc": 0.8089338423056518,
+          "brier": 0.1177,
+          "ece": 0.0813868103200057,
+          "n_usable": 8346
+        },
+        "B2_xgb_full": {
+          "auc": 0.8170535826072701,
+          "brier": 0.10418,
+          "ece": 0.02254870988285145,
+          "n_usable": 8346
+        },
+        "B2_threshold_recall": {
+          "prec_top10": 0.5084,
+          "recall_top10": 0.3387
+        }
+      }
+    },
+    "wsmDia": {
+      "1016.0": {
+        "band": "90d",
+        "direction": "low",
+        "n_train": 34700,
+        "n_test": 8346,
+        "pos_test": 3,
+        "base_rate_train": 0.00023,
+        "base_rate_test": 0.00036,
+        "B0_prior": {
+          "brier": 0.00036,
+          "ece": 0.00012890608004939116
+        },
+        "B1_margin_only": {
+          "auc": 0.9998601622118343,
+          "brier": 0.00035,
+          "ece": 0.00030602252080112323,
+          "n_usable": 8346
+        },
+        "B2_xgb_full": {
+          "auc": null,
+          "brier": NaN,
+          "ece": null,
+          "n_usable": 0
+        },
+        "B2_threshold_recall": {
+          "prec_top10": null,
+          "recall_top10": null
+        }
+      },
+      "1030.0": {
+        "band": "90d",
+        "direction": "low",
+        "n_train": 34700,
+        "n_test": 8346,
+        "pos_test": 153,
+        "base_rate_train": 0.08063,
+        "base_rate_test": 0.01833,
+        "B0_prior": {
+          "brier": 0.02188,
+          "ece": 0.062301870609123684
+        },
+        "B1_margin_only": {
+          "auc": 0.9873369503218513,
+          "brier": 0.0094,
+          "ece": 0.015051601479767033,
+          "n_usable": 8346
+        },
+        "B2_xgb_full": {
+          "auc": 0.9909846521301063,
+          "brier": 0.00813,
+          "ece": 0.003191097383519556,
+          "n_usable": 8346
+        },
+        "B2_threshold_recall": {
+          "prec_top10": 0.1811,
+          "recall_top10": 0.9869
+        }
+      },
+      "1040.0": {
+        "band": "90d",
+        "direction": "low",
+        "n_train": 34700,
+        "n_test": 8346,
+        "pos_test": 375,
+        "base_rate_train": 0.16256,
+        "base_rate_test": 0.04493,
+        "B0_prior": {
+          "brier": 0.05675,
+          "ece": 0.11763313768835057
+        },
+        "B1_margin_only": {
+          "auc": 0.9832593150169364,
+          "brier": 0.0202,
+          "ece": 0.03905704384617664,
+          "n_usable": 8346
+        },
+        "B2_xgb_full": {
+          "auc": 0.9849925981683603,
+          "brier": 0.01528,
+          "ece": 0.005097418525201363,
+          "n_usable": 8346
+        },
+        "B2_threshold_recall": {
+          "prec_top10": 0.4257,
+          "recall_top10": 0.9467
+        }
+      }
+    }
+  }
+}
