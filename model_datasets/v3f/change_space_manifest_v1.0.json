@@ -1,0 +1,54 @@
+{
+  "dataset": "change_space_benchmark",
+  "version": "1.0.0",
+  "phase": "3F",
+  "inputs": {
+    "v3e_ladder": "model_datasets\\v3e\\forecast_information_ladder.parquet",
+    "v3e_ladder_sha256": "0042d3744240820af7ce39f1bfd19eb3bf20651221dfae3eae23bcd7782e0830"
+  },
+  "output_sha256": "f4bd932c6899f0d12eb1d7dd5b2c2330de547195755817dda35dce6856102216",
+  "rows": 239684,
+  "equipment": 16050,
+  "row_identity": "same measurement_record_id set, same order as v3e (asserted)",
+  "target": "dX_d = target_d - base_d (per-dimension change over paired interval, mm)",
+  "band_counts": {
+    "30d": 38060,
+    "60d": 27055,
+    "90d": 43046,
+    "180d": 4948,
+    "365d": 830,
+    "other": 125745
+  },
+  "dX_summary": {
+    "wsmDia": {
+      "n_valid": 239564,
+      "mean": -1.5108,
+      "std": 9.1993,
+      "q01": -25.27,
+      "q99": 45.5092
+    },
+    "wsmFlangeThickness": {
+      "n_valid": 225871,
+      "mean": -0.0048,
+      "std": 0.4918,
+      "q01": -1.25,
+      "q99": 1.45
+    },
+    "wsmRoot": {
+      "n_valid": 239546,
+      "mean": 0.0287,
+      "std": 1.3762,
+      "q01": -3.5,
+      "q99": 3.05
+    },
+    "wsmWheelGauge": {
+      "n_valid": 239036,
+      "mean": -0.0004,
+      "std": 0.3118,
+      "q01": -1.0,
+      "q99": 0.9
+    }
+  },
+  "censoring": "replacement_before_{H}d / crosses_replacement / lifecycle_segment_id inherited; flagged, never dropped",
+  "distance": "native NaN preserved + distance_available flag; no imputation"
+}
