@@ -1,0 +1,53 @@
+{
+  "source_v3f": "model_datasets\\v3f\\change_space_benchmark.parquet",
+  "source_wes": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
+  "output": "model_datasets\\v4\\risk_benchmark.parquet",
+  "sha256": "ab91f875a0a5c81b156b33406425e3c3de51a6bfc0b9cb59e6b4eda2a20f57de",
+  "rows": 239684,
+  "anchor": "v3f within-lifecycle rows, frozen split preserved",
+  "limit_root_mm": 3.0,
+  "horizons": [
+    {
+      "horizon_days": 30,
+      "eligible": 229591,
+      "eligible_test": 40037,
+      "root_events": 10307,
+      "root_events_test": 1744,
+      "root_rate_of_eligible": 0.04489,
+      "root_rate_of_eligible_test": 0.04356,
+      "turn_events": 1279,
+      "turn_events_test": 186,
+      "turn_rate_of_eligible": 0.00557,
+      "turn_rate_of_eligible_test": 0.00465,
+      "excluded_unknown_followup": 10093
+    },
+    {
+      "horizon_days": 90,
+      "eligible": 217484,
+      "eligible_test": 30745,
+      "root_events": 27092,
+      "root_events_test": 3623,
+      "root_rate_of_eligible": 0.12457,
+      "root_rate_of_eligible_test": 0.11784,
+      "turn_events": 4201,
+      "turn_events_test": 607,
+      "turn_rate_of_eligible": 0.01932,
+      "turn_rate_of_eligible_test": 0.01974,
+      "excluded_unknown_followup": 22200
+    },
+    {
+      "horizon_days": 180,
+      "eligible": 194189,
+      "eligible_test": 13468,
+      "root_events": 51154,
+      "root_events_test": 5575,
+      "root_rate_of_eligible": 0.26342,
+      "root_rate_of_eligible_test": 0.41394,
+      "turn_events": 8772,
+      "turn_events_test": 1445,
+      "turn_rate_of_eligible": 0.04517,
+      "turn_rate_of_eligible_test": 0.10729,
+      "excluded_unknown_followup": 45495
+    }
+  ]
+}

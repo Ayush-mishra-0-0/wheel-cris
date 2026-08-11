@@ -1,0 +1,35 @@
+{
+  "task": "phase 4 per-wheel attribution (Stage 4-D)",
+  "cutoff": "2026-06-30",
+  "horizon_days": 90,
+  "targets": {
+    "root": {
+      "n_train": 211141,
+      "n_scored": 4098,
+      "train_events": 26614,
+      "train_prevalence": 0.12604846997977653,
+      "realized_known_scored": 337,
+      "realized_events_scored": 337,
+      "risk_counts": {
+        "LOW": 3000,
+        "HIGH": 686,
+        "MEDIUM": 412
+      },
+      "out_path": "models\\experiments\\v4\\wheel_attribution_root.parquet"
+    },
+    "turn": {
+      "n_train": 208884,
+      "n_scored": 4098,
+      "train_events": 4012,
+      "train_prevalence": 0.019206832500335114,
+      "realized_known_scored": 36,
+      "realized_events_scored": 36,
+      "risk_counts": {
+        "LOW": 3604,
+        "HIGH": 435,
+        "MEDIUM": 59
+      },
+      "out_path": "models\\experiments\\v4\\wheel_attribution_turn.parquet"
+    }
+  }
+}

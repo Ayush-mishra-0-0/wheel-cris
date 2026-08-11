@@ -1,0 +1,10 @@
+WHEEL ENGINEERING RISK CARD
+Wheelset 874318 / Loco 9609 / 2026-06-01
+90-DAY MAINTENANCE RISK          ████████████  HIGH
+ROOT CONSTRAINT RISK             ████████████  HIGH
+LIMITING DIMENSION               ROOT (margin -0.50 mm)
+CURRENT STATE                    Dia 1092.3 / Root 3.50 / Flange 30.75 / Gauge 1595.50 (mm)
+LIKELY CONTRIBUTORS              1 Root margin  2 Inspection history  3 Home shed  4 Days since last turning
+                                  1 Home shed  2 Days since last turning  3 Root margin  4 Inspection history
+ACTION                           → PRIORITY INSPECTION
+MODEL CONFIDENCE                 calibrated band: ~19% 90d event rate (decile 9/10, train)
