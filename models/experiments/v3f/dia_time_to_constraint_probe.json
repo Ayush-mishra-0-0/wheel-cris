@@ -1,0 +1,84 @@
+{
+  "task": "time-to-constraint / limiting-dimension diagnostic (NOT RUL)",
+  "conventions": {
+    "root": "margin = 3 - root (root GROWS toward 3mm max; data-verified)",
+    "dia": "margin = D - 1016 (D falls toward min)",
+    "flange": "DIAGNOSTIC ONLY, limit not owner-confirmed"
+  },
+  "model": "M4 forecasts of dX/interval as rate; point-in-time; conformal on train tail",
+  "lookahead_days": 365.0,
+  "interval_80": {
+    "wsmRoot": {
+      "width_80%": 0.995779814720154
+    },
+    "wsmDia": {
+      "width_80%": 2.9404314994812024
+    },
+    "wsmFlangeThickness": {
+      "width_80%": 0.40356511026620867
+    }
+  },
+  "n_test": 47937,
+  "eval": {
+    "A_warned_before_turn": {
+      "n_turned": 1709,
+      "frac_pred_constrained_before_turn": 0.4014,
+      "frac_turned_within_lookahead": 0.0357,
+      "frac_predict_constraint_within_365d": 0.5318
+    },
+    "A_warning_days": {
+      "median": -74.0,
+      "p25": -1546.1,
+      "p75": 63.8,
+      "mean": -Infinity
+    },
+    "B_time_to_constraint_error_days": {
+      "n": 1496,
+      "mae": 1832.3,
+      "median": 128.5
+    },
+    "D_actionable_warning_days": {
+      "n": 685,
+      "median": 85.6,
+      "p10": 17.5
+    },
+    "C_limiting_dim_agreement_vs_turning_state": {
+      "n_turned_with_state": 987,
+      "frac_predict_matches_dim_nearer_limit_at_turn": 0.9767,
+      "root_nearer_limit_at_turn_frac": 1.0,
+      "mean_root_at_turn_mm": 0.557,
+      "mean_dia_at_turn_mm": 1070.588
+    },
+    "C_turning_state_vs_limits": {
+      "root_at_turn_p50_p90": [
+        0.38,
+        1.75
+      ],
+      "dia_at_turn_p50_p90": [
+        1073.05,
+        1082.39
+      ],
+      "frac_root_at_turn_gt_3mm": 0.0101
+    }
+  },
+  "by_era": {
+    "pre-2024": {
+      "n": 0,
+      "median_time_to_constraint_days": NaN,
+      "frac_constrained_365d": NaN,
+      "root_limited_frac": NaN
+    },
+    "2024": {
+      "n": 0,
+      "median_time_to_constraint_days": NaN,
+      "frac_constrained_365d": NaN,
+      "root_limited_frac": NaN
+    },
+    "2025+": {
+      "n": 47937,
+      "median_time_to_constraint_days": 195.3,
+      "frac_constrained_365d": 0.5318,
+      "root_limited_frac": 0.7288
+    }
+  }
+}
