@@ -1,0 +1,8 @@
+Papers I'd put at the top of your reading list
+Li et al., 2019 — Train Wheel Degradation Modeling and RUL Prediction Based on Mixed Effect Model Considering Dependent Measurement Errors. Probably the most directly relevant statistical formulation for your sparse longitudinal data.
+Ferreira, Freitas & Colosimo, 2012 — Degradation Data Analysis for Samples Under Unequal Operating Conditions: A Case Study on Train Wheels. Very relevant to your "different locos operate differently" problem.
+Cremona et al., 2016 — Predicting Railway Wheel Wear under Uncertainty of Wear Coefficient Using Universal Kriging. Excellent for physics + uncertainty + RUL thinking.
+Winarno et al., 2026 — RUL Prediction of Railway Wheelsets Using a Composite Wear Index Under Sparse Monitoring Data. Especially relevant to your sparse inspection regime.
+Deng et al., 2022 — Data-Driven Wheel Wear Prediction Based on LM-OMP-NARXNN. Worth reading specifically for the sequence/time-series angle.
+
+The mixed-effects + exposure-conditioned continuous-time idea is where I think your project has the most interesting next step—not simply throwing an LSTM at the 1.1M measurement rows.

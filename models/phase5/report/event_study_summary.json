@@ -1,0 +1,48 @@
+{
+  "n_segments": 39971,
+  "n_turning_events": 3237,
+  "n_wheelsets": 1649,
+  "n_locos": 300,
+  "turning_2024plus": 1577,
+  "median_cut_mm": 7.0,
+  "median_measurement_gap_days": 2.0,
+  "n_inter_turn_intervals": 1582,
+  "median_inter_turn_years": 0.39,
+  "median_segment_days": 92.0,
+  "limits": {
+    "wsmFlange": {
+      "n": 3237,
+      "median": 1.2,
+      "p90": 1.95,
+      "p95": 2.13,
+      "pct_over_limit": 0.15
+    },
+    "wsmRoot": {
+      "n": 3237,
+      "median": 2.88,
+      "p90": 3.9,
+      "p95": 4.2,
+      "pct_over_limit": 0.03
+    },
+    "wsmThread": {
+      "n": 3237,
+      "median": 0.7,
+      "p90": 2.7,
+      "p95": 3.25,
+      "pct_over_limit": 0.0
+    }
+  },
+  "dia": {
+    "n_turns_below_floor": 0,
+    "n_turns_below_safe": 0,
+    "median_pre_dia": 1074.5
+  },
+  "sheds_with_policy": 2608,
+  "figures": {
+    "trajectories": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\events_trajectories.png",
+    "turn_state": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\events_turn_state.png",
+    "cut_by_shed": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\events_cut_by_shed.png",
+    "dia_cost": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\events_dia_cost.png",
+    "wheel_life": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\events_wheel_life.png"
+  }
+}

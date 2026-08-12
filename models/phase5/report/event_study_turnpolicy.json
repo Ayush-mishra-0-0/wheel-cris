@@ -1,0 +1,101 @@
+{
+  "n_turns": 3237,
+  "n_turns_rdso": 3237,
+  "primary_cohort": "last-2y >= 2024-08-12",
+  "cohort_counts": {
+    "COLD_older": 1660,
+    "C2Y_last2y": 1120,
+    "C_mid": 457
+  },
+  "cut": {
+    "median": 7.0,
+    "p25": 4.5,
+    "p75": 10.09
+  },
+  "pre_turn_state": {
+    "flange": {
+      "median": 1.2,
+      "p90": 1.95,
+      "pct_over_limit": 0.15
+    },
+    "root": {
+      "median": 2.88,
+      "p90": 3.9,
+      "pct_over_limit": 0.03
+    },
+    "tread": {
+      "median": 0.7,
+      "p90": 2.7,
+      "pct_over_limit": 0.0
+    }
+  },
+  "limiting_dimension_at_turn": {
+    "root": 2039,
+    "flange": 990,
+    "tread": 208
+  },
+  "rdso": {
+    "median_residual": -0.55,
+    "mean_residual": -0.27,
+    "pct_in_tolerance": 26.6,
+    "residual_by_cohort": {
+      "C2Y_last2y": -0.01,
+      "COLD_older": -0.77,
+      "C_mid": 0.9
+    }
+  },
+  "shed_policy": {
+    "n_sheds_stats": 8
+  },
+  "cohort_comparison": {
+    "C2Y_last2y": {
+      "n_turns": 1120,
+      "median_cut": 7.0,
+      "median_pre_flange": 0.8,
+      "median_pre_root": 2.6,
+      "median_pre_tread": 2.0,
+      "median_rdso_residual": -0.29,
+      "pct_in_tolerance": 30.89,
+      "limiting_dim": {
+        "root": 770,
+        "tread": 204,
+        "flange": 146
+      }
+    },
+    "COLD_older": {
+      "n_turns": 1660,
+      "median_cut": 7.0,
+      "median_pre_flange": 1.45,
+      "median_pre_root": 3.1,
+      "median_pre_tread": 0.0,
+      "median_rdso_residual": -1.13,
+      "pct_in_tolerance": 23.25,
+      "limiting_dim": {
+        "root": 953,
+        "flange": 704,
+        "tread": 3
+      }
+    },
+    "C_mid": {
+      "n_turns": 457,
+      "median_cut": 8.19,
+      "median_pre_flange": 1.25,
+      "median_pre_root": 2.75,
+      "median_pre_tread": 1.1,
+      "median_rdso_residual": 0.84,
+      "pct_in_tolerance": 28.23,
+      "limiting_dim": {
+        "root": 316,
+        "flange": 140,
+        "tread": 1
+      }
+    }
+  },
+  "figures": {
+    "p1_prestate_vs_cut": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\turnpolicy_p1_prestate_vs_cut.png",
+    "p2_rdso": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\turnpolicy_p2_rdso.png",
+    "p3_shed_policy": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\turnpolicy_p3_shed_policy.png",
+    "p4_sawtooth": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\turnpolicy_p4_sawtooth.png",
+    "p5_wheel_life": "C:\\Users\\CRIS\\Desktop\\ayush\\wheel-project\\models\\phase5\\report\\turnpolicy_p5_wheel_life.png"
+  }
+}

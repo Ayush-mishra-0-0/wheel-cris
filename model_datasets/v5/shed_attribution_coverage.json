@@ -1,0 +1,9 @@
+{
+  "n_stays": 98333,
+  "distinct_locos": 2300,
+  "date_range": [
+    "2025-01-03",
+    "2026-08-03"
+  ],
+  "open_stays_resolved": 98333
+}
