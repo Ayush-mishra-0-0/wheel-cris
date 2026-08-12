@@ -1,6 +1,6 @@
 # Wheel Profile Lifecycle Contract v1.0
 
-**Status:** DRAFT v1.1 — governing contract for Phase 5 (Wheel Profile Lifecycle System).
+**Status:** DRAFT v1.2 — governing contract for Phase 5 (Wheel Profile Lifecycle System).
 Supersedes the Phase 4 assumption that diameter independently drives turning.
 **Grain:** one wheelset lifecycle segment (between turning/replacement boundaries).
 **Consumes:** `wheel_engineering_state_v1.0` (immutable, v3) + FOIS shed attribution.
@@ -35,8 +35,15 @@ Turning/condemning is decided on **wear** of three dimensions — NOT on diamete
 - **Diameter is a consequence:** `dia_after = dia_before − cut`. Re-profiling the
   profile restores wear (flange/root/tread down, flange thickness up) and lowers dia.
 - **Wheel life:** time from provisioning (or first post-turn state) until dia crosses
-  the floor. Currently expected **3–4 yr** for wear-adopted wheels ("Make in India")
-  vs **6–7 yr** historically for thick-flange wheels. To be validated in Layer 1.
+  the floor. Expected **3–4 yr** for wear-adopted wheels ("Make in India") vs **6–7 yr**
+  historically for thick-flange wheels.
+  **Layer 1 outcome (2026-08-12):** NOT validated by the provision-cohort split specified
+  in the Phase 5 plan — the fleet is >90% right-censored above the floor and observed
+  crossers are dominated by wheels provisioned near-floor (median age at 1020 crossing
+  0.2–0.6 yr for 2023–24 provisions; 1016 crossings effectively absent, n=4). Wheel life
+  must be modelled as a censored survival outcome (Kaplan-Meier / censored median to
+  floor, first post-turn anchor) or remain an unvalidated hypothesis. See
+  `models/experiments/v5/profile_event_study_report.md` §6.
 
 ## 2. Lifecycle segment definition
 
@@ -91,6 +98,15 @@ smallest normalized margin.
   `k = 3d`, configurable), because that row is the wheel parked for machining, not
   a normal operating state. This is applied **going forward** (Layer 2+); v4
   benchmark (Phase 4) stays frozen as committed (`75f54eb`).
+- **Layer 2 degradation target (v1.2):** target wear at horizon `H` =
+  last same-lifecycle-segment measurement value of the dimension strictly inside
+  `(t, t+H]` (within-segment trajectory, no turn/replacement cross). Excluded
+  (`NaN`) when no such measurement exists. This measures "wear growth if no
+  machining action is taken" and keeps the degradation and turn-risk problems
+  separate (Layer 4 owns P(turn)).
+- **Layer 2 exposure:** segments carry days only; km exposure and km-based wear
+  slopes are joined from the safe RTIS daily ledger (`distance_recovery` safe
+  chain), not re-derived inside the segment builder.
 
 ## 5. Data-quality gates (inherited from v1.0 spec §4)
 
@@ -110,7 +126,7 @@ root 0–30, tread 0–30 (source artefact removal only).
 | Layer | Artifact |
 | --- | --- |
 | 0 | `model_datasets/v5/lifecycle_segments.parquet` + manifest |
-| 1 | `models/experiments/v5/profile_event_study.{json,png}` |
+| 1 | `models/experiments/v5/profile_event_study_report.md` + `event_study_summary.json`, `event_study_turnpolicy.json` (plots in `models/phase5/report/events_*.png`, `turnpolicy_p*.png`) |
 | 2–4 | Predictive core (Layers 2–4 per Phase 5 plan) |
 | 5 | FastAPI + React dashboard |
 | 6 | Corrective-action map + feature additions |
@@ -121,3 +137,4 @@ root 0–30, tread 0–30 (source artefact removal only).
 | --- | --- | --- |
 | v1.0 | 2026-08-12 | Initial Phase 5 lifecycle contract: wear-driven turning model, cut = B−A, limits (flange 3 / root 6 / tread 6.5), dia floors 1016/1020, segment definition, PIT rules. |
 | v1.1 | 2026-08-12 | Post-turn eligibility rule (§4): training uses after-turning state; transient pre-turn at-shed rows excluded (default 3d look-ahead). Applies Layer 2+; v4 remains frozen. |
+| v1.2 | 2026-08-12 | Layer 1 gate verdict recorded (§1 wheel-life outcome, §7 artifact path corrected); Layer 2 degradation target defined as within-segment horizon state (§4); km exposure sourced from safe RTIS ledger (§4). |
