@@ -1,0 +1,56 @@
+{
+  "task": "phase5 layer3 turn-policy substrate",
+  "source": "model_datasets\\v5\\lifecycle_turns_shed.parquet",
+  "output": "model_datasets\\v5\\turn_policy_benchmark.parquet",
+  "n_rows": 3237,
+  "n_train": 2117,
+  "n_test": 1120,
+  "train_cutoff": "2024-08-12",
+  "shed_events_discarded_frac": 0.0,
+  "numeric_features": [
+    "pre_wsmDia",
+    "pre_wsmFlange",
+    "pre_wsmRoot",
+    "pre_wsmThread",
+    "days_between",
+    "segment_index"
+  ],
+  "categorical_features": [
+    "shed_any",
+    "wheel_profile_2class",
+    "wheel_position_1_12"
+  ],
+  "targets": [
+    "cut_dia",
+    "post_wsmDia",
+    "post_wsmFlange",
+    "post_wsmRoot",
+    "post_wsmThread"
+  ],
+  "stats": {
+    "shed_policy": 10,
+    "profile_classes": 2,
+    "target_stats": {
+      "cut_dia": {
+        "mean": 7.688,
+        "std": 4.103
+      },
+      "post_wsmDia": {
+        "mean": 1062.203,
+        "std": 18.652
+      },
+      "post_wsmFlange": {
+        "mean": 0.436,
+        "std": 0.407
+      },
+      "post_wsmRoot": {
+        "mean": 0.389,
+        "std": 0.452
+      },
+      "post_wsmThread": {
+        "mean": 0.161,
+        "std": 0.48
+      }
+    }
+  }
+}
