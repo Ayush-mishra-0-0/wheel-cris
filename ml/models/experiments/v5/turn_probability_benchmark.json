@@ -1,0 +1,438 @@
+{
+  "task": "phase 5 layer 5 turning-probability benchmark (maintenance behaviour)",
+  "contract": "wheel_profile_lifecycle_contract_v1",
+  "pointer": "P(turn) = historical maintenance behaviour, NOT engineering-limit risk",
+  "source": "model_datasets\\v5\\turn_probability.parquet",
+  "models": [
+    "B0_prevalence",
+    "B1_shed",
+    "C1_xgb"
+  ],
+  "horizons": {
+    "30": {
+      "models": {
+        "B0_prevalence": {
+          "n_test": 133530,
+          "turn_rate_test": 0.0092,
+          "turn_rate_pred": 0.0248,
+          "roc_auc": 0.5,
+          "pr_auc": 0.0092,
+          "brier": 0.0093,
+          "ece": 0.0157,
+          "capture": {
+            "top1%": {
+              "k": 1335,
+              "turns_captured": 0,
+              "share_of_turns": 0.0,
+              "precision": 0.0
+            },
+            "top5%": {
+              "k": 6676,
+              "turns_captured": 87,
+              "share_of_turns": 0.0712,
+              "precision": 0.013
+            },
+            "top10%": {
+              "k": 13353,
+              "turns_captured": 136,
+              "share_of_turns": 0.1113,
+              "precision": 0.0102
+            }
+          }
+        },
+        "B1_shed": {
+          "n_test": 133530,
+          "turn_rate_test": 0.0092,
+          "turn_rate_pred": 0.0163,
+          "roc_auc": 0.7519,
+          "pr_auc": 0.0407,
+          "brier": 0.0094,
+          "ece": 0.0071,
+          "capture": {
+            "top1%": {
+              "k": 1335,
+              "turns_captured": 70,
+              "share_of_turns": 0.0573,
+              "precision": 0.0524
+            },
+            "top5%": {
+              "k": 6676,
+              "turns_captured": 81,
+              "share_of_turns": 0.0663,
+              "precision": 0.0121
+            },
+            "top10%": {
+              "k": 13353,
+              "turns_captured": 606,
+              "share_of_turns": 0.4959,
+              "precision": 0.0454
+            }
+          }
+        },
+        "C1_xgb": {
+          "n_test": 133530,
+          "turn_rate_test": 0.0092,
+          "turn_rate_pred": 0.0023,
+          "roc_auc": 0.851,
+          "pr_auc": 0.154,
+          "brier": 0.0086,
+          "ece": 0.0071,
+          "capture": {
+            "top1%": {
+              "k": 1335,
+              "turns_captured": 315,
+              "share_of_turns": 0.2578,
+              "precision": 0.236
+            },
+            "top5%": {
+              "k": 6676,
+              "turns_captured": 666,
+              "share_of_turns": 0.545,
+              "precision": 0.0998
+            },
+            "top10%": {
+              "k": 13353,
+              "turns_captured": 789,
+              "share_of_turns": 0.6457,
+              "precision": 0.0591
+            }
+          }
+        }
+      }
+    },
+    "60": {
+      "models": {
+        "B0_prevalence": {
+          "n_test": 127771,
+          "turn_rate_test": 0.014,
+          "turn_rate_pred": 0.0349,
+          "roc_auc": 0.5,
+          "pr_auc": 0.014,
+          "brier": 0.0142,
+          "ece": 0.0209,
+          "capture": {
+            "top1%": {
+              "k": 1277,
+              "turns_captured": 0,
+              "share_of_turns": 0.0,
+              "precision": 0.0
+            },
+            "top5%": {
+              "k": 6388,
+              "turns_captured": 119,
+              "share_of_turns": 0.0665,
+              "precision": 0.0186
+            },
+            "top10%": {
+              "k": 12777,
+              "turns_captured": 145,
+              "share_of_turns": 0.081,
+              "precision": 0.0113
+            }
+          }
+        },
+        "B1_shed": {
+          "n_test": 127771,
+          "turn_rate_test": 0.014,
+          "turn_rate_pred": 0.0168,
+          "roc_auc": 0.7682,
+          "pr_auc": 0.0655,
+          "brier": 0.0136,
+          "ece": 0.0046,
+          "capture": {
+            "top1%": {
+              "k": 1277,
+              "turns_captured": 96,
+              "share_of_turns": 0.0536,
+              "precision": 0.0752
+            },
+            "top5%": {
+              "k": 6388,
+              "turns_captured": 113,
+              "share_of_turns": 0.0631,
+              "precision": 0.0177
+            },
+            "top10%": {
+              "k": 12777,
+              "turns_captured": 945,
+              "share_of_turns": 0.5279,
+              "precision": 0.074
+            }
+          }
+        },
+        "C1_xgb": {
+          "n_test": 127771,
+          "turn_rate_test": 0.014,
+          "turn_rate_pred": 0.0051,
+          "roc_auc": 0.8809,
+          "pr_auc": 0.2353,
+          "brier": 0.0125,
+          "ece": 0.0098,
+          "capture": {
+            "top1%": {
+              "k": 1277,
+              "turns_captured": 466,
+              "share_of_turns": 0.2603,
+              "precision": 0.3649
+            },
+            "top5%": {
+              "k": 6388,
+              "turns_captured": 1050,
+              "share_of_turns": 0.5866,
+              "precision": 0.1644
+            },
+            "top10%": {
+              "k": 12777,
+              "turns_captured": 1260,
+              "share_of_turns": 0.7039,
+              "precision": 0.0986
+            }
+          }
+        }
+      }
+    },
+    "90": {
+      "models": {
+        "B0_prevalence": {
+          "n_test": 121431,
+          "turn_rate_test": 0.0198,
+          "turn_rate_pred": 0.045,
+          "roc_auc": 0.5,
+          "pr_auc": 0.0198,
+          "brier": 0.02,
+          "ece": 0.0252,
+          "capture": {
+            "top1%": {
+              "k": 1214,
+              "turns_captured": 1,
+              "share_of_turns": 0.0004,
+              "precision": 0.0008
+            },
+            "top5%": {
+              "k": 6071,
+              "turns_captured": 161,
+              "share_of_turns": 0.0671,
+              "precision": 0.0265
+            },
+            "top10%": {
+              "k": 12143,
+              "turns_captured": 161,
+              "share_of_turns": 0.0671,
+              "precision": 0.0133
+            }
+          }
+        },
+        "B1_shed": {
+          "n_test": 121431,
+          "turn_rate_test": 0.0198,
+          "turn_rate_pred": 0.0172,
+          "roc_auc": 0.7552,
+          "pr_auc": 0.0834,
+          "brier": 0.0186,
+          "ece": 0.0056,
+          "capture": {
+            "top1%": {
+              "k": 1214,
+              "turns_captured": 122,
+              "share_of_turns": 0.0508,
+              "precision": 0.1005
+            },
+            "top5%": {
+              "k": 6071,
+              "turns_captured": 140,
+              "share_of_turns": 0.0583,
+              "precision": 0.0231
+            },
+            "top10%": {
+              "k": 12143,
+              "turns_captured": 1224,
+              "share_of_turns": 0.51,
+              "precision": 0.1008
+            }
+          }
+        },
+        "C1_xgb": {
+          "n_test": 121431,
+          "turn_rate_test": 0.0198,
+          "turn_rate_pred": 0.0071,
+          "roc_auc": 0.8724,
+          "pr_auc": 0.2648,
+          "brier": 0.0173,
+          "ece": 0.0141,
+          "capture": {
+            "top1%": {
+              "k": 1214,
+              "turns_captured": 492,
+              "share_of_turns": 0.205,
+              "precision": 0.4053
+            },
+            "top5%": {
+              "k": 6071,
+              "turns_captured": 1305,
+              "share_of_turns": 0.5437,
+              "precision": 0.215
+            },
+            "top10%": {
+              "k": 12143,
+              "turns_captured": 1647,
+              "share_of_turns": 0.6863,
+              "precision": 0.1356
+            }
+          }
+        }
+      }
+    }
+  },
+  "shed_breakdown_90d": [
+    {
+      "shed": "SRCE",
+      "n": 4155,
+      "turn_rate": 0.22,
+      "roc_auc": 0.757
+    },
+    {
+      "shed": "LOPV",
+      "n": 2487,
+      "turn_rate": 0.008,
+      "roc_auc": 0.826
+    },
+    {
+      "shed": "TATE",
+      "n": 2437,
+      "turn_rate": 0.079,
+      "roc_auc": 0.654
+    },
+    {
+      "shed": "LDHE",
+      "n": 2057,
+      "turn_rate": 0.001,
+      "roc_auc": 0.59
+    },
+    {
+      "shed": "NA",
+      "n": 1726,
+      "turn_rate": 0.177,
+      "roc_auc": 0.741
+    },
+    {
+      "shed": "BRCE",
+      "n": 1532,
+      "turn_rate": 0.002,
+      "roc_auc": 0.659
+    },
+    {
+      "shed": "HWHE",
+      "n": 1235,
+      "turn_rate": 0.175,
+      "roc_auc": 0.451
+    },
+    {
+      "shed": "SRC",
+      "n": 819,
+      "turn_rate": 0.188,
+      "roc_auc": 0.68
+    },
+    {
+      "shed": "GDDE",
+      "n": 786,
+      "turn_rate": 0.009,
+      "roc_auc": 0.587
+    },
+    {
+      "shed": "HWH",
+      "n": 784,
+      "turn_rate": 0.087,
+      "roc_auc": 0.704
+    },
+    {
+      "shed": "BNDL",
+      "n": 776,
+      "turn_rate": 0.034,
+      "roc_auc": 0.576
+    },
+    {
+      "shed": "NZM",
+      "n": 529,
+      "turn_rate": 0.008,
+      "roc_auc": 0.941
+    },
+    {
+      "shed": "TATA",
+      "n": 415,
+      "turn_rate": 0.043,
+      "roc_auc": 0.642
+    },
+    {
+      "shed": "HWHE ",
+      "n": 358,
+      "turn_rate": 0.341,
+      "roc_auc": 0.552
+    },
+    {
+      "shed": "ASR",
+      "n": 325,
+      "turn_rate": 0.046,
+      "roc_auc": 0.832
+    },
+    {
+      "shed": "PRYJ",
+      "n": 298,
+      "turn_rate": 0.044,
+      "roc_auc": 0.948
+    },
+    {
+      "shed": "BTSB",
+      "n": 282,
+      "turn_rate": 0.121,
+      "roc_auc": 0.406
+    },
+    {
+      "shed": "DBRG",
+      "n": 241,
+      "turn_rate": 0.004,
+      "roc_auc": 0.308
+    },
+    {
+      "shed": "TPKR",
+      "n": 224,
+      "turn_rate": 0.054,
+      "roc_auc": 0.318
+    },
+    {
+      "shed": "GAYA",
+      "n": 211,
+      "turn_rate": 0.047,
+      "roc_auc": 0.455
+    },
+    {
+      "shed": "BTI",
+      "n": 141,
+      "turn_rate": 0.007,
+      "roc_auc": 0.207
+    },
+    {
+      "shed": "BTV",
+      "n": 137,
+      "turn_rate": 0.102,
+      "roc_auc": 0.256
+    },
+    {
+      "shed": "JAT",
+      "n": 129,
+      "turn_rate": 0.023,
+      "roc_auc": 0.347
+    },
+    {
+      "shed": "PYGS",
+      "n": 119,
+      "turn_rate": 0.008,
+      "roc_auc": 0.059
+    },
+    {
+      "shed": "BGP",
+      "n": 118,
+      "turn_rate": 0.025,
+      "roc_auc": 0.557
+    }
+  ]
+}

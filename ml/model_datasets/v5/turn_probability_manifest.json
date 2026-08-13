@@ -1,0 +1,23 @@
+{
+  "task": "phase 5 layer 5 turning-probability substrate (maintenance behaviour)",
+  "contract": "wheel_profile_lifecycle_contract_v1",
+  "pointer": "P(turn) = historical maintenance behaviour, NOT engineering-limit risk",
+  "n_anchors": 220000,
+  "n_wheelsets": 15571,
+  "train_cutoff": "2024-08-12",
+  "split": {
+    "train": 86470,
+    "test": 133530
+  },
+  "turn_rate_train": {
+    "turned_30d": 0.0248,
+    "turned_60d": 0.0349,
+    "turned_90d": 0.045
+  },
+  "turn_rate_test": {
+    "turned_30d": 0.0092,
+    "turned_60d": 0.014,
+    "turned_90d": 0.0198
+  },
+  "sha256": "84b8bf3755a4596f605bc85017c541fcb759eff02f0f2e8c2ca18677b014a263"
+}

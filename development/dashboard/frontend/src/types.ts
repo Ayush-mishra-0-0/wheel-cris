@@ -1,0 +1,134 @@
+export interface WheelsetHeader {
+  wheelset_equipment_id: number;
+  loco_number: string | null;
+  locomotive_id: number | null;
+  latest_measurement: string | null;
+  latest_mean_wsmDia: number | null;
+  latest_mean_wsmFlange: number | null;
+  latest_mean_wsmRoot: number | null;
+  latest_mean_wsmThread: number | null;
+  days_since_turning: number | null;
+  distance_since_turning_km: number | null;
+  n_turns: number;
+  segment_index: number | null;
+  wheel_position_1_12: number | null;
+  axle_position_1_6: number | null;
+  wheel_profile_2class: number | null;
+}
+
+export interface LocomotiveSummary {
+  loco_number: string;
+  locomotive_id: number | null;
+  home_shed: string | null;
+  loco_type: string | null;
+  n_wheelsets: number;
+  n_segments: number;
+  n_turns: number;
+  wheelsets: WheelsetHeader[];
+}
+
+export interface ForecastPoint {
+  horizon: number;
+  dim: string;
+  value: number | null;
+  unit: string;
+}
+
+export interface TurnProbability {
+  horizon: number;
+  probability: number | null;
+  turn_rate_train: number | null;
+  pointer: string;
+}
+
+export interface MeasurementPoint {
+  measurement_timestamp: string;
+  mean_wsmDia: number | null;
+  mean_wsmFlange: number | null;
+  mean_wsmRoot: number | null;
+  mean_wsmThread: number | null;
+  mean_wsmFlangeThickness: number | null;
+  mean_wsmWheelGauge: number | null;
+  segment_index: number | null;
+  turn_event: boolean;
+  replacement: boolean;
+  days_since_turning: number | null;
+}
+
+export interface TurnEvent {
+  wheelset_equipment_id: number;
+  pre_ts: string;
+  post_ts: string;
+  pre_wsmDia: number | null;
+  post_wsmDia: number | null;
+  delta_wsmDia: number | null;
+  pre_wsmFlange: number | null;
+  post_wsmFlange: number | null;
+}
+
+export interface WheelsetDetail {
+  wheelset_equipment_id: number;
+  loco_number: string | null;
+  latest_measurement: string | null;
+  forecasts: ForecastPoint[];
+  turn_probabilities: TurnProbability[];
+  turns: TurnEvent[];
+  measurements: MeasurementPoint[];
+}
+
+export interface ReplayForecast {
+  dim: string;
+  horizon: number;
+  current: number | null;
+  predicted: number | null;
+  actual: number | null;
+  actual_ts: string | null;
+  observed_in_horizon: boolean;
+  implausibility_flag: string | null;
+  mae: number | null;
+}
+
+export interface ReplayPTurn {
+  horizon: number;
+  probability_raw: number;
+  probability_pct: number;
+  turn_rate_train: number | null;
+  actual_turned: boolean | null;
+  actual_n_events: number | null;
+}
+
+export interface WheelsetReplay {
+  wheelset_equipment_id: number;
+  anchor: string | null;
+  loco_number: string | null;
+  degradation: ReplayForecast[];
+  turn_probability: ReplayPTurn[];
+  note: string | null;
+}
+
+export interface FleetBacktest {
+  task: string;
+  contract: string;
+  split: string;
+  implausibility_note: string | null;
+  degradation: Record<string, unknown>;
+  turn_probability: {
+    horizons?: Record<string, { models?: Record<string, BacktestModel> }>;
+    [k: string]: unknown;
+  };
+  implausibility_diagnostics: Record<
+    string,
+    Record<string, { n: number; flag: string; actual_rate: number; model_rate: number }>
+  >;
+}
+
+export interface BacktestModel {
+  n_test: number;
+  turn_rate_test: number;
+  turn_rate_pred: number;
+  roc_auc: number | null;
+  pr_auc: number | null;
+  brier: number;
+  ece: number;
+  capture?: Record<string, { k: number; turns_captured: number; share_of_turns: number; precision: number }>;
+}

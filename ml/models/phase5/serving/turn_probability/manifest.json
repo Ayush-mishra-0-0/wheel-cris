@@ -1,0 +1,24 @@
+{
+  "task": "phase 5 layer 5 turning-probability serving models",
+  "pointer": "P(turn) = historical maintenance behaviour, NOT engineering-limit risk",
+  "models": [
+    {
+      "horizon": 30,
+      "path": "model_30d.joblib",
+      "n_train": 86470,
+      "turn_rate_train": 0.0248
+    },
+    {
+      "horizon": 60,
+      "path": "model_60d.joblib",
+      "n_train": 85839,
+      "turn_rate_train": 0.0349
+    },
+    {
+      "horizon": 90,
+      "path": "model_90d.joblib",
+      "n_train": 84993,
+      "turn_rate_train": 0.045
+    }
+  ]
+}

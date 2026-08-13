@@ -1,0 +1,77 @@
+{
+  "task": "phase 5 layer 2 degradation serving models",
+  "models": [
+    {
+      "dim": "wsmRoot",
+      "horizon": 30,
+      "path": "model_wsmRoot_30d.joblib",
+      "n_train": 92678
+    },
+    {
+      "dim": "wsmRoot",
+      "horizon": 90,
+      "path": "model_wsmRoot_90d.joblib",
+      "n_train": 128661
+    },
+    {
+      "dim": "wsmRoot",
+      "horizon": 180,
+      "path": "model_wsmRoot_180d.joblib",
+      "n_train": 134023
+    },
+    {
+      "dim": "wsmFlange",
+      "horizon": 30,
+      "path": "model_wsmFlange_30d.joblib",
+      "n_train": 92366
+    },
+    {
+      "dim": "wsmFlange",
+      "horizon": 90,
+      "path": "model_wsmFlange_90d.joblib",
+      "n_train": 128117
+    },
+    {
+      "dim": "wsmFlange",
+      "horizon": 180,
+      "path": "model_wsmFlange_180d.joblib",
+      "n_train": 133379
+    },
+    {
+      "dim": "wsmThread",
+      "horizon": 30,
+      "path": "model_wsmThread_30d.joblib",
+      "n_train": 92656
+    },
+    {
+      "dim": "wsmThread",
+      "horizon": 90,
+      "path": "model_wsmThread_90d.joblib",
+      "n_train": 128630
+    },
+    {
+      "dim": "wsmThread",
+      "horizon": 180,
+      "path": "model_wsmThread_180d.joblib",
+      "n_train": 133981
+    },
+    {
+      "dim": "wsmDia",
+      "horizon": 30,
+      "path": "model_wsmDia_30d.joblib",
+      "n_train": 92679
+    },
+    {
+      "dim": "wsmDia",
+      "horizon": 90,
+      "path": "model_wsmDia_90d.joblib",
+      "n_train": 128653
+    },
+    {
+      "dim": "wsmDia",
+      "horizon": 180,
+      "path": "model_wsmDia_180d.joblib",
+      "n_train": 134013
+    }
+  ]
+}

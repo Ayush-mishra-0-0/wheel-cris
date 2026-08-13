@@ -1,0 +1,47 @@
+{
+  "num_feats": [
+    "mean_wsmDia",
+    "mean_wsmFlange",
+    "mean_wsmRoot",
+    "mean_wsmThread",
+    "mean_wsmFlangeThickness",
+    "mean_wsmWheelGauge",
+    "ph5_wsmFlange_rate_per_day_30d",
+    "ph5_wsmFlange_rate_per_day_90d",
+    "ph5_wsmThread_rate_per_day_30d",
+    "ph5_wsmThread_rate_per_day_90d",
+    "wsmRoot_rate_per_day_30d",
+    "wsmRoot_rate_per_day_90d",
+    "wsmDia_rate_per_day_30d",
+    "wsmDia_rate_per_day_90d",
+    "days_since_turning",
+    "distance_since_turning_km",
+    "days_since_last_inspection",
+    "wheel_age_days_proxy",
+    "days_since_segment_start",
+    "inspection_count_30d",
+    "inspection_count_90d",
+    "km_last_30d",
+    "km_last_90d",
+    "rtis_reporting_coverage_pct",
+    "distance_per_day_km",
+    "n_prior_turns",
+    "segment_index",
+    "axle_position_1_6",
+    "wheel_position_1_12",
+    "wheel_profile_2class"
+  ],
+  "cat_feats": [
+    "LocoType",
+    "home_shed",
+    "defect_zone",
+    "shed_any"
+  ],
+  "horizons": [
+    30,
+    60,
+    90
+  ],
+  "train_cutoff": "2024-08-11",
+  "n_train_rows": 86470
+}

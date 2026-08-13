@@ -9,3 +9,10 @@ __pycache__/
 .pytest_cache/
 .venv/
 catboost_info
+
+# frontend build artifacts
+node_modules/
+dist/
+build.log
+vite.log
+.vite/
