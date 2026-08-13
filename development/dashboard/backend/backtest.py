@@ -128,12 +128,17 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
     forecasts = []
     for dim in DIMM:
         for h in HORIZONS:
-            pred = float(deg_svc["models"][(dim, h)].predict(Xdeg)[0])
+            delta = float(deg_svc["models"][(dim, h)].predict(Xdeg)[0])
             actual = tgt[h][dim] if tgt[h] else None
             current = fr.get(f"mean_{dim}")
             act_ts = tts[h]
+            # Serving models regress delta; reconstruct the level for
+            # comparison against current/actual (mirrors build_fleet_backtest).
+            pred = None
+            if np.isfinite(delta) and current is not None and np.isfinite(current):
+                pred = current + delta
             flag = None
-            if np.isfinite(pred) and current is not None and np.isfinite(current):
+            if pred is not None and current is not None and np.isfinite(current):
                 if dim == "wsmDia" and pred > current + DIA_INC_TOL:
                     flag = "increasing_diameter"
                 elif dim in WEAR_DIMS and pred < current - WEAR_BETTER_TOL:
@@ -141,12 +146,13 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
             forecasts.append({
                 "dim": dim, "horizon": h,
                 "current": round(current, 4) if current is not None and np.isfinite(current) else None,
-                "predicted": round(pred, 4),
+                "predicted": round(pred, 4) if pred is not None else None,
+                "delta": round(delta, 4) if np.isfinite(delta) else None,
                 "actual": round(actual, 4) if actual is not None and np.isfinite(actual) else None,
                 "actual_ts": str(pd.Timestamp(act_ts).date()) if act_ts is not None else None,
                 "observed_in_horizon": actual is not None and np.isfinite(actual),
                 "implausibility_flag": flag,
-                "mae": round(abs(pred - actual), 4) if actual is not None and np.isfinite(actual) else None,
+                "mae": round(abs(pred - actual), 4) if pred is not None and actual is not None and np.isfinite(actual) else None,
             })
 
     # ---- P(turn) predictions (raw probabilities, unrounded) ----

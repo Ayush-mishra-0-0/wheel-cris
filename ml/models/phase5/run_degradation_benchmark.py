@@ -6,10 +6,16 @@ states (contract v1.2 section 4); train labels only count when their target
 measurement time is knowable at the deployment cutoff.
 
 Models per (target dim, horizon):
-  B0  persistence        = current wear (no degradation assumed)
-  B1  linear            = current + trailing-90d per-day rate * H
+  B0  persistence        = current wear (no degradation assumed, delta = 0)
+  B1  linear            = trailing-90d per-day rate * H
   B2  ridge             = ridge regression on imputed numeric set
   C1  XGBRegressor      = gradient boosting (native NaN)
+
+TARGET_MODE = "delta": every model regresses the CHANGE (delta = tgt - anchor) and
+predictions are reconstructed as anchor + delta for evaluation. This removes
+between-wheel LEVEL dominance (the old level-regression pitfall where R2 came
+almost entirely from wsmFla level variance, not trend) while keeping MAE/RMSE/R2/
+Spearman in the SAME mm units, so before/after numbers are directly comparable.
 
 Static grid: all 4 dims x 3 horizons, temporal PIT train/test split.
 Rolling headliner: quarterly cutoffs over the test window (label known at T),
@@ -42,6 +48,7 @@ ROOT = Path(__file__).resolve().parents[2]
 DATA = ROOT / "model_datasets" / "v5" / "degradation_benchmark.parquet"
 OUT = ROOT / "models" / "experiments" / "v5"
 
+TARGET_MODE = "delta"
 HORIZONS = (30, 90, 180)
 TARGET_DIMS = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 SEED = 42
@@ -136,30 +143,37 @@ def main() -> None:
     summary = {"task": "phase 5 layer 2 degradation benchmark",
                "contract": "wheel_profile_lifecycle_contract_v1",
                "source": str(DATA.relative_to(ROOT)),
+               "target_mode": TARGET_MODE,
                "models": ["B0_persistence", "B1_linear", "B2_ridge", "C1_xgb"],
                "static": {}, "rolling": {}}
 
     def predict(name, tr, te, dim, H):
-        ytr = df.loc[tr, f"tgt_{dim}_{H}d"].to_numpy(dtype=float)
+        # delta target (TARGET_MODE): y = tgt - anchor; predictions reconstructed
+        # as level = anchor + delta so metrics stay in mm and remain comparable.
+        # Returns (level_pred, delta_pred) so both spaces can be scored.
+        cur_tr = df.loc[tr, f"mean_{dim}"].to_numpy(dtype=float)
+        cur_te = df.loc[te, f"mean_{dim}"].to_numpy(dtype=float)
+        ytr = df.loc[tr, f"tgt_{dim}_{H}d"].to_numpy(dtype=float) - cur_tr
         if name == "B0_persistence":
-            return df.loc[te, f"mean_{dim}"].to_numpy(dtype=float)
-        if name == "B1_linear":
-            cur = df.loc[te, f"mean_{dim}"].to_numpy(dtype=float)
+            delta_te = np.zeros(int(te.sum()))
+        elif name == "B1_linear":
             rate = df.loc[te, RATE_COL[dim]].to_numpy(dtype=float)
-            return cur + np.where(np.isfinite(rate), rate * H, 0.0)
-        if name == "B2_ridge":
+            delta_te = np.where(np.isfinite(rate), rate * H, 0.0)
+        elif name == "B2_ridge":
             Xit = np.hstack([Xn_all[tr], Xc_all[tr]])
             imp = SimpleImputer().fit(Xit)
             m = Ridge(alpha=1.0, random_state=SEED).fit(imp.transform(Xit), ytr)
-            return m.predict(imp.transform(np.hstack([Xn_all[te], Xc_all[te]])))
-        if name == "C1_xgb":
+            delta_te = m.predict(imp.transform(np.hstack([Xn_all[te], Xc_all[te]])))
+        elif name == "C1_xgb":
             Xt = np.hstack([Xn_all[tr], Xc_all[tr]])
             m = XGBRegressor(n_estimators=400, learning_rate=0.08, max_depth=6,
                              subsample=0.85, colsample_bytree=0.85,
                              tree_method="hist", random_state=SEED, verbosity=0)
             m = m.fit(Xt, ytr)
-            return m.predict(np.hstack([Xn_all[te], Xc_all[te]]))
-        raise ValueError(name)
+            delta_te = m.predict(np.hstack([Xn_all[te], Xc_all[te]]))
+        else:
+            raise ValueError(name)
+        return cur_te + delta_te, delta_te
 
     # ---------- static grid ----------
     for dim in TARGET_DIMS:
@@ -168,14 +182,19 @@ def main() -> None:
             elig = df[f"eligible_{dim}_{H}d"].to_numpy()
             tgt_obs = tgt_arr[H]
             ycol = df[f"tgt_{dim}_{H}d"].to_numpy(dtype=float)
-            yok = np.isfinite(ycol)
+            cur = df[f"mean_{dim}"].to_numpy(dtype=float)
+            yok = np.isfinite(ycol) & np.isfinite(cur)
             tr = is_train & elig & yok & (tgt_obs <= train_cutoff)
             te = (~is_train) & elig & yok
             yte = ycol[te]
+            cur_te = df.loc[te, f"mean_{dim}"].to_numpy(dtype=float)
+            dte = yte - cur_te
             per_model = {}
             for name in summary["models"]:
-                yh = predict(name, tr, te, dim, H)
+                yh, dh = predict(name, tr, te, dim, H)
                 per_model[name] = {**metrics(yte, yh),
+                                   **{"delta_" + k: v for k, v in metrics(dte, dh).items()
+                                      if k != "n"},
                                    "capture05": capture_at(yte, yh, 0.05),
                                    "capture10": capture_at(yte, yh, 0.10)}
             summary["static"][dim][f"{H}d"] = {
@@ -190,7 +209,8 @@ def main() -> None:
         elig = df[f"eligible_{dim}_{H}d"].to_numpy()
         tgt_obs = tgt_arr[H]
         ycol = df[f"tgt_{dim}_{H}d"].to_numpy(dtype=float)
-        yok = np.isfinite(ycol)
+        cur = df[f"mean_{dim}"].to_numpy(dtype=float)
+        yok = np.isfinite(ycol) & np.isfinite(cur)
         per_cut = []
         for T in cutoffs:
             Tn = np.datetime64(T, "us")
@@ -201,10 +221,14 @@ def main() -> None:
             if int(tr.sum()) < 5000 or int(te.sum()) < 300:
                 continue
             yte = ycol[te]
+            cur_te = df.loc[te, f"mean_{dim}"].to_numpy(dtype=float)
+            dte = yte - cur_te
             res = {"cutoff": str(T.date()), "n_test": int(te.sum())}
             for name in summary["models"]:
-                yh = predict(name, tr, te, dim, H)
+                yh, dh = predict(name, tr, te, dim, H)
                 res[name] = metrics(yte, yh)
+                res[name]["delta_mae"] = metrics(dte, dh)["mae"]
+                res[name]["delta_r2"] = metrics(dte, dh)["r2"]
             per_cut.append(res)
             print(f"roll {dim} {T.date()} train={tr.sum():,} test={te.sum():,}")
         if per_cut:
@@ -243,11 +267,12 @@ def main() -> None:
     dim, H = "wsmRoot", 90
     elig = df[f"eligible_{dim}_{H}d"].to_numpy()
     ycol_s = df[f"tgt_{dim}_{H}d"].to_numpy(dtype=float)
-    yok_s = np.isfinite(ycol_s)
+    yok_s = np.isfinite(ycol_s) & np.isfinite(df[f"mean_{dim}"].to_numpy(dtype=float))
     tr = is_train & elig & yok_s & (tgt_arr[H] <= train_cutoff)
     te = (~is_train) & elig & yok_s
     yte = ycol_s[te]
-    yh = predict("C1_xgb", tr, te, dim, H)
+    cur_te = df.loc[te, f"mean_{dim}"].to_numpy(dtype=float)
+    yh, _ = predict("C1_xgb", tr, te, dim, H)
     fig, ax = plt.subplots(figsize=(6, 6))
     ok = np.isfinite(yte) & np.isfinite(yh)
     ax.scatter(yte[ok], yh[ok], s=4, alpha=0.12)

@@ -19,9 +19,14 @@ DEG_DIR = ROOT / "models" / "phase5" / "serving" / "degradation"
 PTURN_DIR = ROOT / "models" / "phase5" / "serving" / "turn_probability"
 SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 TURNS = ROOT / "model_datasets" / "v5" / "lifecycle_turns.parquet"
+TRAJ_ARTEFACT = ROOT / "models" / "experiments" / "v5" / "trajectory_product_analysis.json"
 
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
+WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
+WEAR_BETTER_TOL = 0.05      # mm threshold below current to flag "wear improves"
+DIA_INC_TOL = 0.001         # mm; predicted diameter above current
+DAY = np.timedelta64(1, "D")
 
 
 @lru_cache(maxsize=1)
@@ -68,10 +73,19 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
     X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
     fc = []
     for dim in DIMM:
+        current = fr.get(f"mean_{dim}")
         for h in HORIZONS:
             m = svc["models"][(dim, h)]
-            pred = float(m.predict(X)[0])
-            fc.append({"horizon": h, "dim": dim, "value": round(pred, 4)})
+            delta = float(m.predict(X)[0])
+            # Serving models regress delta (tgt - anchor); reconstruct the
+            # level for display so the forecast is an absolute profile state.
+            value = None
+            if np.isfinite(delta) and current is not None and np.isfinite(current):
+                value = round(current + delta, 4)
+            fc.append({"horizon": h, "dim": dim, "value": value,
+                       "delta": round(delta, 4) if np.isfinite(delta) else None,
+                       "current": round(float(current), 4)
+                       if current is not None and np.isfinite(current) else None})
     return {"wheelset_equipment_id": wheelset_id, "anchor": anchor, "forecasts": fc}
 
 
@@ -93,6 +107,181 @@ def predict_pturn(wheelset_id: int, anchor=None) -> dict:
                     "turn_rate_train": svc["turn_rate_train"].get(h)})
     return {"wheelset_equipment_id": wheelset_id, "anchor": anchor,
             "probabilities": out}
+
+
+@lru_cache(maxsize=1)
+def trajectory_artefact() -> dict:
+    if not TRAJ_ARTEFACT.exists():
+        return {}
+    return json.loads(TRAJ_ARTEFACT.read_text())
+
+
+def _conformal_width_mm(dim: str, h: int) -> float | None:
+    a = trajectory_artefact()
+    try:
+        return float(a["3_conformal_80pct"][dim][f"{h}d"]["conformal_width_mm"])
+    except (KeyError, TypeError):
+        return None
+
+
+def _noise_floor_mm(dim: str) -> float | None:
+    a = trajectory_artefact()
+    try:
+        return float(a["2_noise_floor"][dim]["central_sigma_mm"])
+    except (KeyError, TypeError):
+        return None
+
+
+def _delta_metrics_slim() -> dict:
+    a = trajectory_artefact().get("1_delta_metrics", {})
+    out = {}
+    for dim, hs in a.items():
+        out[dim] = {f"{h}d": {
+            "mae_mm": m.get("mae_mm"),
+            "delta_r2": m.get("delta_r2"),
+            "delta_spearman": m.get("delta_spearman"),
+        } for h, m in hs.items()}
+    return out
+
+
+def _physics_flags(dim: str, current: float | None, predicted: float | None) -> list[str]:
+    if predicted is None or current is None or not np.isfinite(current) or not np.isfinite(predicted):
+        return []
+    if dim == "wsmDia" and predicted > current + DIA_INC_TOL:
+        return ["increasing_diameter"]
+    if dim in WEAR_DIMS and predicted < current - WEAR_BETTER_TOL:
+        return ["wear_better_than_current"]
+    return []
+
+
+def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
+    """Chart-data contract for the trajectory panel (trajectory_chart_v1).
+
+    Built for a single anchor (default = latest measurement; `asof` re-anchors
+    at a historical measurement). Wear dims are primary; wsmDia is derived and
+    flagged when the forecast would increase it. All values are levels
+    (predicted = current + delta); physics flags are reported, never clipped.
+    """
+    wes_all = load_wes()
+    w = wes_all[wes_all["wheelset_equipment_id"] == wheelset_id].sort_values(
+        "measurement_timestamp").reset_index(drop=True)
+    if w.empty:
+        return {"wheelset_equipment_id": wheelset_id, "anchor": None, "asof": None,
+                "contract": "trajectory_chart_v1", "model": None, "dims": [],
+                "delta_metrics": {}, "note": None}
+
+    anchor = asof if asof is not None else pd.Timestamp(w.iloc[-1]["measurement_timestamp"])
+    t = pd.to_datetime(w["measurement_timestamp"])
+    t_arr = t.to_numpy(dtype="datetime64[us]")
+    anchor_ns = np.datetime64(pd.Timestamp(anchor), "us")
+    pos = np.where(t_arr == anchor_ns)[0]
+    if len(pos) == 0:
+        return {"wheelset_equipment_id": wheelset_id, "anchor": None,
+                "asof": pd.Timestamp(anchor),
+                "contract": "trajectory_chart_v1", "model": None, "dims": [],
+                "delta_metrics": {}, "note": "as-of is not a measurement timestamp"}
+    p = int(pos[0])
+
+    fr = extract_features(wheelset_id, pd.Timestamp(anchor), w=w)
+    svc = degradation_models()
+    deg = {}
+    if fr is not None:
+        X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
+        for dim in DIMM:
+            cur = fr.get(f"mean_{dim}")
+            deg[dim] = {"current": cur, "delta": {}, "predicted": {}}
+            for h in HORIZONS:
+                delta = float(svc["models"][(dim, h)].predict(X)[0])
+                predicted = cur + delta if np.isfinite(delta) and cur is not None and np.isfinite(cur) else None
+                deg[dim]["delta"][h] = delta
+                deg[dim]["predicted"][h] = predicted
+
+    # observed history up to (and including) the anchor
+    seg_id = w["seg_id"].to_numpy(dtype="int64") if "seg_id" in w else w.get("seg_id")
+    dims = []
+    for dim in DIMM:
+        vals = w[f"mean_{dim}"].to_numpy(dtype=float)
+        cur = deg[dim]["current"] if dim in deg else None
+        obs = []
+        for i in range(p + 1):
+            v = vals[i]
+            if np.isfinite(v):
+                obs.append({
+                    "ts": pd.Timestamp(t.iloc[i]),
+                    "value": round(float(v), 4),
+                    "segment_index": int(seg_id[i]) if seg_id is not None else None,
+                    "turn_event": bool(w.iloc[i].get("turn_event", False)),
+                    "replacement": bool(w.iloc[i].get("replacement", False)),
+                })
+        forecasts = []
+        flags = set()
+        for h in HORIZONS:
+            pred = deg[dim]["predicted"].get(h) if dim in deg else None
+            width = _conformal_width_mm(dim, h)
+            forecasts.append({
+                "dim": dim, "horizon": h,
+                "asof_ts": pd.Timestamp(anchor) + pd.Timedelta(days=h),
+                "current": round(float(cur), 4) if cur is not None and np.isfinite(cur) else None,
+                "delta": round(float(deg[dim]["delta"][h]), 4) if dim in deg else None,
+                "predicted": round(float(pred), 4) if pred is not None else None,
+                "low": round(float(pred - width), 4) if pred is not None and width is not None else None,
+                "high": round(float(pred + width), 4) if pred is not None and width is not None else None,
+            })
+            flags.update(_physics_flags(dim, cur, pred))
+
+        # realised: future within-segment measurements inside each horizon
+        realised = []
+        for h in HORIZONS:
+            hi = int(np.searchsorted(t_arr, anchor_ns + h * DAY, side="right"))
+            b = int(np.searchsorted(seg_id, seg_id[p], side="right")) if seg_id is not None else 0
+            last_same = min(hi, b) - 1
+            if last_same > p:
+                actual = vals[last_same]
+                pred = deg[dim]["predicted"].get(h) if dim in deg else None
+                if np.isfinite(actual):
+                    realised.append({
+                        "dim": dim, "horizon": h,
+                        "ts": pd.Timestamp(t.iloc[last_same]),
+                        "actual": round(float(actual), 4),
+                        "residual": round(float(actual - pred), 4) if pred is not None else None,
+                        "observed_in_horizon": True,
+                    })
+
+        dims.append({
+            "dim": dim,
+            "observed": obs,
+            "forecasts": forecasts,
+            "realised": realised,
+            "flags": sorted(flags),
+            "noise_floor_mm": _noise_floor_mm(dim),
+        })
+
+    # model metadata from the degradation serving manifest + features.json
+    meta = None
+    try:
+        feats = json.loads((DEG_DIR / "features.json").read_text())
+        mf = json.loads((DEG_DIR / "manifest.json").read_text())
+        meta = {
+            "task": mf.get("task"),
+            "target_mode": "delta",
+            "train_cutoff": feats.get("train_cutoff"),
+            "n_train": feats.get("n_train_rows"),
+        }
+    except Exception:
+        pass
+
+    return {
+        "wheelset_equipment_id": wheelset_id,
+        "anchor": pd.Timestamp(anchor),
+        "asof": pd.Timestamp(anchor),
+        "contract": "trajectory_chart_v1",
+        "model": meta,
+        "dims": dims,
+        "delta_metrics": _delta_metrics_slim(),
+        "note": ("Trajectory chart contract: forecast = anchor + delta; "
+                 "80% split-conformal bands from the trajectory artefact; "
+                 "physics flags reported, never clipped."),
+    }
 
 
 def loco_lookup(loco_number: str) -> pd.DataFrame:

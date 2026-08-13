@@ -1,11 +1,11 @@
 {
   "task": "phase 5 lifecycle segment reconstruction",
   "contract": "wheel_profile_lifecycle_contract_v1",
-  "n_segments": 39971,
+  "n_segments": 44093,
   "n_turning_events": 3237,
   "n_wheelsets": 19167,
   "min_segment_days": 0.0,
-  "median_segment_days": 92.0,
+  "median_segment_days": 93.0,
   "median_turn_cut_mm": 7.0,
   "turning_events_by_year": {
     "2020": 29,
@@ -16,6 +16,6 @@
     "2025": 552,
     "2026": 384
   },
-  "sha256_segments": "00ad5e85bbaac809b5a56029010032bcd88b44fe73370c5b1ba79ff57b1bccbc",
-  "sha256_turns": "c2c8d6b0837c4a8f3020d640db5376141500a0a0ad1b0df950996db35d2b40c6"
+  "sha256_segments": "3992a18950faf92ce86be4ecb4f6e717d44a96ffbfc1cf167bd84aca8f5024fb",
+  "sha256_turns": "f5518ab461cc12007b473ea818fa1c33287f57db21d3105d9b0a24de65357a94"
 }

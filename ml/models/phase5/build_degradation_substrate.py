@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from models.phase5.build_lifecycle_segments import (  # noqa: E402
-    GATES, SIDE_FIELDS, side_mean,
+    GATES, SIDE_FIELDS, compute_boundaries, side_mean,
 )
 
 WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
@@ -111,28 +111,7 @@ def main() -> None:
     wes["turn_flag"] = wes["turning_record_at_measurement"].eq(1)
 
     # ---- turn-event / replacement / segment id (identical logic to segments builder) ----
-    g = wes.groupby("wheelset_equipment_id", sort=False)
-    for f in SIDE_FIELDS:
-        wes[f"prev_{f}"] = g[f"mean_{f}"].shift(1)
-    wes["prev_ts"] = g["_ts"].shift(1)
-    wes["days_prev"] = (wes["_ts"] - wes["prev_ts"]) / np.timedelta64(1, "D")
-
-    cut = wes["prev_wsmDia"] - wes["mean_wsmDia"]
-    fl_restore = wes["mean_wsmFlange"].fillna(0) <= wes["prev_wsmFlange"].fillna(0) - 0.2
-    rt_restore = wes["mean_wsmRoot"].fillna(0) <= wes["prev_wsmRoot"].fillna(0) - 0.2
-    dia_cut = (cut >= 1.0) & (cut <= 25.0) & wes["prev_wsmDia"].notna()
-    wes["turn_event"] = wes["turn_flag"] & dia_cut & (fl_restore | rt_restore)
-
-    prov = pd.to_datetime(wes["wsmProvDate"])
-    wes["_prov_num"] = prov.to_numpy(dtype="datetime64[us]").astype("int64")
-    wes["_prov_num"] = wes["_prov_num"].replace(-9223372036854775808, np.nan)
-    prov_changed = g["_prov_num"].transform(lambda s: s.notna() & s.ne(s.shift()) & s.shift().notna())
-    age = wes["wheel_age_days_proxy"].to_numpy(dtype=float)
-    age_reset = (age < 10) & (pd.Series(age).shift() > 90) & \
-        (wes["wheelset_equipment_id"].eq(wes["wheelset_equipment_id"].shift()))
-    wes["replacement"] = (prov_changed | age_reset).to_numpy()
-    wes["_boundary"] = wes["turn_event"] | wes["replacement"]
-    wes["seg_id"] = g["_boundary"].cumsum().astype(int)
+    wes = compute_boundaries(wes)
 
     # ---- anchors: frozen v3f within-lifecycle rows (join 100% coverage, no dupes) ----
     v3f = pd.read_parquet(V3F)

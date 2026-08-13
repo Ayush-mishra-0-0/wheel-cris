@@ -28,6 +28,8 @@ class ForecastPoint(BaseModel):
     horizon: int
     dim: str
     value: float | None = None
+    delta: float | None = None
+    current: float | None = None
     unit: str = "mm"
     note: str | None = None
 
@@ -95,6 +97,7 @@ class ReplayForecast(BaseModel):
     horizon: int
     current: float | None = None
     predicted: float | None = None
+    delta: float | None = None
     actual: float | None = None
     actual_ts: str | None = None
     observed_in_horizon: bool = False
@@ -128,3 +131,58 @@ class FleetBacktest(BaseModel):
     degradation: dict = Field(default_factory=dict)
     turn_probability: dict = Field(default_factory=dict)
     implausibility_diagnostics: dict = Field(default_factory=dict)
+
+
+class TrajectoryObserved(BaseModel):
+    ts: dt.datetime
+    value: float | None = None
+    segment_index: int | None = None
+    turn_event: bool = False
+    replacement: bool = False
+
+
+class TrajectoryForecast(BaseModel):
+    dim: str
+    horizon: int
+    asof_ts: dt.datetime | None = None
+    current: float | None = None
+    delta: float | None = None
+    predicted: float | None = None
+    low: float | None = None
+    high: float | None = None
+
+
+class TrajectoryRealised(BaseModel):
+    dim: str
+    horizon: int
+    ts: dt.datetime | None = None
+    actual: float | None = None
+    residual: float | None = None
+    observed_in_horizon: bool = False
+
+
+class TrajectoryDim(BaseModel):
+    dim: str
+    observed: list[TrajectoryObserved] = Field(default_factory=list)
+    forecasts: list[TrajectoryForecast] = Field(default_factory=list)
+    realised: list[TrajectoryRealised] = Field(default_factory=list)
+    flags: list[str] = Field(default_factory=list)
+    noise_floor_mm: float | None = None
+
+
+class TrajectoryModelMeta(BaseModel):
+    task: str
+    target_mode: str
+    train_cutoff: str | None = None
+    n_train: int | None = None
+
+
+class TrajectoryContract(BaseModel):
+    wheelset_equipment_id: int
+    anchor: dt.datetime | None = None
+    asof: dt.datetime | None = None
+    contract: str = "trajectory_chart_v1"
+    model: TrajectoryModelMeta | None = None
+    dims: list[TrajectoryDim] = Field(default_factory=list)
+    delta_metrics: dict = Field(default_factory=dict)
+    note: str | None = None

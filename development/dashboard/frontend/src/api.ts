@@ -1,4 +1,10 @@
-import type { FleetBacktest, LocomotiveSummary, WheelsetDetail, WheelsetReplay } from "./types";
+import type {
+  FleetBacktest,
+  LocomotiveSummary,
+  TrajectoryContract,
+  WheelsetDetail,
+  WheelsetReplay,
+} from "./types";
 
 const BASE = "/api";
 
@@ -17,6 +23,12 @@ export const api = {
     get<WheelsetDetail>(`/wheelset/${id}/overview`),
   wheelsetBacktest: (id: number, asof: string) =>
     get<WheelsetReplay>(`/wheelset/${id}/backtest?asof=${encodeURIComponent(asof)}`),
+  trajectory: (id: number, asof?: string) =>
+    get<TrajectoryContract>(
+      asof
+        ? `/wheelset/${id}/trajectory?asof=${encodeURIComponent(asof)}`
+        : `/wheelset/${id}/trajectory`
+    ),
   fleetBacktest: () => get<FleetBacktest>(`/backtest/fleet`),
   locoPlots: (loco: string) =>
     get<{ loco: string; images: Record<string, string>; svgs: Record<string, string> }>(

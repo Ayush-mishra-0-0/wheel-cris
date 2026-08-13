@@ -6,6 +6,11 @@ labels known at the train cutoff), and persists the fitted model + the
 OrdinalEncoder + the feature column order so the FastAPI backend can predict
 for ANY wheelset (including Loco 37597, which is outside the substrate).
 
+TARGET_MODE = "delta": the models regress the CHANGE over the horizon (delta =
+horizon state - anchor state), matching run_degradation_benchmark.py. At serve
+time the backend reconstructs pred = anchor_mean + delta. This removes the
+between-wheel LEVEL dominance that inflated R2 in the old level regression.
+
 Output:
   models/phase5/serving/degradation/*.joblib  (model_<dim>_<H>d.joblib)
   models/phase5/serving/degradation/encoder.joblib
@@ -26,6 +31,7 @@ ROOT = Path(__file__).resolve().parents[4]
 DATA = ROOT / "model_datasets" / "v5" / "degradation_benchmark.parquet"
 OUT = ROOT / "models" / "phase5" / "serving" / "degradation"
 
+TARGET_MODE = "delta"
 HORIZONS = (30, 90, 180)
 TARGET_DIMS = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 SEED = 42
@@ -90,11 +96,12 @@ def main() -> None:
         for H in HORIZONS:
             elig = df[f"eligible_{dim}_{H}d"].to_numpy()
             ycol = df[f"tgt_{dim}_{H}d"].to_numpy(dtype=float)
-            yok = np.isfinite(ycol)
+            cur = df[f"mean_{dim}"].to_numpy(dtype=float)
+            yok = np.isfinite(ycol) & np.isfinite(cur)
             tr = is_train & elig & yok & (tgt_arr[H] <= train_cutoff)
             Xtr = np.hstack([df.loc[tr, NUM_FEATS].to_numpy(dtype=float),
                              Xc_full[tr]])
-            ytr = ycol[tr]
+            ytr = ycol[tr] - cur[tr]  # delta target (TARGET_MODE)
             m = XGBRegressor(n_estimators=400, learning_rate=0.08, max_depth=6,
                              subsample=0.85, colsample_bytree=0.85,
                              tree_method="hist", random_state=SEED, verbosity=0)
@@ -103,7 +110,7 @@ def main() -> None:
             joblib.dump(m, path)
             manifest["models"].append({
                 "dim": dim, "horizon": H, "path": path.name,
-                "n_train": int(len(ytr))})
+                "n_train": int(len(ytr)), "target": TARGET_MODE})
             print(f"{dim} {H}d  train={len(ytr):,} saved")
 
     (OUT / "manifest.json").write_text(

@@ -26,7 +26,16 @@ TRACKHIST = ROOT / "distance_recovery" / "data" / "fois_trackhistory_wap7.parque
 
 
 def station_shed_lookup() -> tuple[pd.DataFrame, set]:
-    """FOIS station codes equal to SLAM shed codes form the shed-station set."""
+    """FOIS station codes equal to SLAM shed codes form the shed-station set.
+
+    The FOIS trackhistory source is an external data dependency (gitignored under
+    distance_recovery/data/). If it is absent the function degrades to an empty
+    lookup; shed attribution then falls back to SLAM stays + WES home_shed only.
+    """
+    if not TRACKHIST.exists():
+        print(f"WARN: {TRACKHIST.name} not found - FOIS station attribution skipped "
+              "(SLAM + WES fallback only)")
+        return pd.DataFrame(columns=["lom_number", "Station", "t"]), set()
     th = pd.read_parquet(TRACKHIST, columns=["LocoNumber", "Station", "LastLocationTime"])
     th["LocoNumber"] = th["LocoNumber"].astype(str).str.strip()
     th["Station"] = th["Station"].astype(str).str.strip()
@@ -78,12 +87,14 @@ def main() -> None:
             stays = slam[(slam["loco_number"] == lom) & (slam["start"] <= tt) & (slam["end"] >= tt)]
             if not stays.empty:
                 shed_slam[i] = stays.sort_values("start").iloc[-1]["shed"]
-        # FOIS: most recent station at/before post_ts (per loco)
-        tgt = out.reset_index(drop=False)[["index", "lom_number", "post_ts"]].rename(columns={"post_ts": "t"})
-        tgt = tgt.dropna(subset=["lom_number"]).sort_values("t")
-        merged = pd.merge_asof(
-            tgt, th.sort_values("t"), on="t", by="lom_number", direction="backward")
-        stn_map = dict(zip(merged["index"], merged["Station"]))
+        # FOIS: most recent station at/before post_ts (per loco); skip if source absent
+        stn_map: dict = {}
+        if len(th):
+            tgt = out.reset_index(drop=False)[["index", "lom_number", "post_ts"]].rename(columns={"post_ts": "t"})
+            tgt = tgt.dropna(subset=["lom_number"]).sort_values("t")
+            merged = pd.merge_asof(
+                tgt, th.sort_values("t"), on="t", by="lom_number", direction="backward")
+            stn_map = dict(zip(merged["index"], merged["Station"]))
         # map stations equal to a shed code
         for i, s in stn_map.items():
             stn[i] = s

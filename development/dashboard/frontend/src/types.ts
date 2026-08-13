@@ -31,6 +31,8 @@ export interface ForecastPoint {
   horizon: number;
   dim: string;
   value: number | null;
+  delta: number | null;
+  current: number | null;
   unit: string;
 }
 
@@ -120,6 +122,61 @@ export interface FleetBacktest {
     string,
     Record<string, { n: number; flag: string; actual_rate: number; model_rate: number }>
   >;
+}
+
+export interface TrajectoryObserved {
+  ts: string;
+  value: number | null;
+  segment_index: number | null;
+  turn_event: boolean;
+  replacement: boolean;
+}
+
+export interface TrajectoryForecast {
+  dim: string;
+  horizon: number;
+  asof_ts: string | null;
+  current: number | null;
+  delta: number | null;
+  predicted: number | null;
+  low: number | null;
+  high: number | null;
+}
+
+export interface TrajectoryRealised {
+  dim: string;
+  horizon: number;
+  ts: string | null;
+  actual: number | null;
+  residual: number | null;
+  observed_in_horizon: boolean;
+}
+
+export interface TrajectoryDim {
+  dim: string;
+  observed: TrajectoryObserved[];
+  forecasts: TrajectoryForecast[];
+  realised: TrajectoryRealised[];
+  flags: string[];
+  noise_floor_mm: number | null;
+}
+
+export interface TrajectoryModelMeta {
+  task: string | null;
+  target_mode: string | null;
+  train_cutoff: string | null;
+  n_train: number | null;
+}
+
+export interface TrajectoryContract {
+  wheelset_equipment_id: number;
+  anchor: string | null;
+  asof: string | null;
+  contract: string;
+  model: TrajectoryModelMeta | null;
+  dims: TrajectoryDim[];
+  delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
+  note: string | null;
 }
 
 export interface BacktestModel {

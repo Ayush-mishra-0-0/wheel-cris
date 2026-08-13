@@ -1,0 +1,85 @@
+{
+  "task": "P0.2 replacement-contamination audit",
+  "contract": "wheel_profile_lifecycle_contract_v1",
+  "boundary_logic": "models.phase5.dashboard.backend.features._boundaries (serving-exact)",
+  "date": "2026-08-13",
+  "missed_replacement_scan": {
+    "rows": 271350,
+    "wheelsets": 19167,
+    "boundary_flags": {
+      "turn_event": 3270,
+      "replacement": 22837
+    },
+    "jump_ge_15mm": {
+      "total_up": 8650,
+      "detected_by_boundary": 8247,
+      "missed_by_boundary": 403,
+      "missed_within_same_segment": 403,
+      "missed_share": 0.0466
+    },
+    "jump_ge_20mm": {
+      "total_up": 7928,
+      "detected_by_boundary": 7923,
+      "missed_by_boundary": 5,
+      "missed_within_same_segment": 5,
+      "missed_share": 0.0006
+    },
+    "jump_ge_30mm": {
+      "total_up": 6674,
+      "detected_by_boundary": 6673,
+      "missed_by_boundary": 1,
+      "missed_within_same_segment": 1,
+      "missed_share": 0.0001
+    }
+  },
+  "target_contamination": {
+    "30": {
+      "n": 123977,
+      "rate_delta_gt_0.05mm": 0.0292,
+      "rate_delta_gt_0.5mm": 0.023,
+      "rate_delta_gt_2mm": 0.0118,
+      "n_delta_gt_0.05mm": 3617,
+      "median_positive_delta_mm": 1.51,
+      "p99_positive_delta_mm": 18.1008
+    },
+    "90": {
+      "n": 184331,
+      "rate_delta_gt_0.05mm": 0.0236,
+      "rate_delta_gt_0.5mm": 0.0187,
+      "rate_delta_gt_2mm": 0.0104,
+      "n_delta_gt_0.05mm": 4354,
+      "median_positive_delta_mm": 1.75,
+      "p99_positive_delta_mm": 18.3867
+    },
+    "180": {
+      "n": 217957,
+      "rate_delta_gt_0.05mm": 0.0181,
+      "rate_delta_gt_0.5mm": 0.0153,
+      "rate_delta_gt_2mm": 0.0103,
+      "n_delta_gt_0.05mm": 3946,
+      "median_positive_delta_mm": 3.2975,
+      "p99_positive_delta_mm": 19.5
+    }
+  },
+  "anchor_cross_check": {
+    "30": {
+      "contaminated_anchors_checked": 3165,
+      "contaminated_with_missed_jump": 117,
+      "share_with_missed_jump": 0.037,
+      "total_missed_jumps_in_windows": 118
+    },
+    "90": {
+      "contaminated_anchors_checked": 4167,
+      "contaminated_with_missed_jump": 277,
+      "share_with_missed_jump": 0.0665,
+      "total_missed_jumps_in_windows": 282
+    },
+    "180": {
+      "contaminated_anchors_checked": 3897,
+      "contaminated_with_missed_jump": 579,
+      "share_with_missed_jump": 0.1486,
+      "total_missed_jumps_in_windows": 587
+    }
+  },
+  "note": "A 'missed' up-jump >= threshold between consecutive measurements that the serving boundary heuristic did not flag as turn_event/replacement. Positive-delta targets are within-segment wsmDia targets exceeding the anchor diameter (physically invalid unless a replacement happened)."
+}

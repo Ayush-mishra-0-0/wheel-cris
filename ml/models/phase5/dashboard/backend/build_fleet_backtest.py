@@ -58,7 +58,10 @@ def main() -> None:
             Xn = te.loc[el, NUM].to_numpy(float)
             X = np.hstack([Xn, Xc[el.to_numpy()]])
             cur = te.loc[el, f"mean_{dim}"].to_numpy(float)
-            pred = m.predict(X)
+            # serving models regress delta (tgt - anchor); reconstruct level for
+            # implausibility comparison against the anchor diameter.
+            delta = m.predict(X)
+            pred = cur + delta
             tgt = te.loc[el, f"tgt_{dim}_{H}d"].to_numpy(float)
             fin = np.isfinite(pred) & np.isfinite(cur)
             if dim == "wsmDia":
@@ -84,6 +87,7 @@ def main() -> None:
         "task": "phase 5 layer 5 fleet-level temporal backtest",
         "contract": "wheel_profile_lifecycle_contract_v1",
         "split": "temporal point-in-time (train_cutoff preserved from substrate)",
+        "target_mode": "delta (serving models regress change; level = anchor + delta)",
         "implausibility_note": ("Implausibility flags are reported explicitly, never clipped. "
                                 "Model over-prediction vs actual within-segment physics is surfaced below."),
         "degradation": json.loads((EXP / "degradation_benchmark.json").read_text()),

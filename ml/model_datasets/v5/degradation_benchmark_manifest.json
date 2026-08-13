@@ -6,13 +6,13 @@
   "source_v3f": "model_datasets\\v3f\\change_space_benchmark.parquet",
   "source_segments": "model_datasets\\v5\\lifecycle_segments_shed.parquet",
   "output": "model_datasets\\v5\\degradation_benchmark.parquet",
-  "sha256": "6e5ed4e6a01be93f65ece19277c18955a5809cc59790b8e0b7d008ba739620c2",
+  "sha256": "eaf9d11e38f80008a9f9d423a2adc5d59108007749b1c2432ec6dc2d596a1ef3",
   "rows": 239684,
   "rows_train": 191747,
   "rows_test": 47937,
-  "transient_excluded_3d": 2354,
-  "transient_pct": 0.98,
-  "shed_coverage_pct": 94.31,
+  "transient_excluded_3d": 2426,
+  "transient_pct": 1.01,
+  "shed_coverage_pct": 85.83,
   "profile_class_coverage_pct": 63.29,
   "horizons": [
     30,
@@ -27,64 +27,64 @@
   ],
   "per_dim_horizon": {
     "wsmRoot_30d": {
-      "eligible": 124376,
-      "eligible_test": 29283,
+      "eligible": 124018,
+      "eligible_test": 29145,
       "target_median": 1.0
     },
     "wsmRoot_90d": {
-      "eligible": 185255,
-      "eligible_test": 42220,
-      "target_median": 1.35
+      "eligible": 184400,
+      "eligible_test": 41885,
+      "target_median": 1.375
     },
     "wsmRoot_180d": {
-      "eligible": 219432,
-      "eligible_test": 47770,
-      "target_median": 1.4
+      "eligible": 218031,
+      "eligible_test": 47311,
+      "target_median": 1.45
     },
     "wsmFlange_30d": {
-      "eligible": 124376,
-      "eligible_test": 29283,
+      "eligible": 124018,
+      "eligible_test": 29145,
       "target_median": 0.5
     },
     "wsmFlange_90d": {
-      "eligible": 185255,
-      "eligible_test": 42220,
+      "eligible": 184400,
+      "eligible_test": 41885,
       "target_median": 0.5
     },
     "wsmFlange_180d": {
-      "eligible": 219432,
-      "eligible_test": 47770,
+      "eligible": 218031,
+      "eligible_test": 47311,
       "target_median": 0.5
     },
     "wsmThread_30d": {
-      "eligible": 124376,
-      "eligible_test": 29283,
+      "eligible": 124018,
+      "eligible_test": 29145,
       "target_median": 0.5
     },
     "wsmThread_90d": {
-      "eligible": 185255,
-      "eligible_test": 42220,
-      "target_median": 0.55
+      "eligible": 184400,
+      "eligible_test": 41885,
+      "target_median": 0.6
     },
     "wsmThread_180d": {
-      "eligible": 219432,
-      "eligible_test": 47770,
+      "eligible": 218031,
+      "eligible_test": 47311,
       "target_median": 0.75
     },
     "wsmDia_30d": {
-      "eligible": 124376,
-      "eligible_test": 29283,
+      "eligible": 124018,
+      "eligible_test": 29145,
       "target_median": 1072.0
     },
     "wsmDia_90d": {
-      "eligible": 185255,
-      "eligible_test": 42220,
-      "target_median": 1071.0
+      "eligible": 184400,
+      "eligible_test": 41885,
+      "target_median": 1070.61
     },
     "wsmDia_180d": {
-      "eligible": 219432,
-      "eligible_test": 47770,
-      "target_median": 1069.0
+      "eligible": 218031,
+      "eligible_test": 47311,
+      "target_median": 1067.6
     }
   }
 }

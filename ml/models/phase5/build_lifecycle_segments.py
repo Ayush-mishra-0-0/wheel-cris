@@ -60,6 +60,15 @@ TURN_CUT_MIN, TURN_CUT_MAX = 1.0, 25.0
 WEAR_RESTORE = 0.2
 MAX_INTER_EVENT_DAYS = 180
 
+# P0.2 replacement-candidate rule (config-registry constants; single source of truth).
+# A consecutive same-wheelset mean-dia UP-jump >= REPLACEMENT_DIA_JUMP_MM is treated as a
+# wheel replacement / state reset ONLY when confirmed by one of:
+#   * both raw sides (wsmDia1, wsmDia2) also jump >= threshold, OR
+#   * the new (higher) level is sustained by the next same-wheelset measurement within
+#     REPLACEMENT_CONFIRM_SUSTAIN_TOL_MM (excludes one-off measurement spikes).
+REPLACEMENT_DIA_JUMP_MM = 20.0
+REPLACEMENT_CONFIRM_SUSTAIN_TOL_MM = 10.0
+
 
 def side_mean(df: pd.DataFrame, field: str) -> pd.Series:
     lo, hi = GATES[field]
@@ -75,6 +84,102 @@ def side_mean(df: pd.DataFrame, field: str) -> pd.Series:
     v2 = np.where(g2 & np.isfinite(f2) & (f2 >= lo) & (f2 <= hi), f2, np.nan)
     nv = np.stack([v1, v2], axis=1)
     return pd.Series(np.nanmean(nv, axis=1), index=df.index)
+
+
+def _dia_jump_replacement_mask(wes: pd.DataFrame) -> np.ndarray:
+    """Confirmed replacement candidates from consecutive dia up-jumps (numpy).
+
+    Returns a bool array aligned to `wes` (sorted by wheelset + timestamp) marking
+    rows whose mean diameter jumped up >= REPLACEMENT_DIA_JUMP_MM vs the previous
+    same-wheelset measurement AND the jump is confirmed (both raw sides rose >= the
+    threshold, OR the new level is sustained by the next same-wheelset measurement
+    within REPLACEMENT_CONFIRM_SUSTAIN_TOL_MM).
+    """
+    ws = wes["wheelset_equipment_id"].to_numpy()
+    dia = wes["mean_wsmDia"].to_numpy(dtype=float)
+    d1 = wes["wsmDia1"].to_numpy(dtype=float)
+    d2 = wes["wsmDia2"].to_numpy(dtype=float)
+    n = len(wes)
+    if n == 0:
+        return np.zeros(0, dtype=bool)
+
+    same_ws = np.concatenate([[False], ws[1:] == ws[:-1]])
+    jump = np.concatenate([[np.nan], dia[1:] - dia[:-1]])
+    cand = same_ws & np.isfinite(jump) & (jump >= REPLACEMENT_DIA_JUMP_MM) & np.isfinite(dia)
+
+    # confirmation A: both raw sides jump >= threshold (wheel pair changed)
+    both = np.zeros(n, dtype=bool)
+    if cand.any():
+        d1_prev = np.concatenate([[np.nan], d1[:-1]])
+        d2_prev = np.concatenate([[np.nan], d2[:-1]])
+        j1 = d1 - d1_prev
+        j2 = d2 - d2_prev
+        both = (np.isfinite(d1) & np.isfinite(d1_prev) & (j1 >= REPLACEMENT_DIA_JUMP_MM)
+                & np.isfinite(d2) & np.isfinite(d2_prev) & (j2 >= REPLACEMENT_DIA_JUMP_MM))
+
+    # confirmation B: new (higher) level sustained by the next same-wheelset measurement
+    sustained = np.zeros(n, dtype=bool)
+    idx = np.flatnonzero(cand & ~both)
+    if len(idx):
+        # next valid same-wheelset mean measurement per row (single backward pass)
+        next_idx = np.full(n, -1, dtype=np.int64)
+        seen = 0
+        for i in range(n - 1, -1, -1):
+            if seen and ws[i] == ws[i + 1]:
+                if np.isfinite(dia[i + 1]):
+                    next_idx[i] = i + 1
+                else:
+                    nxt = next_idx[i + 1]
+                    if nxt != -1:
+                        next_idx[i] = nxt
+            seen += 1
+        for i in idx:
+            k = next_idx[i]
+            if k != -1 and abs(dia[k] - dia[i]) <= REPLACEMENT_CONFIRM_SUSTAIN_TOL_MM:
+                sustained[i] = True
+
+    return cand & (both | sustained)
+
+
+def compute_boundaries(wes: pd.DataFrame) -> pd.DataFrame:
+    """Assign turn_event / replacement / _boundary / seg_id to a WES frame (in place).
+
+    The single source of truth for lifecycle boundaries, shared by:
+      - build_lifecycle_segments.py   (segment reconstruction)
+      - build_degradation_substrate.py (benchmark substrate)
+      - dashboard/backend/features.py (serving extractor)
+
+    Requires `mean_{f}` columns for SIDE_FIELDS to be present (see side_mean) and the
+    frame sorted by (wheelset_equipment_id, measurement_timestamp).
+
+    A row is a boundary when it is a turn event OR a replacement, where replacement =
+    wsmProvDate change OR wheel-age reset OR a CONFIRMED dia up-jump >=
+    REPLACEMENT_DIA_JUMP_MM (the P0.2 fix; see _dia_jump_replacement_mask).
+    """
+    g = wes.groupby("wheelset_equipment_id", sort=False)
+    for f in SIDE_FIELDS:
+        wes[f"prev_{f}"] = g[f"mean_{f}"].shift(1)
+    wes["prev_ts"] = g["_ts"].shift(1)
+    wes["days_prev"] = (wes["_ts"] - wes["prev_ts"]) / np.timedelta64(1, "D")
+
+    cut = wes["prev_wsmDia"] - wes["mean_wsmDia"]
+    fl_restore = wes["mean_wsmFlange"].fillna(0) <= wes["prev_wsmFlange"].fillna(0) - WEAR_RESTORE
+    rt_restore = wes["mean_wsmRoot"].fillna(0) <= wes["prev_wsmRoot"].fillna(0) - WEAR_RESTORE
+    dia_cut = (cut >= TURN_CUT_MIN) & (cut <= TURN_CUT_MAX) & wes["prev_wsmDia"].notna()
+    wes["turn_event"] = wes["turn_flag"] & dia_cut & (fl_restore | rt_restore)
+
+    prov = pd.to_datetime(wes["wsmProvDate"])
+    wes["_prov_num"] = prov.to_numpy(dtype="datetime64[us]").astype("int64")
+    wes["_prov_num"] = wes["_prov_num"].replace(-9223372036854775808, np.nan)
+    prov_changed = g["_prov_num"].transform(lambda s: s.notna() & s.ne(s.shift()) & s.shift().notna())
+    age = wes["wheel_age_days_proxy"].to_numpy(dtype=float)
+    age_reset = (age < 10) & (pd.Series(age).shift() > 90) & \
+        (wes["wheelset_equipment_id"].eq(wes["wheelset_equipment_id"].shift()))
+    dia_jump = _dia_jump_replacement_mask(wes)
+    wes["replacement"] = (prov_changed | age_reset).to_numpy() | dia_jump
+    wes["_boundary"] = wes["turn_event"] | wes["replacement"]
+    wes["seg_id"] = g["_boundary"].cumsum().astype(int)
+    return wes
 
 
 def build_segments() -> tuple[pd.DataFrame, pd.DataFrame]:
@@ -95,26 +200,8 @@ def build_segments() -> tuple[pd.DataFrame, pd.DataFrame]:
     wes["prev_ts"] = g["_ts"].shift(1)
     wes["days_prev"] = (wes["_ts"] - wes["prev_ts"]) / np.timedelta64(1, "D")
 
-    # ---- turning event: flag-anchored material change ----
-    cut = wes["prev_wsmDia"] - wes["mean_wsmDia"]
-    fl_restore = wes["mean_wsmFlange"].fillna(0) <= wes["prev_wsmFlange"].fillna(0) - WEAR_RESTORE
-    rt_restore = wes["mean_wsmRoot"].fillna(0) <= wes["prev_wsmRoot"].fillna(0) - WEAR_RESTORE
-    dia_cut = (cut >= TURN_CUT_MIN) & (cut <= TURN_CUT_MAX) & wes["prev_wsmDia"].notna()
-    wes["turn_event"] = wes["turn_flag"] & dia_cut & (fl_restore | rt_restore)
-
-    # ---- replacement boundary ----
-    prov = pd.to_datetime(wes["wsmProvDate"])
-    wes["_prov_num"] = prov.to_numpy(dtype="datetime64[us]").astype("int64")
-    wes["_prov_num"] = wes["_prov_num"].replace(-9223372036854775808, np.nan)
-    prov_changed = g["_prov_num"].transform(lambda s: s.notna() & s.ne(s.shift()) & s.shift().notna())
-    age = wes["wheel_age_days_proxy"].to_numpy(dtype=float)
-    age_reset = (age < 10) & (pd.Series(age).shift() > 90) & \
-        (wes["wheelset_equipment_id"].eq(wes["wheelset_equipment_id"].shift()))
-    wes["replacement"] = (prov_changed | age_reset).to_numpy()
-
-    # a fresh post-turn (or replacement) row OPENS a new segment
-    wes["_boundary"] = wes["turn_event"] | wes["replacement"]
-    wes["seg_id"] = g["_boundary"].cumsum().astype(int)
+    # ---- turning event / replacement / segment id (single source: compute_boundaries) ----
+    wes = compute_boundaries(wes)
 
     # ---- turn events table: pre = previous measurement, post = this row ----
     turns_rows = []

@@ -35,7 +35,7 @@ SLOPE_DIMS = ("wsmFlange", "wsmThread")
 RATE_DIMS = (("wsmRoot", (30, 90)), ("wsmDia", (30, 90)))
 
 from models.phase5.build_lifecycle_segments import (  # noqa: E402
-    SIDE_FIELDS, side_mean,
+    SIDE_FIELDS, compute_boundaries, side_mean,
 )
 
 
@@ -62,25 +62,7 @@ def _boundaries(wes: pd.DataFrame) -> pd.DataFrame:
     t = pd.to_datetime(wes["measurement_timestamp"])
     wes["_ts"] = t.to_numpy(dtype="datetime64[us]")
     wes["turn_flag"] = wes["turning_record_at_measurement"].eq(1)
-    g = wes.groupby("wheelset_equipment_id", sort=False)
-    for f in SIDE_FIELDS:
-        wes[f"prev_{f}"] = g[f"mean_{f}"].shift(1)
-    cut = wes["prev_wsmDia"] - wes["mean_wsmDia"]
-    fl_restore = wes["mean_wsmFlange"].fillna(0) <= wes["prev_wsmFlange"].fillna(0) - 0.2
-    rt_restore = wes["mean_wsmRoot"].fillna(0) <= wes["prev_wsmRoot"].fillna(0) - 0.2
-    dia_cut = (cut >= 1.0) & (cut <= 25.0) & wes["prev_wsmDia"].notna()
-    wes["turn_event"] = wes["turn_flag"] & dia_cut & (fl_restore | rt_restore)
-    prov = pd.to_datetime(wes["wsmProvDate"])
-    wes["_prov_num"] = prov.to_numpy(dtype="datetime64[us]").astype("int64")
-    wes["_prov_num"] = wes["_prov_num"].replace(-9223372036854775808, np.nan)
-    prov_changed = g["_prov_num"].transform(lambda s: s.notna() & s.ne(s.shift()) & s.shift().notna())
-    age = wes["wheel_age_days_proxy"].to_numpy(dtype=float)
-    age_reset = (age < 10) & (pd.Series(age).shift() > 90) & \
-        (wes["wheelset_equipment_id"].eq(wes["wheelset_equipment_id"].shift()))
-    wes["replacement"] = (prov_changed | age_reset).to_numpy()
-    wes["_boundary"] = wes["turn_event"] | wes["replacement"]
-    wes["seg_id"] = g["_boundary"].cumsum().astype(int)
-    return wes
+    return compute_boundaries(wes)
 
 
 def extract_features(wheelset_id: int, anchor: pd.Timestamp,

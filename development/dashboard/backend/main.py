@@ -18,7 +18,7 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import (
-    FleetBacktest, LocomotiveSummary, WheelsetDetail, WheelsetReplay,
+    FleetBacktest, LocomotiveSummary, TrajectoryContract, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
 import base64
@@ -81,6 +81,22 @@ def pd_notna(v):
         return pd.notna(v)
     except ImportError:
         return v is not None
+
+
+@app.get("/wheelset/{ws}/trajectory", response_model=TrajectoryContract)
+def wheelset_trajectory(ws: int, asof: str | None = Query(None, description="re-anchor at YYYY-MM-DD")):
+    """Chart-data contract for the trajectory panel (trajectory_chart_v1).
+
+    Wear dims (flange/root/tread) are the primary product; wsmDia is derived.
+    Forecast = anchor + delta; 80% conformal bands + noise floor come from the
+    trajectory artefact; physics flags are reported, never clipped. Realised
+    residuals appear when `asof` re-anchors at a historical measurement.
+    """
+    anchor = pd.Timestamp(asof) if asof else None
+    data = service.trajectory(ws, anchor)
+    if not data["dims"]:
+        raise HTTPException(status_code=404, detail=f"no data for wheelset {ws}")
+    return TrajectoryContract(**data)
 
 
 @app.get("/wheelset/{ws}/backtest", response_model=WheelsetReplay)

@@ -4,6 +4,7 @@ import type { LocomotiveSummary, WheelsetDetail } from "./types";
 import { WearTimeline } from "./WearTimeline";
 import AllWheelPlots from "./AllWheelPlots";
 import { BacktestView } from "./BacktestView";
+import { TrajectoryPanel } from "./TrajectoryPanel";
 
 export function App() {
   const [loco, setLoco] = useState<string>("37597");
@@ -144,9 +145,6 @@ export function App() {
 }
 
 function WheelsetView({ detail }: { detail: WheelsetDetail }) {
-  const byDim = (dim: string) => detail.forecasts.filter((f) => f.dim === dim);
-  const dims = ["wsmRoot", "wsmFlange", "wsmThread", "wsmDia"];
-
   return (
     <div className="wheelset-view">
       <h2>
@@ -158,31 +156,7 @@ function WheelsetView({ detail }: { detail: WheelsetDetail }) {
       )}
 
       <section className="forecast">
-        <h3>Degradation forecasts (predicted profile state)</h3>
-        <table>
-          <thead>
-            <tr>
-              <th>dimension</th>
-              <th>30d</th>
-              <th>90d</th>
-              <th>180d</th>
-            </tr>
-          </thead>
-          <tbody>
-            {dims.map((d) => (
-              <tr key={d}>
-                <td>{d}</td>
-                {[30, 90, 180].map((h) => {
-                  const f = byDim(d).find((x) => x.horizon === h);
-                  return <td key={h}>{f?.value != null ? f.value.toFixed(3) : "—"}</td>;
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-        <p className="muted small">
-          Model estimates from a point-in-time serving extractor, not engineering mandates.
-        </p>
+        <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
       </section>
 
       <section className="pturn">
