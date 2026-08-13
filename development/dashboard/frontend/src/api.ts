@@ -18,4 +18,8 @@ export const api = {
   wheelsetBacktest: (id: number, asof: string) =>
     get<WheelsetReplay>(`/wheelset/${id}/backtest?asof=${encodeURIComponent(asof)}`),
   fleetBacktest: () => get<FleetBacktest>(`/backtest/fleet`),
+  locoPlots: (loco: string) =>
+    get<{ loco: string; images: Record<string, string>; svgs: Record<string, string> }>(
+      `/loco/${encodeURIComponent(loco)}/plots`
+    ),
 };

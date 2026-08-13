@@ -21,6 +21,11 @@ from .schemas import (
     FleetBacktest, LocomotiveSummary, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
+import base64
+import io
+
+# plotting helper (phase5)
+from models.phase5 import plot_lifecycle_step
 
 app = FastAPI(
     title="Wheel Lifecycle Dashboard (Layer 5)",
@@ -96,3 +101,62 @@ def fleet_backtest():
     if "error" in data:
         raise HTTPException(status_code=404, detail=data["error"])
     return FleetBacktest(**data)
+
+
+@app.get("/loco/{loco_number}/plots")
+def loco_plots(loco_number: str) -> dict:
+    """Generate lifecycle step PNGs for all wheelsets on a loco and return base64 images.
+
+    This calls the Phase 5 plotting utility which writes PNGs to its report
+    output directory; we read them and return base64-encoded bytes in JSON.
+    """
+    turns, wes = plot_lifecycle_step.load_data()
+    # match loco number in WES (LomNumber may be int or str)
+    w = wes[wes["LomNumber"].astype(str) == str(loco_number)]
+    if w.empty:
+        raise HTTPException(status_code=404, detail=f"no wheelsets found for loco {loco_number}")
+    wheelsets = sorted(w["wheelset_equipment_id"].unique())
+    images: dict = {}
+    from pathlib import Path
+    outdir = plot_lifecycle_step.OUTPUT_DIR
+    svgs: dict = {}
+    for ws in wheelsets:
+        svg_name = f"lifecycle_step_loco_{loco_number}_wheelset_{ws}.svg"
+        svg_path = outdir / svg_name
+        if svg_path.exists():
+            try:
+                with open(svg_path, "r", encoding="utf-8") as fh:
+                    svgs[str(ws)] = fh.read()
+                continue
+            except Exception as exc:
+                svgs[str(ws)] = f"error reading svg file: {exc}"
+                continue
+
+        # fallback to PNG if SVG missing or read fails
+        img_name = f"lifecycle_step_loco_{loco_number}_wheelset_{ws}.png"
+        img_path = outdir / img_name
+        if img_path.exists():
+            try:
+                with open(img_path, "rb") as fh:
+                    images[str(ws)] = base64.b64encode(fh.read()).decode("ascii")
+                continue
+            except Exception as exc:
+                images[str(ws)] = f"error reading png file: {exc}"
+                # continue to attempt generation
+
+        # fallback: generate plot on-demand (will create both png and svg if possible)
+        measurements = wes[wes["wheelset_equipment_id"] == ws].copy()
+        events = turns[turns["wheelset_equipment_id"] == ws].copy()
+        try:
+            p = plot_lifecycle_step.plot_wheelset(int(ws), str(loco_number), measurements, events, outdir)
+            # prefer svg we just tried to produce
+            svg_p = Path(p).with_suffix('.svg')
+            if svg_p.exists():
+                with open(svg_p, 'r', encoding='utf-8') as fh:
+                    svgs[str(ws)] = fh.read()
+            else:
+                with open(p, 'rb') as fh:
+                    images[str(ws)] = base64.b64encode(fh.read()).decode('ascii')
+        except Exception as exc:
+            images[str(ws)] = f"error generating plot: {exc}"
+    return {"loco": loco_number, "images": images, "svgs": svgs}

@@ -174,6 +174,13 @@ def plot_wheelset(
     fig.autofmt_xdate(rotation=20)
     path = output_dir / f"lifecycle_step_loco_{loco}_wheelset_{wheelset_id}.png"
     fig.savefig(path, dpi=200, bbox_inches="tight")
+    # also save as SVG for high-quality scalable frontend rendering
+    try:
+        svg_path = path.with_suffix('.svg')
+        fig.savefig(svg_path, bbox_inches='tight', format='svg')
+    except Exception:
+        # SVG optional; ignore failures so PNG remains primary
+        pass
     plt.close(fig)
     return path
 

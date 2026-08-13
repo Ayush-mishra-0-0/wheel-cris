@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { api } from "./api";
 import type { LocomotiveSummary, WheelsetDetail } from "./types";
 import { WearTimeline } from "./WearTimeline";
+import AllWheelPlots from "./AllWheelPlots";
 import { BacktestView } from "./BacktestView";
 
 export function App() {
@@ -208,6 +209,8 @@ function WheelsetView({ detail }: { detail: WheelsetDetail }) {
         </h3>
         <WearTimeline measurements={detail.measurements} />
       </section>
+
+      {detail.loco_number && <AllWheelPlots loco={detail.loco_number} />}
 
       {detail.turns.length > 0 && (
         <section className="turns">
