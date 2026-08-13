@@ -4,7 +4,7 @@
 > engineers can use day to day. Tick items off with `- [x]` as they land.
 > Related: `ml/docs/ml_correctness_analysis.md` (ML findings), `future_work.md` (deferred enterprise hygiene).
 >
-> Last updated: 2026-08-13
+> Last updated: 2026-08-14
 
 ## Important caveat — this becomes a module inside the SLAM ecosystem
 
@@ -102,7 +102,7 @@ Nothing in P1–P4 may present a degradation forecast as an engineering output u
 
 ### P0.2b — Trajectory product (flange/root/tread) — honesty layer for the dashboard
 
-Tier 1 (make existing Δ-models honest and usable):
+Tier 1 (make existing Δ-models honest and usable) — **COMPLETE 2026-08-14**:
 - [x] **Chart-data contract** `GET /wheelset/{ws}/trajectory` (trajectory_chart_v1): observed series,
       forecast continuation (anchor + Δ, with `current`/`delta` fields), 80% split-conformal
       low/high bands (from the trajectory artefact), realised residual strip (historical `asof`
@@ -116,10 +116,14 @@ Tier 1 (make existing Δ-models honest and usable):
       delta as the absolute level, e.g. wsmDia 1053.91 → −8.57). Flags/MAE now compare levels.
 - [x] **Delta metrics / noise floor / intervals / residual strip** surfaced in the panel (JSON carries
       them; chart consumes the contract). Noise floor: flange 0.114 / root 0.105 / thread 0.066 mm.
-- [ ] Dashboard/API surface **delta MAE / R² / ρ** alongside absolute in the fleet backtest view
-      (JSON already carries them — table still shows only absolute MAE).
-- [ ] **Physics flags** at serving time: monotone wear direction + dia non-increasing. Report, don't clip
-      (currently computed in the trajectory contract + backtest; wire into the standalone API response).
+- [x] Dashboard/API surface **delta MAE / R² / ρ** alongside absolute in the fleet backtest view:
+      `DegradationDeltaTable` in `BacktestView.tsx` reads the static grid
+      (`fleet.degradation.static[dim][H].models.C1_xgb`) and shows ΔMAE / ΔR² / Δρ / n_test
+      with positive ΔR² highlighted.
+- [x] **Physics flags** at serving time: `predict_degradation` now attaches `implausibility_flag`
+      per forecast (wear dims `< current − 0.05 → wear_better_than_current`; dia `> current + 0.001
+      → increasing_diameter`); surfaced in the overview API and shown in the trajectory panel.
+      Reported, never clipped.
 
 Tier 2 (decision-aligned ranking and remaining life):
 - [ ] **Operational capture@k**: success = wheelsets that cross an action threshold (or are turned)

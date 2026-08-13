@@ -33,6 +33,7 @@ export interface ForecastPoint {
   value: number | null;
   delta: number | null;
   current: number | null;
+  implausibility_flag: string | null;
   unit: string;
 }
 
@@ -113,7 +114,7 @@ export interface FleetBacktest {
   contract: string;
   split: string;
   implausibility_note: string | null;
-  degradation: Record<string, unknown>;
+  degradation: FleetDegradation;
   turn_probability: {
     horizons?: Record<string, { models?: Record<string, BacktestModel> }>;
     [k: string]: unknown;
@@ -188,4 +189,27 @@ export interface BacktestModel {
   brier: number;
   ece: number;
   capture?: Record<string, { k: number; turns_captured: number; share_of_turns: number; precision: number }>;
+}
+
+export interface DegradationCell {
+  n_train?: number;
+  n_test?: number;
+  models?: Record<
+    string,
+    {
+      mae?: number;
+      r2?: number;
+      spearman?: number;
+      delta_mae?: number;
+      delta_r2?: number;
+      delta_spearman?: number;
+      [k: string]: unknown;
+    }
+  >;
+}
+
+export interface FleetDegradation {
+  static?: Record<string, Record<string, DegradationCell>>;
+  rolling?: unknown;
+  [k: string]: unknown;
 }

@@ -82,10 +82,12 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
             value = None
             if np.isfinite(delta) and current is not None and np.isfinite(current):
                 value = round(current + delta, 4)
+            flags = _physics_flags(dim, current, value)
             fc.append({"horizon": h, "dim": dim, "value": value,
                        "delta": round(delta, 4) if np.isfinite(delta) else None,
                        "current": round(float(current), 4)
-                       if current is not None and np.isfinite(current) else None})
+                       if current is not None and np.isfinite(current) else None,
+                       "implausibility_flag": flags[0] if flags else None})
     return {"wheelset_equipment_id": wheelset_id, "anchor": anchor, "forecasts": fc}
 
 

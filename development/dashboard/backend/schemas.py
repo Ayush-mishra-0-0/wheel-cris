@@ -30,6 +30,7 @@ class ForecastPoint(BaseModel):
     value: float | None = None
     delta: float | None = None
     current: float | None = None
+    implausibility_flag: str | None = None
     unit: str = "mm"
     note: str | None = None
 

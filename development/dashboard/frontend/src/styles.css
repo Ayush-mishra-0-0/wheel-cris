@@ -140,6 +140,7 @@ th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: upp
 }
 .warn ul { margin: 6px 0 0 18px; }
 .backtest .over { color: #b91c1c; font-weight: 600; }
+.backtest .delta-good { color: #15803d; font-weight: 600; }
 
 .trajectory .asof { display: flex; align-items: center; gap: 8px; margin: 6px 0 12px; font-size: 13px; }
 .trajectory .asof label { display: flex; align-items: center; gap: 8px; color: var(--muted); }

@@ -3,6 +3,11 @@ import { api } from "./api";
 import type { FleetBacktest, WheelsetReplay } from "./types";
 
 const DIMM = ["wsmRoot", "wsmFlange", "wsmThread", "wsmDia"];
+const HORIZONS = [30, 90, 180];
+
+function fmtNum(v: number | undefined | null, d = 3): string {
+  return v == null || !isFinite(v) ? "—" : v.toFixed(d);
+}
 
 export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
   const [asof, setAsof] = useState<string>("2025-04-13");
@@ -133,6 +138,46 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
   );
 }
 
+function DegradationDeltaTable({ fleet }: { fleet: FleetBacktest }) {
+  const staticGrid = fleet.degradation?.static;
+  if (!staticGrid) {
+    return <p className="muted">no static degradation grid in fleet backtest payload</p>;
+  }
+  return (
+    <table>
+      <thead>
+        <tr>
+          <th>dim</th>
+          <th>H</th>
+          <th>ΔMAE (mm)</th>
+          <th>ΔR²</th>
+          <th>Δρ</th>
+          <th>n_test</th>
+        </tr>
+      </thead>
+      <tbody>
+        {DIMM.flatMap((dim) => HORIZONS.map((h) => ({ dim, h }))).map(({ dim, h }) => {
+          const cell = staticGrid[dim]?.[`${h}d`];
+          const m = cell?.models?.C1_xgb;
+          if (!m) return null;
+          return (
+            <tr key={`${dim}-${h}`}>
+              <td>{dim}</td>
+              <td>{h}d</td>
+              <td>{fmtNum(m.delta_mae)}</td>
+              <td className={m.delta_r2 != null && m.delta_r2 > 0 ? "delta-good" : ""}>
+                {fmtNum(m.delta_r2)}
+              </td>
+              <td>{fmtNum(m.delta_spearman)}</td>
+              <td>{cell.n_test?.toLocaleString() ?? "—"}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
+}
+
 function FleetTable({ fleet }: { fleet: FleetBacktest }) {
   const h90 = fleet.turn_probability?.horizons?.["90"]?.models;
   return (
@@ -174,6 +219,13 @@ function FleetTable({ fleet }: { fleet: FleetBacktest }) {
       ) : (
         <p className="muted">no 90d horizon data</p>
       )}
+
+      <h4>Degradation — Δ-space metrics, static grid (C1 XGB)</h4>
+      <p className="muted small">
+        ΔMAE == level MAE (level = anchor + Δ). The honest skill signal is ΔR² / Δρ —
+        positive ΔR² means real change-prediction beyond persistence.
+      </p>
+      <DegradationDeltaTable fleet={fleet} />
 
       <h4>Implausibility diagnostics (model vs actual, %)</h4>
       <table>
