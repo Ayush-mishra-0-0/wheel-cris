@@ -237,11 +237,20 @@ def build_event_table(events: pd.DataFrame, loco: str, wheelset: int | None = No
     table = events.copy()
     table = table.sort_values(["wheelset_equipment_id", "post_ts"]).reset_index(drop=True)
     table["loco"] = loco
+    # keep only confirmed lifecycle boundaries: the reset must restore wear DOWN
+    # on every dimension (flange/root/tread) while diameter is cut.
+    consistent = (
+        (table["pre_wsmDia"] > table["post_wsmDia"])
+        & (table["pre_wsmFlange"] >= table["post_wsmFlange"])
+        & (table["pre_wsmRoot"] >= table["post_wsmRoot"])
+        & (table["pre_wsmThread"] >= table["post_wsmThread"]))
+    table = table[consistent].copy()
     table["turn_no"] = table.groupby("wheelset_equipment_id").cumcount() + 1
     table = table.rename(columns={
         "post_ts": "turn_date",
         "pre_wsmDia": "pre_dia",
         "post_wsmDia": "post_dia",
+        "cut_dia": "dia_cut",
         "pre_wsmFlange": "pre_flange",
         "post_wsmFlange": "post_flange",
         "pre_wsmRoot": "pre_root",
@@ -282,7 +291,9 @@ def main() -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     turns, wes = load_data()
-    mapping = wes[["wheelset_equipment_id", "measurement_timestamp", "LomNumber"]].rename(columns={"measurement_timestamp": "post_ts"})
+    mapping = (wes[["wheelset_equipment_id", "measurement_timestamp", "LomNumber"]]
+               .rename(columns={"measurement_timestamp": "post_ts"})
+               .drop_duplicates(["wheelset_equipment_id", "post_ts"], keep="last"))
     turns = turns.merge(mapping, on=["wheelset_equipment_id", "post_ts"], how="left")
     turns["LomNumber"] = turns["LomNumber"].astype("string")
 
@@ -308,6 +319,11 @@ def main() -> None:
     if not bad.empty:
         print("WARNING: some confirmed turns are not consistent across diameter/flange/root/tread:")
         print(bad.to_string(index=False))
+
+    # Plot ONLY boundary-consistent events (confirmed lifecycle boundaries).
+    loco_turns = loco_turns[loco_turns["boundary_consistent"]].copy()
+    if loco_turns.empty:
+        raise SystemExit(f"No boundary-consistent confirmed turns remain for loco {loco}.")
 
     wheelsets = sorted(loco_turns["wheelset_equipment_id"].unique())
     print(f"Plotting loco {loco} with wheelsets {wheelsets}")
