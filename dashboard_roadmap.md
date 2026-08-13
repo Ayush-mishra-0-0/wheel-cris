@@ -128,10 +128,21 @@ Tier 1 (make existing Δ-models honest and usable) — **COMPLETE 2026-08-14**:
 Tier 2 (decision-aligned ranking and remaining life):
 - [ ] **Operational capture@k**: success = wheelsets that cross an action threshold (or are turned)
       within H days because of flange/root/tread wear (turn-within-H proxy defined in the artefact).
-- [ ] **Time-to-threshold / remaining-life** view: Δ forecast + current value + action limits
-      (condemning dia 1016 mm hard stop) → expected days-to-limit with interval. Gated on action-threshold approval.
-- [ ] **Subgroup stability**: error + coverage by shed / profile class / wheel position / age cohort /
-      current wear quantile. Collapse on any large subgroup blocks uniform display.
+- [x] **Time-to-threshold / remaining-life** view: Δ forecast + current value + action limits
+      (condemning dia 1016 mm hard stop) → expected days-to-limit with interval. **DONE for the dia
+      hard stop (serving-side, no retrain):** `service._time_to_limit` piecewise-linear crossing of
+      the 1016 mm condemning limit from the 30/90/180 Δ forecasts; exposed as per-dim `time_to_limit`
+      + `time_to_limit_summary` on the trajectory and replay contracts and a days-to-condemning chip
+      in the trajectory panel + fleet backtest replay. Subgroup flags ride on the same path (amber
+      treatment when the driving dim is flagged). **Remaining:** dia conformal band (interval edges
+      null until calibration); flange/root/tread action limits still pending engineering approval.
+- [x] **Subgroup stability**: error + coverage by shed / profile class / wheel position / age cohort /
+      current wear quantile. Collapse on any large subgroup blocks uniform display. **DONE as an
+      analysis + serving/UI policy (no model change):** `subgroup_stability.py` flags 111 collapse
+      rows (mostly shed × root/thread); `subgroup_policy.py` matches a wheelset's shed / wear band /
+      profile / position / age cohort against `collapse_groups` for each dim×horizon and emits a
+      "reduced confidence" badge (amber, dot-dashed forecast) — point forecast shown but not
+      decision-grade there. Flange remains the default primary trajectory.
 
 Tier 3 (only after Tier 1–2 are visible):
 - [ ] Feature/light-model work if residual analysis shows systematic bias (rate features, exposure,

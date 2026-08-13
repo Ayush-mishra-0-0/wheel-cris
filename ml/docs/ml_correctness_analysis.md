@@ -276,23 +276,35 @@ the serving path is trustworthy for out-of-substrate locos.
 2. ~~**Model the delta.** Predict Δdim over H; serve `pred = anchor + Δ`. Removes level-dominance.~~
    **DONE** — benchmark, serving models, and fleet backtest run in Δ-mode (`TARGET_MODE="delta"`);
    MAE reconstructed as `anchor + Δ` for comparability (§2.1). Dia MAE −14…−20%, R² 0.69→0.87 @180d.
-3. **Trajectory-product honesty layer** (see §2.4) — **DONE** for the analysis artefact:
+3. **Trajectory-product honesty layer** (see §2.4) — **DONE** through the serving/UI path:
    Δ-metrics exposed side-by-side, residual distribution + noise floor (flange 0.114 / root 0.105 /
    thread 0.066 mm), 80% conformal intervals with verified coverage (77–85%), operational capture@k
-   (turn-within-H label), and residual panels incl. Loco 37597 via the serving path. **Remaining:**
-   surface these on the dashboard/API (delta metrics, residual strip, bands, flags).
+   (turn-within-H label), and residual panels incl. Loco 37597 via the serving path. The dashboard
+   `/wheelset/{ws}/trajectory` contract now carries delta metrics, noise floor, conformal bands,
+   realised residuals, physics flags and subgroup flags per forecast point (`trajectory_chart_v1`).
 4. **Physics guard, reported not clipped.** If predicted dia > current + tolerance, emit the
    flag (backtest already does; fleet backtest wsmDia 90d/180d bias ≈ 0) and serve
-   persistence/refusal with the flag + model version. **Not yet extended to serving.**
-5. **Conformal intervals** (phase-3b machinery) — **DONE** in the trajectory artefact; attach
-   intervals to every flange/root/tread forecast point in the UI.
+   persistence/refusal with the flag + model version. **DONE at serving** — physics flags are
+   attached per forecast in `predict_degradation` and the trajectory contract; reported, never clipped.
+5. **Conformal intervals** (phase-3b machinery) — **DONE** in the trajectory artefact and attached
+   to every flange/root/tread forecast point in the trajectory UI + replay backtest.
 6. ~~**Re-baseline and record before/after** implausibility rates + MAE/R²/Spearman in this doc.~~
    **DONE** — see §1.5 (audit before/after) and §2.1 (Δ-model before/after).
-7. **Time-to-threshold / remaining-life view** (Tier 2): using Δ forecast + current value +
-   action limits (condemning dia 1016 mm as hard stop) → expected days-to-limit with interval.
-   **Not started** — gated on action-threshold approval.
-8. **Subgroup stability** (Tier 2): error + coverage by shed / profile / wheel position / age cohort /
-   wear quantile. **Not started.**
+7. ~~**Time-to-threshold / remaining-life view** (Tier 2): using Δ forecast + current value +
+   action limits (condemning dia 1016 mm as hard stop) → expected days-to-limit with interval.~~
+   **DONE (dia hard stop)** — serving-side piecewise-linear crossing of the 1016 mm condemning
+   limit from the 30/90/180 Δ forecasts in `service._time_to_limit` (single source of truth).
+   Exposed as `time_to_limit` per dim + `time_to_limit_summary` on the trajectory and replay
+   contracts, with a days-to-condemning UI chip. **Limitations:** dia conformal bands are not yet
+   calibrated (only point-path crossing reported for dia; interval edge fields present but null);
+   flange/root/tread action limits remain pending engineering approval and are NOT reported.
+8. ~~**Subgroup stability** (Tier 2): error + coverage by shed / profile / wheel position / age cohort /
+   wear quantile.~~ **DONE** — `subgroup_stability.py` produces per-group bias/coverage and flags
+   111 collapse rows (mostly shed × root/thread). Encoded as a **serving/UI confidence policy**
+   (`development/dashboard/backend/subgroup_policy.py`): any wheelset whose shed / wear band /
+   profile / position / age cohort is in `collapse_groups` for that dim×horizon gets a
+   "reduced confidence" flag + amber treatment — point forecast shown but not decision-grade there.
+   No model change; Tier-3 interaction work deferred until the policy is insufficient live.
 9. **Reconsider the dia target**: prefer time-to-condemning-limit / rate features over level
    regression if noise floor persists. Dia is a derived diagnostic, not the product target.
 
