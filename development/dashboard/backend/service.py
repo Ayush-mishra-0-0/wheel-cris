@@ -13,6 +13,7 @@ from ._paths import ML_ROOT
 from models.phase5.dashboard.backend.features import (
     extract_features, latest_anchor, load_segments, load_wes,
 )
+from .subgroup_policy import subgroup_flags
 
 ROOT = ML_ROOT
 DEG_DIR = ROOT / "models" / "phase5" / "serving" / "degradation"
@@ -27,6 +28,19 @@ WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
 WEAR_BETTER_TOL = 0.05      # mm threshold below current to flag "wear improves"
 DIA_INC_TOL = 0.001         # mm; predicted diameter above current
 DAY = np.timedelta64(1, "D")
+
+# Condemning limit register. Only wsmDia has an approved numeric hard stop
+# (domain constant 1016 mm, lower is worse). Flange/root/tread action limits
+# are NOT approved yet -> limit_mm stays None and time-to-limit is not computed.
+CONDEMNING_DIA_MM = 1016.0
+LIMIT_REGISTER = {
+    "wsmDia": {"limit_mm": CONDEMNING_DIA_MM, "direction": "down",
+               "label": "condemning (dia)"},
+    "wsmFlange": None,
+    "wsmRoot": None,
+    "wsmThread": None,
+}
+TTL_HORIZONS = (30, 90, 180)
 
 
 @lru_cache(maxsize=1)
@@ -87,7 +101,8 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
                        "delta": round(delta, 4) if np.isfinite(delta) else None,
                        "current": round(float(current), 4)
                        if current is not None and np.isfinite(current) else None,
-                       "implausibility_flag": flags[0] if flags else None})
+                       "implausibility_flag": flags[0] if flags else None,
+                       "subgroup_flags": subgroup_flags(fr, dim, h)})
     return {"wheelset_equipment_id": wheelset_id, "anchor": anchor, "forecasts": fc}
 
 
@@ -134,6 +149,101 @@ def _noise_floor_mm(dim: str) -> float | None:
         return None
 
 
+def _crossing_days(times: list[int], values: list[float | None],
+                   limit: float, direction: str) -> float | None:
+    """First day a piecewise-linear (t, value) path crosses `limit`.
+
+    direction "down": value falls to the limit (dia shrinks to 1016).
+    direction "up":   value rises to the limit (root/tread grow to 3mm, TBD).
+    Returns None if the limit is not crossed within the provided times.
+    """
+    first = True
+    prev_t = prev_v = None
+    for t, v in zip(times, values):
+        if v is None or not np.isfinite(v):
+            first = True
+            prev_t = prev_v = None
+            continue
+        if not first and prev_v is not None and prev_t is not None:
+            lo_v, hi_v = sorted((prev_v, v))
+            if direction == "down" and lo_v <= limit <= hi_v:
+                # interpolate when the falling edge crosses
+                if v != prev_v:
+                    frac = (prev_v - limit) / (prev_v - v)
+                    return float(prev_t + frac * (t - prev_t))
+            elif direction == "up" and lo_v <= limit <= hi_v:
+                if v != prev_v:
+                    frac = (limit - prev_v) / (v - prev_v)
+                    return float(prev_t + frac * (t - prev_t))
+        first = False
+        prev_t, prev_v = t, v
+    return None
+
+
+def _time_to_limit(dim: str, cur: float | None,
+                   pred: dict, low: dict, high: dict) -> dict | None:
+    """Time-to-limit for one dim from anchor + 30/90/180 forecasts.
+
+    Builds three piecewise-linear paths (point, interval-lo, interval-hi) over
+    the horizon grid and finds the first crossing of the approved limit. Only
+    wsmDia has an approved limit; other dims return None until engineering
+    signs off numeric thresholds.
+    """
+    reg = LIMIT_REGISTER.get(dim)
+    if reg is None or cur is None or not np.isfinite(cur):
+        return None
+    ttl: dict = {
+        "dim": dim,
+        "limit_mm": reg["limit_mm"],
+        "direction": reg["direction"],
+        "label": reg["label"],
+        "current_mm": round(float(cur), 4),
+        "predicted_at": {}, "interval_lo": {}, "interval_hi": {},
+        "days_to_limit_point": None,
+        "days_to_limit_lo": None,
+        "days_to_limit_hi": None,
+        "status": "beyond_horizon",
+        "note": ("days-to-condemning from serving delta forecasts at "
+                 "30/90/180; piecewise-linear; hard stop 1016 mm (dia). "
+                 "Conformal bands are calibrated for flange/root/tread only, "
+                 "so the dia band (interval_lo/hi) is not reported until a "
+                 "dia conformal width is calibrated; only the point path is "
+                 "used for the dia hard stop. Flange/root/tread limits are "
+                 "not approved."),
+    }
+    times = list(TTL_HORIZONS)
+    for h in TTL_HORIZONS:
+        p = pred.get(h)
+        ttl["predicted_at"][h] = round(float(p), 4) if p is not None and np.isfinite(p) else None
+        ttl["interval_lo"][h] = round(float(low[h]), 4) if low.get(h) is not None and np.isfinite(low[h]) else None
+        ttl["interval_hi"][h] = round(float(high[h]), 4) if high.get(h) is not None and np.isfinite(high[h]) else None
+
+    limit = reg["limit_mm"]
+    direction = reg["direction"]
+
+    # Already at/beyond the limit now
+    if (direction == "down" and cur <= limit) or (direction == "up" and cur >= limit):
+        ttl["days_to_limit_point"] = 0.0
+        ttl["days_to_limit_lo"] = 0.0
+        ttl["days_to_limit_hi"] = 0.0
+        ttl["status"] = "at_limit"
+        return ttl
+
+    point = _crossing_days([0] + times, [cur] + [pred.get(h) for h in times], limit, direction)
+    lo = _crossing_days([0] + times, [cur] + [low.get(h) for h in times], limit, direction)
+    hi = _crossing_days([0] + times, [cur] + [high.get(h) for h in times], limit, direction)
+
+    ttl["days_to_limit_point"] = round(point, 1) if point is not None else None
+    # conservative edge = whichever band edge reaches the limit sooner
+    edges = [d for d in (lo, hi) if d is not None]
+    if edges:
+        ttl["days_to_limit_lo"] = round(min(edges), 1)
+        ttl["days_to_limit_hi"] = round(max(edges), 1) if len(edges) > 1 else None
+    if point is not None:
+        ttl["status"] = "within_horizon"
+    return ttl
+
+
 def _delta_metrics_slim() -> dict:
     a = trajectory_artefact().get("1_delta_metrics", {})
     out = {}
@@ -170,7 +280,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     if w.empty:
         return {"wheelset_equipment_id": wheelset_id, "anchor": None, "asof": None,
                 "contract": "trajectory_chart_v1", "model": None, "dims": [],
-                "delta_metrics": {}, "note": None}
+                "delta_metrics": {}, "time_to_limit_summary": None, "note": None}
 
     anchor = asof if asof is not None else pd.Timestamp(w.iloc[-1]["measurement_timestamp"])
     t = pd.to_datetime(w["measurement_timestamp"])
@@ -181,7 +291,8 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         return {"wheelset_equipment_id": wheelset_id, "anchor": None,
                 "asof": pd.Timestamp(anchor),
                 "contract": "trajectory_chart_v1", "model": None, "dims": [],
-                "delta_metrics": {}, "note": "as-of is not a measurement timestamp"}
+                "delta_metrics": {}, "time_to_limit_summary": None,
+                "note": "as-of is not a measurement timestamp"}
     p = int(pos[0])
 
     fr = extract_features(wheelset_id, pd.Timestamp(anchor), w=w)
@@ -217,19 +328,23 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                 })
         forecasts = []
         flags = set()
+        pred_map, low_map, high_map = {}, {}, {}
         for h in HORIZONS:
             pred = deg[dim]["predicted"].get(h) if dim in deg else None
             width = _conformal_width_mm(dim, h)
+            pred_map[h], low_map[h], high_map[h] = pred, (pred - width) if (pred is not None and width is not None) else None, (pred + width) if (pred is not None and width is not None) else None
             forecasts.append({
                 "dim": dim, "horizon": h,
                 "asof_ts": pd.Timestamp(anchor) + pd.Timedelta(days=h),
                 "current": round(float(cur), 4) if cur is not None and np.isfinite(cur) else None,
                 "delta": round(float(deg[dim]["delta"][h]), 4) if dim in deg else None,
                 "predicted": round(float(pred), 4) if pred is not None else None,
-                "low": round(float(pred - width), 4) if pred is not None and width is not None else None,
-                "high": round(float(pred + width), 4) if pred is not None and width is not None else None,
+                "low": round(float(low_map[h]), 4) if low_map[h] is not None else None,
+                "high": round(float(high_map[h]), 4) if high_map[h] is not None else None,
+                "subgroup_flags": subgroup_flags(fr, dim, h) if fr is not None else [],
             })
             flags.update(_physics_flags(dim, cur, pred))
+        time_to_limit = _time_to_limit(dim, cur, pred_map, low_map, high_map)
 
         # realised: future within-segment measurements inside each horizon
         realised = []
@@ -256,6 +371,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
             "realised": realised,
             "flags": sorted(flags),
             "noise_floor_mm": _noise_floor_mm(dim),
+            "time_to_limit": time_to_limit,
         })
 
     # model metadata from the degradation serving manifest + features.json
@@ -272,6 +388,29 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     except Exception:
         pass
 
+    # time-to-limit summary: only dims with an approved limit participate;
+    # limiting dim = the one that reaches its limit soonest on the point path.
+    ttl_rows = [d["time_to_limit"] for d in dims if d.get("time_to_limit")]
+    limiting = None
+    if ttl_rows:
+        ranked = sorted(
+            ttl_rows,
+            key=lambda x: (x["days_to_limit_point"] is not None,
+                           x["days_to_limit_point"] if x["days_to_limit_point"] is not None else 1e12))
+        limiting = ranked[0]
+    summary = {
+        "status": limiting["status"] if limiting else "no_approved_limit",
+        "limiting_dim": limiting["dim"] if limiting else None,
+        "limit_mm": limiting["limit_mm"] if limiting else None,
+        "current_mm": limiting["current_mm"] if limiting else None,
+        "days_to_limit_point": limiting["days_to_limit_point"] if limiting else None,
+        "days_to_limit_lo": limiting["days_to_limit_lo"] if limiting else None,
+        "days_to_limit_hi": limiting["days_to_limit_hi"] if limiting else None,
+        "note": ("Condemning limit 1016 mm (dia) is the only approved hard stop. "
+                 "Flange/root/tread action limits are pending engineering "
+                 "sign-off and are not reported."),
+    }
+
     return {
         "wheelset_equipment_id": wheelset_id,
         "anchor": pd.Timestamp(anchor),
@@ -280,6 +419,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         "model": meta,
         "dims": dims,
         "delta_metrics": _delta_metrics_slim(),
+        "time_to_limit_summary": summary,
         "note": ("Trajectory chart contract: forecast = anchor + delta; "
                  "80% split-conformal bands from the trajectory artefact; "
                  "physics flags reported, never clipped."),

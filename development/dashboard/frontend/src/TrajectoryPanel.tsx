@@ -66,6 +66,36 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
 
       {data && (
         <>
+          {data.time_to_limit_summary && (
+            <div className="ttl-summary">
+              <span className="chip">
+                days to condemning (dia):{" "}
+                {data.time_to_limit_summary.days_to_limit_point != null ? (
+                  <>
+                    <b>{data.time_to_limit_summary.days_to_limit_point.toFixed(0)} d</b>
+                    {data.time_to_limit_summary.days_to_limit_lo != null && (
+                      <>
+                        {" "}
+                        <span className="muted">
+                          (band {data.time_to_limit_summary.days_to_limit_lo.toFixed(0)}–
+                          {data.time_to_limit_summary.days_to_limit_hi != null
+                            ? data.time_to_limit_summary.days_to_limit_hi.toFixed(0)
+                            : "∞"}{" "}
+                          d)
+                        </span>
+                      </>
+                    )}
+                  </>
+                ) : (
+                  <span className="muted">
+                    beyond 180 d horizon{data.time_to_limit_summary.status === "at_limit" ? " — at limit now" : ""}
+                  </span>
+                )}{" "}
+                · limit {data.time_to_limit_summary.limit_mm?.toFixed(0)} mm (hard stop)
+              </span>
+              <span className="muted small">{data.time_to_limit_summary.note}</span>
+            </div>
+          )}
           <div className="trajectory-grid">
             {dimOrder.map((dim) => {
               const d = data.dims.find((x) => x.dim === dim);
@@ -85,6 +115,8 @@ function TrajectoryChart({ data }: { data: TrajectoryDim }) {
   const ref = useRef<HTMLDivElement>(null);
   const color = COLORS[data.dim] ?? "#2563eb";
   const primary = PRIMARY_DIMS.includes(data.dim);
+  const subFlags = data.forecasts.flatMap((f) => f.subgroup_flags);
+  const reducedConfidence = subFlags.length > 0;
 
   useEffect(() => {
     if (!ref.current) return;
@@ -172,10 +204,12 @@ function TrajectoryChart({ data }: { data: TrajectoryDim }) {
         name: "forecast (anchor + Δ)",
         type: "line",
         data: connX.map((x, i) => [x, connY[i]]),
-        symbol: "diamond",
-        symbolSize: 7,
-        lineStyle: { color, width: 1.8, type: "dashed" },
-        itemStyle: { color },
+        symbol: reducedConfidence ? "diamond" : "circle",
+        symbolSize: reducedConfidence ? 7 : 5,
+        lineStyle: reducedConfidence
+          ? { color: "#d97706", width: 1.8, type: "dotted" }
+          : { color, width: 1.8, type: "dashed" },
+        itemStyle: reducedConfidence ? { color: "#d97706" } : { color },
         connectNulls: true,
         z: 3,
         tooltip: { valueFormatter: (v) => `${fmt(v as number)} mm` },
@@ -237,15 +271,54 @@ function TrajectoryChart({ data }: { data: TrajectoryDim }) {
       window.removeEventListener("resize", onResize);
       chart.dispose();
     };
-  }, [data]);
+  }, [data, reducedConfidence]);
 
   const flags = data.flags;
   const nf = data.noise_floor_mm;
+  const flagGroups = Array.from(new Set(subFlags.map((s) => s.group))).join(", ");
+  const ttl = data.time_to_limit;
 
   return (
     <div className="trajectory-card">
       <div ref={ref} className="trajectory-chart" />
       <div className="trajectory-meta">
+        {reducedConfidence && (
+          <span
+            className="flag flag-reduced"
+            title={subFlags
+              .map(
+                (s) =>
+                  `${s.group}:${s.level} · ${s.reason} (n=${s.n}, bias=${fmt(
+                    s.bias_mm,
+                    3,
+                  )} mm, cov=${s.coverage != null ? fmt(s.coverage, 2) : "—"})`,
+              )
+              .join("\n")}
+          >
+            ⚠ reduced confidence — {flagGroups}
+          </span>
+        )}
+        {ttl && (
+          <span
+            className={`chip${reducedConfidence ? " chip-reduced" : ""}`}
+            title={ttl.note ?? ""}
+          >
+            {ttl.label}: {ttl.days_to_limit_point != null ? (
+              <>
+                {ttl.days_to_limit_point.toFixed(0)} d
+                {ttl.days_to_limit_lo != null && (
+                  <>
+                    {" "}
+                    <span className="muted">(band {ttl.days_to_limit_lo.toFixed(0)}–
+                    {ttl.days_to_limit_hi != null ? ttl.days_to_limit_hi.toFixed(0) : "∞"} d)</span>
+                  </>
+                )}
+              </>
+            ) : (
+              ">180 d"
+            )}
+          </span>
+        )}
         {flags.length > 0 && (
           <span className="flag" title="Reported, never clipped">
             {flags.join(", ")}
@@ -268,10 +341,16 @@ function TrajectoryFootnote({ data }: { data: TrajectoryContract }) {
     <p className="muted small trajectory-footnote">
       Forecast = anchor + Δ from serving C1 models (train cutoff{" "}
       {m?.train_cutoff ?? "—"}, n={m?.n_train?.toLocaleString() ?? "—"}); 80%
-      split-conformal bands + noise floor from the trajectory artefact; realised
+      split-conformal bands + noise floor from the trajectory artefact;       realised
       points are actual within-segment measurements when a historical as-of is
       chosen. Physics flags (wear improving / diameter increasing) are reported,
       never clipped. Diameter is derived and never the primary trajectory.
+      "Days to condemning" is the first piecewise-linear crossing of the 1016 mm
+      dia hard stop (the only approved limit); the band uses the conformal
+      interval edges. Flange/root/tread action thresholds are not yet approved.
+      Amber "reduced confidence" marks a wheelset that belongs to a collapsed
+      subgroup (shed / wear band) for that dimension — the point forecast is
+      shown but not decision-grade there.
     </p>
   );
 }

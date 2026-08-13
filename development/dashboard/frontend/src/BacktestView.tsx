@@ -48,41 +48,45 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
               compared to actual future observations.
             </p>
 
+            {replay.time_to_limit_summary && (
+              <div className="ttl-summary">
+                <span className="chip">
+                  days to condemning (dia):{" "}
+                  {replay.time_to_limit_summary.days_to_limit_point != null ? (
+                    <>
+                      <b>
+                        {replay.time_to_limit_summary.days_to_limit_point.toFixed(0)} d
+                      </b>
+                      {replay.time_to_limit_summary.days_to_limit_lo != null && (
+                        <>
+                          {" "}
+                          <span className="muted">
+                            (band{" "}
+                            {replay.time_to_limit_summary.days_to_limit_lo.toFixed(0)}–
+                            {replay.time_to_limit_summary.days_to_limit_hi != null
+                              ? replay.time_to_limit_summary.days_to_limit_hi.toFixed(0)
+                              : "∞"}{" "}
+                            d)
+                          </span>
+                        </>
+                      )}
+                    </>
+                  ) : (
+                    <span className="muted">
+                      beyond 180 d horizon
+                      {replay.time_to_limit_summary.status === "at_limit" ? " — at limit now" : ""}
+                    </span>
+                  )}{" "}
+                  · limit {replay.time_to_limit_summary.limit_mm?.toFixed(0)} mm (hard stop)
+                </span>
+                <span className="muted small">
+                  {replay.time_to_limit_summary.note}
+                </span>
+              </div>
+            )}
+
             <h4>Degradation — predicted vs actual</h4>
-            <table>
-              <thead>
-                <tr>
-                  <th>dim</th>
-                  <th>H</th>
-                  <th>current</th>
-                  <th>predicted</th>
-                  <th>actual</th>
-                  <th>obs ts</th>
-                  <th>MAE</th>
-                  <th>flag</th>
-                </tr>
-              </thead>
-              <tbody>
-                {DIMM.flatMap((dim) => [30, 90, 180].map((h) => ({ dim, h }))).map(({ dim, h }) => {
-                  const f = replay.degradation.find(
-                    (x) => x.dim === dim && x.horizon === h
-                  );
-                  if (!f) return null;
-                  return (
-                    <tr key={`${dim}-${h}`} className={f.implausibility_flag ? "flag-row" : ""}>
-                      <td>{dim}</td>
-                      <td>{h}d</td>
-                      <td>{f.current ?? "—"}</td>
-                      <td>{f.predicted ?? "—"}</td>
-                      <td>{f.observed_in_horizon ? f.actual : "—"}</td>
-                      <td>{f.actual_ts ?? "—"}</td>
-                      <td>{f.mae != null ? f.mae : "—"}</td>
-                      <td>{f.implausibility_flag ?? ""}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <ReplayDegradationTable replay={replay} />
             {implausible.length > 0 && (
               <div className="warn">
                 <strong>Implausibility flags ({implausible.length}):</strong>
@@ -134,6 +138,108 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
           <FleetTable fleet={fleet} />
         )}
       </section>
+    </div>
+  );
+}
+
+function ReplayDegradationTable({ replay }: { replay: WheelsetReplay }) {
+  const [sortByTtl, setSortByTtl] = useState(false);
+  const rows = DIMM.flatMap((dim) => HORIZONS.map((h) => ({ dim, h })))
+    .map(({ dim, h }) => {
+      const f = replay.degradation.find((x) => x.dim === dim && x.horizon === h);
+      return f ? { f } : null;
+    })
+    .filter((r): r is { f: WheelsetReplay["degradation"][number] } => r != null);
+
+  const sorted = sortByTtl
+    ? [...rows].sort((a, b) => {
+        const da = replay.time_to_limit[a.f.dim]?.days_to_limit_point;
+        const db = replay.time_to_limit[b.f.dim]?.days_to_limit_point;
+        const va = da == null ? Infinity : da;
+        const vb = db == null ? Infinity : db;
+        return va - vb;
+      })
+    : rows;
+
+  return (
+    <div>
+      <div className="table-toolbar">
+        <label>
+          <input
+            type="checkbox"
+            checked={sortByTtl}
+            onChange={(e) => setSortByTtl(e.target.checked)}
+          />
+          sort by soonest days-to-condemning
+        </label>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>dim</th>
+            <th>H</th>
+            <th>current</th>
+            <th>predicted</th>
+            <th>actual</th>
+            <th>obs ts</th>
+            <th>MAE</th>
+            <th>days to condemning</th>
+            <th>flag</th>
+          </tr>
+        </thead>
+        <tbody>
+          {sorted.map(({ f }) => {
+            const ttl = replay.time_to_limit[f.dim];
+            const reduced = f.subgroup_flags.length > 0;
+            const cls = [
+              f.implausibility_flag ? "flag-row" : "",
+              reduced ? "subgroup-row" : "",
+            ]
+              .filter(Boolean)
+              .join(" ");
+            return (
+              <tr key={`${f.dim}-${f.horizon}`} className={cls}>
+                <td>{f.dim}</td>
+                <td>{f.horizon}d</td>
+                <td>{f.current ?? "—"}</td>
+                <td>{f.predicted ?? "—"}</td>
+                <td>{f.observed_in_horizon ? f.actual : "—"}</td>
+                <td>{f.actual_ts ?? "—"}</td>
+                <td>{f.mae != null ? f.mae : "—"}</td>
+                <td>
+                  {ttl && ttl.days_to_limit_point != null ? (
+                    <span className={`chip${reduced ? " chip-reduced" : ""}`}>
+                      {ttl.days_to_limit_point.toFixed(0)} d
+                      {ttl.days_to_limit_lo != null && (
+                        <span className="muted">
+                          {" "}
+                          (band {ttl.days_to_limit_lo.toFixed(0)}–
+                          {ttl.days_to_limit_hi != null ? ttl.days_to_limit_hi.toFixed(0) : "∞"})
+                        </span>
+                      )}
+                    </span>
+                  ) : (
+                    "—"
+                  )}
+                </td>
+                <td>
+                  {f.implausibility_flag ?? ""}
+                  {reduced && (
+                    <span
+                      className="flag flag-reduced"
+                      title={f.subgroup_flags
+                        .map((s) => `${s.group}:${s.level} · ${s.reason}`)
+                        .join("\n")}
+                    >
+                      ⚠ reduced confidence
+                    </span>
+                  )}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
     </div>
   );
 }

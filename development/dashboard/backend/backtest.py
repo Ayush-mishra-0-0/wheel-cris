@@ -155,6 +155,23 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
                 "mae": round(abs(pred - actual), 4) if pred is not None and actual is not None and np.isfinite(actual) else None,
             })
 
+    # ---- time-to-limit: reuse the trajectory contract (single source of truth).
+    # Same wheelset + same anchor -> identical days_to_limit_* as /trajectory.
+    traj = service.trajectory(wheelset_id, anchor_ts)
+    ttl_summary = traj.get("time_to_limit_summary") if traj.get("dims") else None
+    ttl_by_dim = {}
+    for dim in traj.get("dims", []):
+        ttl = dim.get("time_to_limit")
+        if ttl:
+            ttl_by_dim[dim["dim"]] = ttl
+    # attach subgroup flags per (dim, horizon) from the trajectory contract
+    subgroup_lookup = {}
+    for dim in traj.get("dims", []):
+        for f in dim.get("forecasts", []):
+            subgroup_lookup[(dim["dim"], f["horizon"])] = f.get("subgroup_flags", [])
+    for row in forecasts:
+        row["subgroup_flags"] = subgroup_lookup.get((row["dim"], row["horizon"]), [])
+
     # ---- P(turn) predictions (raw probabilities, unrounded) ----
     pt_svc = service.pturn_models()
     Xpt = service._feature_vector(fr, pt_svc["num_feats"], pt_svc["cat_feats"], pt_svc["enc"])
@@ -178,10 +195,13 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
         "loco_number": str(w.iloc[p]["LomNumber"]) if pd.notna(w.iloc[p]["LomNumber"]) else None,
         "degradation": forecasts,
         "turn_probability": pturn,
+        "time_to_limit_summary": ttl_summary,
+        "time_to_limit": ttl_by_dim,
         "note": ("Strict point-in-time: features use only information at "
                  "anchor; predictions compared against actual future within-segment "
                  "observations / confirmed turns. Implausibility flags are reported, "
-                 "never clipped."),
+                 "never clipped. Time-to-limit reuses the trajectory contract "
+                 "(single source of truth)."),
     }
 
 

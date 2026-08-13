@@ -27,6 +27,17 @@ export interface LocomotiveSummary {
   wheelsets: WheelsetHeader[];
 }
 
+export interface SubgroupFlag {
+  group: string;
+  level: string;
+  reason: "bias" | "coverage" | string;
+  n: number;
+  bias_mm: number | null;
+  coverage: number | null;
+  noise_floor_mm: number | null;
+  note: string;
+}
+
 export interface ForecastPoint {
   horizon: number;
   dim: string;
@@ -34,6 +45,7 @@ export interface ForecastPoint {
   delta: number | null;
   current: number | null;
   implausibility_flag: string | null;
+  subgroup_flags: SubgroupFlag[];
   unit: string;
 }
 
@@ -88,6 +100,7 @@ export interface ReplayForecast {
   actual_ts: string | null;
   observed_in_horizon: boolean;
   implausibility_flag: string | null;
+  subgroup_flags: SubgroupFlag[];
   mae: number | null;
 }
 
@@ -106,6 +119,8 @@ export interface WheelsetReplay {
   loco_number: string | null;
   degradation: ReplayForecast[];
   turn_probability: ReplayPTurn[];
+  time_to_limit_summary: TimeToLimitSummary | null;
+  time_to_limit: Record<string, TimeToLimit>;
   note: string | null;
 }
 
@@ -142,6 +157,7 @@ export interface TrajectoryForecast {
   predicted: number | null;
   low: number | null;
   high: number | null;
+  subgroup_flags: SubgroupFlag[];
 }
 
 export interface TrajectoryRealised {
@@ -153,6 +169,33 @@ export interface TrajectoryRealised {
   observed_in_horizon: boolean;
 }
 
+export interface TimeToLimit {
+  dim: string;
+  limit_mm: number;
+  direction: "down" | "up" | string;
+  label: string;
+  current_mm: number | null;
+  predicted_at: Record<number, number | null>;
+  interval_lo: Record<number, number | null>;
+  interval_hi: Record<number, number | null>;
+  days_to_limit_point: number | null;
+  days_to_limit_lo: number | null;
+  days_to_limit_hi: number | null;
+  status: "within_horizon" | "beyond_horizon" | "at_limit" | string;
+  note: string | null;
+}
+
+export interface TimeToLimitSummary {
+  status: string;
+  limiting_dim: string | null;
+  limit_mm: number | null;
+  current_mm: number | null;
+  days_to_limit_point: number | null;
+  days_to_limit_lo: number | null;
+  days_to_limit_hi: number | null;
+  note: string | null;
+}
+
 export interface TrajectoryDim {
   dim: string;
   observed: TrajectoryObserved[];
@@ -160,6 +203,7 @@ export interface TrajectoryDim {
   realised: TrajectoryRealised[];
   flags: string[];
   noise_floor_mm: number | null;
+  time_to_limit: TimeToLimit | null;
 }
 
 export interface TrajectoryModelMeta {
@@ -177,6 +221,7 @@ export interface TrajectoryContract {
   model: TrajectoryModelMeta | null;
   dims: TrajectoryDim[];
   delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
+  time_to_limit_summary: TimeToLimitSummary | null;
   note: string | null;
 }
 

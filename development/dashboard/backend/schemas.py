@@ -24,6 +24,20 @@ class WheelsetHeader(BaseModel):
     wheel_profile_2class: float | None = None
 
 
+class SubgroupFlag(BaseModel):
+    group: str
+    level: str
+    reason: str
+    n: int
+    bias_mm: float | None = None
+    coverage: float | None = None
+    noise_floor_mm: float | None = None
+    note: str = ("Reduced confidence: this wheelset belongs to a subgroup whose "
+                 "delta residuals or conformal coverage collapse for this "
+                 "dimension/horizon. Interval is shown but the point forecast "
+                 "is not decision-grade.")
+
+
 class ForecastPoint(BaseModel):
     horizon: int
     dim: str
@@ -31,6 +45,7 @@ class ForecastPoint(BaseModel):
     delta: float | None = None
     current: float | None = None
     implausibility_flag: str | None = None
+    subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
     unit: str = "mm"
     note: str | None = None
 
@@ -103,6 +118,7 @@ class ReplayForecast(BaseModel):
     actual_ts: str | None = None
     observed_in_horizon: bool = False
     implausibility_flag: str | None = None
+    subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
     mae: float | None = None
 
 
@@ -121,6 +137,8 @@ class WheelsetReplay(BaseModel):
     loco_number: str | None = None
     degradation: list[ReplayForecast] = Field(default_factory=list)
     turn_probability: list[ReplayPTurn] = Field(default_factory=list)
+    time_to_limit_summary: TimeToLimitSummary | None = None
+    time_to_limit: dict[str, TimeToLimit] = Field(default_factory=dict)
     note: str | None = None
 
 
@@ -151,6 +169,7 @@ class TrajectoryForecast(BaseModel):
     predicted: float | None = None
     low: float | None = None
     high: float | None = None
+    subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
 
 
 class TrajectoryRealised(BaseModel):
@@ -162,6 +181,33 @@ class TrajectoryRealised(BaseModel):
     observed_in_horizon: bool = False
 
 
+class TimeToLimit(BaseModel):
+    dim: str
+    limit_mm: float
+    direction: str
+    label: str
+    current_mm: float | None = None
+    predicted_at: dict[int, float | None] = Field(default_factory=dict)
+    interval_lo: dict[int, float | None] = Field(default_factory=dict)
+    interval_hi: dict[int, float | None] = Field(default_factory=dict)
+    days_to_limit_point: float | None = None
+    days_to_limit_lo: float | None = None
+    days_to_limit_hi: float | None = None
+    status: str = "beyond_horizon"
+    note: str | None = None
+
+
+class TimeToLimitSummary(BaseModel):
+    status: str
+    limiting_dim: str | None = None
+    limit_mm: float | None = None
+    current_mm: float | None = None
+    days_to_limit_point: float | None = None
+    days_to_limit_lo: float | None = None
+    days_to_limit_hi: float | None = None
+    note: str | None = None
+
+
 class TrajectoryDim(BaseModel):
     dim: str
     observed: list[TrajectoryObserved] = Field(default_factory=list)
@@ -169,6 +215,7 @@ class TrajectoryDim(BaseModel):
     realised: list[TrajectoryRealised] = Field(default_factory=list)
     flags: list[str] = Field(default_factory=list)
     noise_floor_mm: float | None = None
+    time_to_limit: TimeToLimit | None = None
 
 
 class TrajectoryModelMeta(BaseModel):
@@ -186,4 +233,5 @@ class TrajectoryContract(BaseModel):
     model: TrajectoryModelMeta | None = None
     dims: list[TrajectoryDim] = Field(default_factory=list)
     delta_metrics: dict = Field(default_factory=dict)
+    time_to_limit_summary: TimeToLimitSummary | None = None
     note: str | None = None
