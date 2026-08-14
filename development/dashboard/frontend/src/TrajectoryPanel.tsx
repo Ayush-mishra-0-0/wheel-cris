@@ -1,5 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import * as echarts from "echarts";
+import { EChart } from "./EChart";
+import type { EChartsOption } from "./EChart";
 import { api } from "./api";
 import type { TrajectoryContract, TrajectoryDim, TurnMarker } from "./types";
 import { ErrorState, SkeletonBlock } from "./States";
@@ -127,16 +129,12 @@ function TrajectoryChart({
   data: TrajectoryDim;
   turns: TurnMarker[];
 }) {
-  const ref = useRef<HTMLDivElement>(null);
   const color = COLORS[data.dim] ?? "#2563eb";
   const primary = PRIMARY_DIMS.includes(data.dim);
   const subFlags = data.forecasts.flatMap((f) => f.subgroup_flags);
   const reducedConfidence = subFlags.length > 0;
 
-  useEffect(() => {
-    if (!ref.current) return;
-    const chart = echarts.init(ref.current);
-
+  const option = useMemo<EChartsOption>(() => {
     const obsX: string[] = [];
     const obsY: (number | null)[] = [];
     for (const o of data.observed) {
@@ -319,14 +317,14 @@ function TrajectoryChart({
       });
     }
 
-    chart.setOption({
+    return {
       animation: false,
       grid: { left: 46, right: 16, top: 28, bottom: 42 },
       title: {
         text: data.dim,
         left: 0,
         top: 0,
-        textStyle: { fontSize: 13, color: "#1f2333", fontWeight: 600 },
+        textStyle: { fontSize: 13, color: "#1c1917", fontWeight: 600 },
       },
       tooltip: {
         trigger: "axis",
@@ -337,31 +335,24 @@ function TrajectoryChart({
         bottom: 0,
         itemWidth: 14,
         itemHeight: 8,
-        textStyle: { fontSize: 10, color: "#6b7280" },
+        textStyle: { fontSize: 10, color: "#78716c" },
         data: ["forecast (anchor + Δ)", "realised"],
       },
       xAxis: {
         type: "time",
-        axisLabel: { fontSize: 10, color: "#888" },
+        axisLabel: { fontSize: 10, color: "#a8a29e" },
         splitLine: { show: false },
       },
       yAxis: {
         type: "value",
         scale: true,
-        axisLabel: { fontSize: 10, color: "#888" },
-        splitLine: { lineStyle: { color: "#f0f0f0" } },
+        axisLabel: { fontSize: 10, color: "#a8a29e" },
+        splitLine: { lineStyle: { color: "#f5f5f4" } },
       },
       dataZoom: [{ type: "inside" }, { type: "slider", height: 12, bottom: 18 }],
       series,
-    });
-
-    const onResize = () => chart.resize();
-    window.addEventListener("resize", onResize);
-    return () => {
-      window.removeEventListener("resize", onResize);
-      chart.dispose();
     };
-  }, [data, reducedConfidence]);
+  }, [data, turns, reducedConfidence, color]);
 
   const flags = data.flags;
   const nf = data.noise_floor_mm;
@@ -370,7 +361,7 @@ function TrajectoryChart({
 
   return (
     <div className="trajectory-card">
-      <div ref={ref} className="trajectory-chart" />
+      <EChart option={option} height={260} />
       <div className="trajectory-meta">
         {reducedConfidence && (
           <span
