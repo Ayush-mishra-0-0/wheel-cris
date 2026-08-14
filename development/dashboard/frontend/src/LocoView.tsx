@@ -75,7 +75,17 @@ export function LocoView({
           </div>
           <div className="kpi">
             <span className="kpi-label">Wheelsets</span>
-            <span className="kpi-value">{table.n_wheelsets}</span>
+            <span className="kpi-value">
+              {table.n_wheelsets}
+              {table.n_wheelsets_current !== undefined && table.n_wheelsets_historical !== undefined && table.n_wheelsets_historical > 0 && (
+                <>
+                  {" "}
+                  <span className="muted" title={`${table.n_wheelsets} recent (≤${table.recency_threshold_days}d) · ${table.n_wheelsets_historical} older`}>
+                    (+{table.n_wheelsets_historical})
+                  </span>
+                </>
+              )}
+            </span>
           </div>
           <div className="kpi">
             <span className="kpi-label">Segments</span>
@@ -99,11 +109,21 @@ export function LocoView({
       {table && table.wheelsets.length > 0 && (
         <section className="loco-table-wrap">
           <div className="loco-table-bar">
-            <h3>Wheelsets ({table.wheelsets.length})</h3>
-            {table.snapshot_sourced && (
-              <span className="chip">snapshot-sourced forecasts</span>
-            )}
-            <button className="nav-item back" onClick={onBack}>← Back to fleet</button>
+            <div>
+              <h3>Wheelsets ({table.wheelsets.length})</h3>
+              {table.n_wheelsets_historical !== undefined && table.n_wheelsets_historical > 0 && (
+                <p className="muted small">
+                  Showing {table.n_wheelsets} recently measured (≤{table.recency_threshold_days}d);
+                  {table.n_wheelsets_historical} older records hidden
+                </p>
+              )}
+            </div>
+            <div>
+              {table.snapshot_sourced && (
+                <span className="chip">snapshot-sourced forecasts</span>
+              )}
+              <button className="nav-item back" onClick={onBack}>← Back to fleet</button>
+            </div>
           </div>
           <div className="table-wrap">
             <table className="risk-table">

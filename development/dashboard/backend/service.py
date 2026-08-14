@@ -668,19 +668,39 @@ def loco_lookup(loco_number: str) -> pd.DataFrame:
 
 
 def loco_summary(loco_number: str) -> dict:
+    """Loco wheelset list with current fit status based on measurement recency.
+    
+    Returns wheelsets grouped into:
+    - wheelsets: recently measured (≤90d staleness) = current fits
+    - wheelsets_all: complete history (for optional toggle later)
+    
+    This filters out 1100+ day old records that would mislead engineers
+    into thinking they're currently on the loco.
+    """
     wes = load_wes()
     lom = str(loco_number).strip().lower()
     target = wes[wes["LomNumber"].astype(str).str.lower().eq(lom)]
     if target.empty:
         return {"loco_number": loco_number, "locomotive_id": None,
-                "wheelsets": [], "n_wheelsets": 0}
+                "wheelsets": [], "n_wheelsets": 0, "n_wheelsets_current": 0,
+                "n_wheelsets_historical": 0}
+    
     rows = []
+    rows_all = []
     seg = load_segments()
     turns = pd.read_parquet(TURNS)
     turns = turns[turns["wheelset_equipment_id"].isin(target["wheelset_equipment_id"])]
+    
+    latest_date = wes["measurement_timestamp"].max()
+    RECENCY_THRESHOLD_DAYS = 90
+    
     for (ws, grp) in target.sort_values("measurement_timestamp").groupby("wheelset_equipment_id"):
         last = grp.iloc[-1]
-        rows.append({
+        meas_ts = pd.Timestamp(last["measurement_timestamp"])
+        staleness_days = (pd.Timestamp(latest_date) - meas_ts).days
+        is_current_fit = staleness_days <= RECENCY_THRESHOLD_DAYS
+        
+        row = {
             "wheelset_equipment_id": int(ws),
             "loco_number": loco_number,
             "locomotive_id": int(target.iloc[0]["locomotive_id"]),
@@ -695,7 +715,13 @@ def loco_summary(loco_number: str) -> dict:
             "wheel_position_1_12": _f(last["wheel_position_1_12"]),
             "axle_position_1_6": _f(last["axle_position_1_6"]),
             "wheel_profile_2class": _f(last["wheel_profile_2class"]),
-        })
+            "staleness_days": staleness_days,
+            "is_current_fit": is_current_fit,
+        }
+        rows_all.append(row)
+        if is_current_fit:
+            rows.append(row)
+    
     s = seg[seg["wheelset_equipment_id"].isin(target["wheelset_equipment_id"])]
     return {
         "loco_number": loco_number,
@@ -703,9 +729,13 @@ def loco_summary(loco_number: str) -> dict:
         "home_shed": str(target.iloc[-1]["home_shed"]) if pd.notna(target.iloc[-1]["home_shed"]) else None,
         "loco_type": str(target.iloc[0]["LocoType"]) if pd.notna(target.iloc[0]["LocoType"]) else None,
         "n_wheelsets": len(rows),
+        "n_wheelsets_current": len(rows),
+        "n_wheelsets_historical": len(rows_all) - len(rows),
+        "recency_threshold_days": RECENCY_THRESHOLD_DAYS,
         "n_segments": int(s[["wheelset_equipment_id", "segment_index"]].drop_duplicates().shape[0]) if not s.empty else 0,
         "n_turns": int(turns.shape[0]),
         "wheelsets": rows,
+        "wheelsets_all": rows_all,
     }
 
 

@@ -37,6 +37,8 @@ export interface LocoWheelsetRow extends WheelsetHeader {
   fc_wsmRoot_90d: number | null;
   fc_wsmFlange_90d: number | null;
   fc_wsmThread_90d: number | null;
+  staleness_days?: number;
+  is_current_fit?: boolean;
 }
 
 export interface LocoWheelsetTable {
@@ -45,6 +47,9 @@ export interface LocoWheelsetTable {
   home_shed: string | null;
   loco_type: string | null;
   n_wheelsets: number;
+  n_wheelsets_current?: number;
+  n_wheelsets_historical?: number;
+  recency_threshold_days?: number;
   n_segments: number;
   n_turns: number;
   snapshot_sourced: boolean;
