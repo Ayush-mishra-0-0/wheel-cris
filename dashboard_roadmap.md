@@ -214,14 +214,14 @@ trajectory_chart_v1 builder); P1.3 makes it the single chart-data contract.
 
 ### P1.3 — Chart-data contract (single source of truth for all plots)
 
-- [ ] Define a versioned JSON contract: `GET /api/v1/wheelset/{ws}/lifecycle?contract=v1` returns everything a chart needs:
-  - [ ] measurement series per dimension (observed, with timestamps, quality/segment ids)
-  - [ ] segment boundaries + `turn_event` / `replacement` markers (with pre-turn flange/root/tread, `dia_cut`, `pre_dia`, `post_dia`)
-  - [ ] forecast continuation per dimension (30/90/180d points) + interval bounds + `model_version` + flags
-  - [ ] anchor/latest timestamp, units
-- [ ] The Matplotlib export path consumes the SAME contract (a shared backend function builds the series; the renderer is downstream).
-  - [ ] Refactor `ml/models/phase5/plot_lifecycle_step.py` to take the contract payload as input (keep a thin CLI wrapper for report generation).
-- [ ] **No lifecycle/forecast transformation logic in the frontend** — the React/ECharts layer only renders what the contract provides.
+- [x] Define a versioned JSON contract: `GET /api/v1/wheelset/{ws}/lifecycle?contract=v1` returns everything a chart needs:
+  - [x] measurement series per dimension (observed, with timestamps, quality/segment ids)
+  - [x] segment boundaries + `turn_event` / `replacement` markers (with pre-turn flange/root/tread, `dia_cut`, `pre_dia`, `post_dia`)
+  - [x] forecast continuation per dimension (30/90/180d points) + interval bounds + `model_version` + flags
+  - [x] anchor/latest timestamp, units
+- [x] The Matplotlib export path consumes the SAME contract (a shared backend function builds the series; the renderer is downstream).
+  - [x] Refactor `ml/models/phase5/plot_lifecycle_step.py` to take the contract payload as input (keep a thin CLI wrapper for report generation).
+- [x] **No lifecycle/forecast transformation logic in the frontend** — the React/ECharts layer only renders what the contract provides.
 
 ---
 

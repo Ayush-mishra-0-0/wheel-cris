@@ -414,6 +414,45 @@ def _physics_flags(dim: str, current: float | None, predicted: float | None) -> 
     return []
 
 
+def _turn_markers(wheelset_id: int, asof: pd.Timestamp) -> list[dict]:
+    """Turn/replacement markers from the confirmed lifecycle turns table.
+
+    Each marker carries the pre/post profile state per dim plus the diameter
+    cut, so a renderer (ECharts or Matplotlib) never needs the raw tables.
+    Only turns whose post_ts is <= asof are included (the chart is anchored).
+    """
+    try:
+        turns = pd.read_parquet(TURNS)
+    except Exception:
+        return []
+    t = turns[turns["wheelset_equipment_id"] == wheelset_id].sort_values("post_ts")
+    if t.empty:
+        return []
+    out = []
+    for no, (_, r) in enumerate(t.iterrows(), start=1):
+        post = pd.Timestamp(r["post_ts"])
+        if post > asof:
+            continue
+        pre = pd.Timestamp(r["pre_ts"]) if pd.notna(r.get("pre_ts")) else post
+        out.append({
+            "turn_no": no,
+            "pre_ts": pre,
+            "post_ts": post,
+            "segment_index": _f(r.get("segment_index")),
+            "days_between": _f(r.get("days_between")),
+            "pre_wsmDia": _f(r.get("pre_wsmDia")),
+            "post_wsmDia": _f(r.get("post_wsmDia")),
+            "dia_cut": _f(r.get("cut_dia")),
+            "pre_wsmFlange": _f(r.get("pre_wsmFlange")),
+            "post_wsmFlange": _f(r.get("post_wsmFlange")),
+            "pre_wsmRoot": _f(r.get("pre_wsmRoot")),
+            "post_wsmRoot": _f(r.get("post_wsmRoot")),
+            "pre_wsmThread": _f(r.get("pre_wsmThread")),
+            "post_wsmThread": _f(r.get("post_wsmThread")),
+        })
+    return out
+
+
 def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     """Chart-data contract for the trajectory panel (trajectory_chart_v1).
 
@@ -565,19 +604,33 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                  "sign-off and are not reported."),
     }
 
+    # loco number + identity for full context in the contract
+    loco_number = None
+    try:
+        wes_row = wes_all[wes_all["wheelset_equipment_id"] == wheelset_id]["LomNumber"].dropna()
+        if len(wes_row):
+            loco_number = str(wes_row.iloc[-1])
+    except Exception:
+        pass
+
     return {
         "wheelset_equipment_id": wheelset_id,
+        "loco_number": loco_number,
         "anchor": pd.Timestamp(anchor),
         "asof": pd.Timestamp(anchor),
-        "contract": "trajectory_chart_v1",
+        "contract": "lifecycle_chart_v1",
+        "units": {"length": "mm", "time": "days"},
         "model": meta,
         "feature_coverage": cov,
         "dims": dims,
+        "turns": _turn_markers(wheelset_id, pd.Timestamp(anchor)),
         "delta_metrics": _delta_metrics_slim(),
         "time_to_limit_summary": summary,
-        "note": ("Trajectory chart contract: forecast = anchor + delta; "
-                 "80% split-conformal bands from the trajectory artefact; "
-                 "physics flags reported, never clipped."),
+        "note": ("Lifecycle chart contract (lifecycle_chart_v1): forecast = "
+                 "anchor + delta; 80% split-conformal bands + noise floor from "
+                 "the trajectory artefact; physics flags reported, never "
+                 "clipped; turn markers carry pre/post profile state + dia "
+                 "cut so renderers never read raw tables."),
     }
 
 

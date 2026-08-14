@@ -251,14 +251,34 @@ export interface TrajectoryModelMeta {
   model_version: string | null;
 }
 
+export interface TurnMarker {
+  turn_no: number;
+  pre_ts: string | null;
+  post_ts: string;
+  segment_index: number | null;
+  days_between: number | null;
+  pre_wsmDia: number | null;
+  post_wsmDia: number | null;
+  dia_cut: number | null;
+  pre_wsmFlange: number | null;
+  post_wsmFlange: number | null;
+  pre_wsmRoot: number | null;
+  post_wsmRoot: number | null;
+  pre_wsmThread: number | null;
+  post_wsmThread: number | null;
+}
+
 export interface TrajectoryContract {
   wheelset_equipment_id: number;
+  loco_number: string | null;
   anchor: string | null;
   asof: string | null;
   contract: string;
+  units: Record<string, string>;
   model: TrajectoryModelMeta | null;
   feature_coverage: number | null;
   dims: TrajectoryDim[];
+  turns: TurnMarker[];
   delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
   time_to_limit_summary: TimeToLimitSummary | null;
   note: string | null;

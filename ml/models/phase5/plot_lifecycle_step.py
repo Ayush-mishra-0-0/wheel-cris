@@ -107,60 +107,114 @@ def plot_wheelset(
     events: pd.DataFrame,
     output_dir: Path,
 ) -> Path:
-    measurements = measurements.sort_values("measurement_timestamp").reset_index(drop=True)
-    fig, axes = plt.subplots(4, 1, figsize=(14, 12), sharex=True)
+    """Thin wrapper: builds the lifecycle_chart_v1 payload from raw frames,
+    then delegates to the shared render_contract() renderer.
+
+    Kept for backward compatibility with existing callers (dashboard /plots);
+    render_contract() is the single renderer for the contract.
+    """
+    contract = build_contract_from_frames(wheelset_id, loco, measurements, events)
+    return render_contract(contract, output_dir, loco)
+
+
+# ---------------------------------------------------------------------------
+# P1.3 chart-data contract rendering (single source of truth for all plots)
+#
+# render_contract() is a PURE renderer: it takes the lifecycle_chart_v1 JSON
+# payload from GET /api/v1/wheelset/{ws}/lifecycle?contract=v1 and draws the
+# step plot. It never touches raw tables - the payload already carries the
+# observed series, turn markers (with pre/post state + dia cut) and forecast
+# continuation. No lifecycle/forecast transformation logic here.
+# ---------------------------------------------------------------------------
+
+DIM_ORDER = ["wsmRoot", "wsmFlange", "wsmThread", "wsmDia"]
+
+
+def _contract_series(contract: dict, dim: str) -> list[dict]:
+    """Observed series (timestamp, value) for a dim from the contract dims[]."""
+    for d in contract.get("dims", []):
+        if d.get("dim") == dim:
+            return d.get("observed", [])
+    return []
+
+
+def _contract_forecasts(contract: dict) -> dict[str, list[dict]]:
+    """Forecast continuation per dim: list of {asof_ts, predicted, low, high}."""
+    out: dict[str, list[dict]] = {}
+    for d in contract.get("dims", []):
+        out[d.get("dim")] = d.get("forecasts", [])
+    return out
+
+
+def render_contract(contract: dict, output_dir: Path, loco: str | None = None) -> Path:
+    """Draw the 4-panel step plot from a lifecycle_chart_v1 payload.
+
+    Consumes ONLY the contract: observed series per dim, turn markers
+    (turn_no / pre-post state / dia_cut) and forecast continuation points.
+    """
+    ws = contract.get("wheelset_equipment_id")
+    loco = loco or contract.get("loco_number") or str(ws)
+    dims_meta = contract.get("dims", [])
+    present_dims = [d.get("dim") for d in dims_meta if d.get("observed")]
+    order = [d for d in DIM_ORDER if d in present_dims]
+    if not order:
+        order = present_dims
+
+    fig, axes = plt.subplots(len(order), 1, figsize=(14, 12), sharex=True)
+    if len(order) == 1:
+        axes = [axes]
     fig.subplots_adjust(hspace=0.15)
     palette = ["#1f77b4", "#ff7f0e", "#2ca02c", "#9467bd"]
-    for ax, field, label, color in zip(axes, PLOT_FIELDS, PLOT_LABELS, palette):
-        ax.plot(
-            measurements["measurement_timestamp"],
-            measurements[field],
-            marker="o",
-            markersize=4,
-            linestyle="-",
-            color=color,
-            alpha=0.8,
-            label=label,
-        )
+    palette_map = dict(zip(PLOT_FIELDS, palette))
+    label_map = dict(zip(PLOT_FIELDS, PLOT_LABELS))
+
+    turns = contract.get("turns", [])
+    for ax, dim in zip(axes, order):
+        series = _contract_series(contract, dim)
+        ts = [pd.Timestamp(p["ts"]) for p in series]
+        vals = [p.get("value") for p in series]
+        color = palette_map.get(f"mean_{dim}", "#333")
+        label = label_map.get(f"mean_{dim}", dim)
+        ax.plot(ts, vals, marker="o", markersize=4, linestyle="-",
+                color=color, alpha=0.8, label=label)
         ax.set_ylabel(label)
         ax.grid(alpha=0.25)
-        # if field != "mean_wsmDia":
-        #     ax.invert_yaxis()
+        # turn/reset boundaries: red dashed drop from pre to post value
+        for t in turns:
+            pre = t.get(f"pre_{dim}")
+            post = t.get(f"post_{dim}")
+            if pre is not None and post is not None:
+                ax.vlines(pd.Timestamp(t["post_ts"]), min(pre, post), max(pre, post),
+                          color="red", linestyle="--", alpha=0.7, linewidth=1.5)
     axes[-1].set_xlabel("Measurement timestamp")
 
-    # Split the timeline at the confirmed turning boundaries so the line does not smooth across the reset.
-    boundary_indices = []
-    event_rows = []
-    for event_no, event in enumerate(events.sort_values("post_ts").itertuples(), start=1):
-        pre_idx = find_measurement_index(measurements, event.pre_ts, DIA_FIELD, event.pre_wsmDia)
-        post_idx = find_measurement_index(measurements, event.post_ts, DIA_FIELD, event.post_wsmDia)
-        if pre_idx is None or post_idx is None:
-            continue
-        boundary_indices.append((pre_idx, post_idx, event_no, event))
-        event_rows.append(event)
+    # forecast continuation (dashed continuation from the anchor) on each dim axis
+    forecasts = _contract_forecasts(contract)
+    for ax, dim in zip(axes, order):
+        dim_fc = forecasts.get(dim, [])
+        if dim_fc:
+            fts = [pd.Timestamp(f.get("asof_ts") or f.get("horizon")) for f in dim_fc]
+            fval = [f.get("predicted") for f in dim_fc]
+            ax.plot(fts, fval, linestyle="--", marker="s", markersize=5,
+                    color="black", alpha=0.55, linewidth=1.0, label="forecast")
 
-    for field, ax in zip(PLOT_FIELDS, axes):
-        for pre_idx, post_idx, _, event in boundary_indices:
-            x_val = event.post_ts
-            y_pre = getattr(event, f"pre_{field.replace('mean_', '')}")
-            y_post = getattr(event, f"post_{field.replace('mean_', '')}")
-            if pd.notna(y_pre) and pd.notna(y_post):
-                ax.vlines(x_val, min(y_pre, y_post), max(y_pre, y_post), color="red", linestyle="--", alpha=0.7, linewidth=1.5)
-
-    for event_no, event in enumerate(events.sort_values("post_ts").itertuples(), start=1):
-        if pd.isna(event.pre_wsmDia) or pd.isna(event.post_wsmDia):
+    # turn annotations on the last panel (dia) using marker pre/post + dia_cut
+    for t in turns:
+        post = t.get("post_wsmDia")
+        if post is None:
             continue
         annotation = (
-            f"TURN #{event_no}\n"
-            f"pre-flange={event.pre_wsmFlange:.2f} mm\n"
-            f"pre-root={event.pre_wsmRoot:.2f} mm\n"
-            f"pre-tread={event.pre_wsmThread:.2f} mm\n"
-            f"dia cut={event.cut_dia:.2f} mm"
+            f"TURN #{t.get('turn_no')}\n"
+            f"pre-flange={t.get('pre_wsmFlange')} mm\n"
+            f"pre-root={t.get('pre_wsmRoot')} mm\n"
+            f"pre-tread={t.get('pre_wsmThread')} mm\n"
+            f"dia cut={t.get('dia_cut')} mm"
         )
+        even = (t.get("turn_no") or 0) % 2 == 0
         axes[-1].annotate(
             annotation,
-            xy=(event.post_ts, event.post_wsmDia),
-            xytext=(0, 40 if (event_no % 2) == 0 else 80),
+            xy=(pd.Timestamp(t["post_ts"]), post),
+            xytext=(0, 40 if even else 80),
             textcoords="offset points",
             fontsize=7,
             ha="center",
@@ -169,20 +223,98 @@ def plot_wheelset(
             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=0.2", color="gray", lw=0.5, alpha=0.7),
         )
 
-    title = f"Loco {loco} wheelset {wheelset_id} lifecycle step plot"
+    title = f"Loco {loco} wheelset {ws} lifecycle step plot (lifecycle_chart_v1)"
     fig.suptitle(title, fontsize=14, y=0.98)
     fig.autofmt_xdate(rotation=20)
-    path = output_dir / f"lifecycle_step_loco_{loco}_wheelset_{wheelset_id}.png"
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / f"lifecycle_step_loco_{loco}_wheelset_{ws}.png"
     fig.savefig(path, dpi=200, bbox_inches="tight")
-    # also save as SVG for high-quality scalable frontend rendering
     try:
-        svg_path = path.with_suffix('.svg')
-        fig.savefig(svg_path, bbox_inches='tight', format='svg')
+        fig.savefig(path.with_suffix(".svg"), bbox_inches="tight", format="svg")
     except Exception:
-        # SVG optional; ignore failures so PNG remains primary
         pass
     plt.close(fig)
     return path
+
+
+def build_contract_from_frames(
+    wheelset_id: int,
+    loco: str,
+    measurements: pd.DataFrame,
+    events: pd.DataFrame,
+) -> dict:
+    """Build a lifecycle_chart_v1-shaped payload from raw frames.
+
+    Used by the thin CLI wrapper only, so the CLI can run without a live API.
+    Production path: the API builds the SAME payload; render_contract() stays
+    consumer-agnostic (JSON-in, chart-out).
+    """
+    measurements = measurements.sort_values("measurement_timestamp").reset_index(drop=True)
+    dims = []
+    for field in PLOT_FIELDS:
+        dim = field.replace("mean_", "")
+        if field not in measurements.columns:
+            continue
+        observed = []
+        for _, r in measurements.iterrows():
+            v = r[field]
+            if pd.isna(v):
+                continue
+            observed.append({
+                "ts": str(pd.Timestamp(r["measurement_timestamp"])),
+                "value": round(float(v), 4),
+                "segment_index": None,
+                "turn_event": bool(r.get("turn_event", False)),
+                "replacement": bool(r.get("replacement", False)),
+            })
+        dims.append({"dim": dim, "observed": observed, "forecasts": []})
+
+    turns = []
+    for no, (_, r) in enumerate(events.sort_values("post_ts").iterrows(), start=1):
+        pre_fl = r.get("pre_wsmFlange")
+        pre_rt = r.get("pre_wsmRoot")
+        pre_td = r.get("pre_wsmThread")
+        turns.append({
+            "turn_no": no,
+            "pre_ts": str(pd.Timestamp(r.get("pre_ts"))) if pd.notna(r.get("pre_ts")) else None,
+            "post_ts": str(pd.Timestamp(r.get("post_ts"))),
+            "segment_index": None,
+            "days_between": None,
+            "pre_wsmDia": _num(r.get("pre_wsmDia")),
+            "post_wsmDia": _num(r.get("post_wsmDia")),
+            "dia_cut": _num(r.get("cut_dia")),
+            "pre_wsmFlange": _num(pre_fl),
+            "post_wsmFlange": _num(r.get("post_wsmFlange")),
+            "pre_wsmRoot": _num(pre_rt),
+            "post_wsmRoot": _num(r.get("post_wsmRoot")),
+            "pre_wsmThread": _num(pre_td),
+            "post_wsmThread": _num(r.get("post_wsmThread")),
+        })
+
+    return {
+        "wheelset_equipment_id": int(wheelset_id),
+        "loco_number": loco,
+        "anchor": str(pd.Timestamp(measurements["measurement_timestamp"].max()))
+        if len(measurements) else None,
+        "asof": None,
+        "contract": "lifecycle_chart_v1",
+        "units": {"length": "mm", "time": "days"},
+        "model": None,
+        "feature_coverage": None,
+        "dims": dims,
+        "turns": turns,
+        "delta_metrics": {},
+        "time_to_limit_summary": None,
+        "note": "CLI-built contract (no live API): observed + turn markers only.",
+    }
+
+
+def _num(v) -> float | None:
+    try:
+        x = float(v)
+        return None if np.isnan(x) else round(x, 4)
+    except (TypeError, ValueError):
+        return None
 
 
 def plot_combined_flange_vs_dia(
@@ -344,7 +476,9 @@ def main() -> None:
         if wheelset_events.empty:
             print(f"Skipping wheelset {wheelset_id} because no confirmed turns remain after filtering")
             continue
-        plot_path = plot_wheelset(wheelset_id, loco, measurements, wheelset_events, output_dir)
+        # P1.3: build the lifecycle_chart_v1 payload and delegate to the shared renderer.
+        contract = build_contract_from_frames(wheelset_id, loco, measurements, wheelset_events)
+        plot_path = render_contract(contract, output_dir, loco)
         plot_paths.append(plot_path)
         print(f"Saved plot: {plot_path}")
 

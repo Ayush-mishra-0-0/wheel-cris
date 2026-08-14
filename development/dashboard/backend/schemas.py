@@ -255,14 +255,34 @@ class TrajectoryModelMeta(BaseModel):
     model_version: str | None = None
 
 
+class TurnMarker(BaseModel):
+    turn_no: int
+    pre_ts: dt.datetime | None = None
+    post_ts: dt.datetime
+    segment_index: int | None = None
+    days_between: float | None = None
+    pre_wsmDia: float | None = None
+    post_wsmDia: float | None = None
+    dia_cut: float | None = None
+    pre_wsmFlange: float | None = None
+    post_wsmFlange: float | None = None
+    pre_wsmRoot: float | None = None
+    post_wsmRoot: float | None = None
+    pre_wsmThread: float | None = None
+    post_wsmThread: float | None = None
+
+
 class TrajectoryContract(BaseModel):
     wheelset_equipment_id: int
+    loco_number: str | None = None
     anchor: dt.datetime | None = None
     asof: dt.datetime | None = None
-    contract: str = "trajectory_chart_v1"
+    contract: str = "lifecycle_chart_v1"
+    units: dict = Field(default_factory=lambda: {"length": "mm", "time": "days"})
     model: TrajectoryModelMeta | None = None
     feature_coverage: float | None = None
     dims: list[TrajectoryDim] = Field(default_factory=list)
+    turns: list[TurnMarker] = Field(default_factory=list)
     delta_metrics: dict = Field(default_factory=dict)
     time_to_limit_summary: TimeToLimitSummary | None = None
     note: str | None = None
