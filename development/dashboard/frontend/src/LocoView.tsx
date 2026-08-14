@@ -5,6 +5,7 @@ import { WearTimeline } from "./WearTimeline";
 import AllWheelPlots from "./AllWheelPlots";
 import { BacktestView } from "./BacktestView";
 import { TrajectoryPanel } from "./TrajectoryPanel";
+import { EmptyState, ErrorState, SkeletonBlock } from "./States";
 function fmt(v: number | null | undefined, d = 2): string {
   return v == null || !isFinite(v) ? "—" : v.toFixed(d);
 }
@@ -27,6 +28,7 @@ export function LocoView({
   const [view, setView] = useState<"overview" | "backtest">("overview");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -44,7 +46,7 @@ export function LocoView({
       })
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
-  }, [loco]);
+  }, [loco, reload]);
 
   useEffect(() => {
     if (selected == null) return;
@@ -57,9 +59,9 @@ export function LocoView({
 
   return (
     <div className="loco-page">
-      {err && <div className="error">{err}</div>}
+      {err && !loading && <ErrorState message={err} onRetry={() => setReload((r) => r + 1)} />}
 
-      {loading && <p className="muted">Loading loco {loco}…</p>}
+      {loading && !table && <SkeletonBlock lines={4} />}
 
       {table && (
         <div className="loco-header">
@@ -90,7 +92,11 @@ export function LocoView({
         </div>
       )}
 
-      {table && (
+      {table && table.wheelsets.length === 0 && (
+        <EmptyState title={`No wheelsets for loco ${loco}`} hint="Check the loco number — it may be inactive or have no recent measurements." />
+      )}
+
+      {table && table.wheelsets.length > 0 && (
         <section className="loco-table-wrap">
           <div className="loco-table-bar">
             <h3>Wheelsets ({table.wheelsets.length})</h3>
@@ -101,54 +107,54 @@ export function LocoView({
           </div>
           <div className="table-wrap">
             <table className="risk-table">
-              <thead>
-                <tr>
-                  <th>#</th>
-                  <th>Pos</th>
-                  <th>Dia</th>
-                  <th>Flange</th>
-                  <th>Root</th>
-                  <th>Thread</th>
-                  <th>Limiting</th>
-                  <th>Condemning</th>
-                  <th>P(turn) 90d</th>
-                  <th>Fc root 90d</th>
-                  <th>Fc flange 90d</th>
-                  <th>Fc tread 90d</th>
-                  <th>Turns</th>
-                  <th>Staleness</th>
-                </tr>
-              </thead>
-              <tbody>
-                {table.wheelsets.map((w) => (
-                  <tr
-                    key={w.wheelset_equipment_id}
-                    className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""}`}
-                    onClick={() => setSelected(w.wheelset_equipment_id)}
-                  >
-                    <td className="mono">#{w.wheelset_equipment_id}</td>
-                    <td>{fmt(w.wheel_position_1_12, 0)}</td>
-                    <td>{fmt(w.latest_mean_wsmDia)}</td>
-                    <td>{fmt(w.latest_mean_wsmFlange)}</td>
-                    <td>{fmt(w.latest_mean_wsmRoot)}</td>
-                    <td>{fmt(w.latest_mean_wsmThread)}</td>
-                    <td>{w.limiting_dim ?? "—"}</td>
-                    <td>{fmt(w.days_to_condemning_dia, 0)} d</td>
-                    <td>
-                      <span className={w.pturn_90d != null && w.pturn_90d >= 0.01 ? "risk-high" : "risk-low"}>
-                        {pct(w.pturn_90d)}
-                      </span>
-                    </td>
-                    <td>{fmt(w.fc_wsmRoot_90d)}</td>
-                    <td>{fmt(w.fc_wsmFlange_90d)}</td>
-                    <td>{fmt(w.fc_wsmThread_90d)}</td>
-                    <td>{w.n_turns}</td>
-                    <td>{fmt(w.days_since_turning, 0)} d</td>
+                <thead>
+                  <tr>
+                    <th>#</th>
+                    <th>Pos</th>
+                    <th>Dia</th>
+                    <th>Flange</th>
+                    <th>Root</th>
+                    <th>Thread</th>
+                    <th>Limiting</th>
+                    <th>Condemning</th>
+                    <th>P(turn) 90d</th>
+                    <th>Fc root 90d</th>
+                    <th>Fc flange 90d</th>
+                    <th>Fc tread 90d</th>
+                    <th>Turns</th>
+                    <th>Staleness</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {table.wheelsets.map((w) => (
+                    <tr
+                      key={w.wheelset_equipment_id}
+                      className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""}`}
+                      onClick={() => setSelected(w.wheelset_equipment_id)}
+                    >
+                      <td className="mono">#{w.wheelset_equipment_id}</td>
+                      <td>{fmt(w.wheel_position_1_12, 0)}</td>
+                      <td>{fmt(w.latest_mean_wsmDia)}</td>
+                      <td>{fmt(w.latest_mean_wsmFlange)}</td>
+                      <td>{fmt(w.latest_mean_wsmRoot)}</td>
+                      <td>{fmt(w.latest_mean_wsmThread)}</td>
+                      <td>{w.limiting_dim ?? "—"}</td>
+                      <td>{fmt(w.days_to_condemning_dia, 0)} d</td>
+                      <td>
+                        <span className={w.pturn_90d != null && w.pturn_90d >= 0.01 ? "risk-high" : "risk-low"}>
+                          {pct(w.pturn_90d)}
+                        </span>
+                      </td>
+                      <td>{fmt(w.fc_wsmRoot_90d)}</td>
+                      <td>{fmt(w.fc_wsmFlange_90d)}</td>
+                      <td>{fmt(w.fc_wsmThread_90d)}</td>
+                      <td>{w.n_turns}</td>
+                      <td>{fmt(w.days_since_turning, 0)} d</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
         </section>
       )}
 
@@ -158,7 +164,7 @@ export function LocoView({
             detail ? (
               <WheelsetView detail={detail} caps={caps} />
             ) : (
-              <p className="hint">Loading wheelset…</p>
+              <SkeletonBlock lines={6} />
             )
           ) : (
             <BacktestView wheelsetId={selected} caps={caps} />

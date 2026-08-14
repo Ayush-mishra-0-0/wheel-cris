@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import type { FleetOverview, RiskRow } from "./types";
+import { EmptyState, ErrorState, SkeletonTable, StaleBanner } from "./States";
 
 function fmt(v: number | null | undefined, d = 2): string {
   return v == null || !isFinite(v) ? "—" : v.toFixed(d);
@@ -38,13 +39,14 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
   const [riskLevel, setRiskLevel] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("pturn_90d");
   const [descending, setDescending] = useState(true);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     api
       .fleetOverview()
       .then(setOverview)
       .catch((e) => setErr((e as Error).message));
-  }, []);
+  }, [reload]);
 
   useEffect(() => {
     setLoading(true);
@@ -66,7 +68,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
       })
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
-  }, [shed, locoType, limitingDim, riskLevel, sortBy, descending, page, pageSize]);
+  }, [shed, locoType, limitingDim, riskLevel, sortBy, descending, page, pageSize, reload]);
 
   const sheds = useMemo(
     () => (overview?.top_sheds ?? []).map((s) => s.shed_any).filter(Boolean) as string[],
@@ -86,10 +88,15 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
 
   return (
     <div className="fleet">
-      {err && <div className="error">{err}</div>}
+      {err && !loading && <ErrorState message={err} onRetry={() => setReload((r) => r + 1)} />}
 
       {overview && (
         <section className="fleet-health">
+          <StaleBanner days={
+            overview.snapshot_built_at
+              ? Math.max(0, Math.floor((Date.now() - Date.parse(overview.snapshot_built_at)) / 86400000))
+              : null
+          } />
           <div className="fleet-health-row">
             <div className="kpi">
               <span className="kpi-label">Fleet wheelsets</span>
@@ -204,9 +211,12 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
         </div>
 
         {loading ? (
-          <p className="muted">Loading fleet risk…</p>
+          <SkeletonTable rows={8} cols={12} />
         ) : rows.length === 0 ? (
-          <p className="muted">No wheelsets match the current filters.</p>
+          <EmptyState
+            title="No wheelsets match the current filters"
+            hint="Try clearing the shed / type / risk filters above."
+          />
         ) : (
           <div className="table-wrap">
             <table className="risk-table">

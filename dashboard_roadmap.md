@@ -266,9 +266,9 @@ The actual daily tool for engineers. (Work here transfers directly to SLAM.)
 
 ### P2.5 — UX states
 
-- [ ] Loading states (skeletons) for fleet table and wheelset detail.
-- [ ] Empty states (no data, no results, stale snapshot).
-- [ ] Error states with retry.
+- [x] Loading states (skeletons) for fleet table and wheelset detail (`SkeletonTable`/`SkeletonBlock` with shimmer).
+- [x] Empty states (no data, no results, stale snapshot — `EmptyState` + `StaleBanner` for snapshot age).
+- [x] Error states with retry (`ErrorState` + reload counter in Fleet/Loco/Trajectory/FleetValidation).
 
 ---
 

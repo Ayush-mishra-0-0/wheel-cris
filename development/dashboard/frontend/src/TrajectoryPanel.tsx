@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
 import { api } from "./api";
 import type { TrajectoryContract, TrajectoryDim, TurnMarker } from "./types";
+import { ErrorState, SkeletonBlock } from "./States";
 
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
 const DERIVED_DIMS = ["wsmDia"];
@@ -30,6 +31,7 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
   const [asof, setAsof] = useState<string>("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
     setLoading(true);
@@ -40,7 +42,7 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
       .then(setData)
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
-  }, [wheelsetId, asof]);
+  }, [wheelsetId, asof, reload]);
 
   const dimOrder = [...PRIMARY_DIMS, ...DERIVED_DIMS];
 
@@ -68,8 +70,8 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
         </label>
       </div>
 
-      {err && <div className="error">{err}</div>}
-      {loading && <p className="muted">loading…</p>}
+      {err && !loading && <ErrorState message={err} onRetry={() => setReload((r) => r + 1)} />}
+      {loading && <SkeletonBlock lines={5} />}
 
       {data && (
         <>

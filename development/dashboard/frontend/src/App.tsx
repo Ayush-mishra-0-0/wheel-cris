@@ -4,6 +4,7 @@ import type { Capabilities, FleetBacktest, OperationalCapture, SearchHit } from 
 import { CaptureTable, FleetTable } from "./BacktestView";
 import { FleetView } from "./FleetView";
 import { LocoView } from "./LocoView";
+import { ErrorState, EmptyState, SkeletonBlock } from "./States";
 
 type Page = "fleet" | "search" | "validation" | "loco";
 
@@ -143,7 +144,11 @@ export function App() {
             <div className="search-page">
               <h2>Search</h2>
               <p className="muted">Type a loco number, shed or loco type in the top bar.</p>
-              {hits.length > 0 && (
+              {!q.trim() ? (
+                <EmptyState title="Type to search" hint="Start typing a loco number, shed or loco type in the top search bar." />
+              ) : hits.length === 0 ? (
+                <EmptyState title={`No matches for “${q}”`} hint="Try a different loco number, shed code or loco type." />
+              ) : (
                 <ul className="search-results">
                   {hits.map((h, i) => (
                     <li key={i}>
@@ -184,8 +189,11 @@ function FleetValidation() {
   const [fleet, setFleet] = useState<FleetBacktest | null>(null);
   const [capture, setCapture] = useState<OperationalCapture | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    setFleet(null);
+    setErr(null);
     api
       .fleetBacktest()
       .then(setFleet)
@@ -194,10 +202,10 @@ function FleetValidation() {
       .fleetCapture()
       .then(setCapture)
       .catch(() => {}); // capture@k is optional enrichment, not a hard dependency
-  }, []);
+  }, [reload]);
 
-  if (err) return <div className="warn">{err}</div>;
-  if (!fleet) return <p className="hint">Loading fleet backtest…</p>;
+  if (err) return <ErrorState message={err} onRetry={() => setReload((r) => r + 1)} />;
+  if (!fleet) return <SkeletonBlock lines={8} />;
 
   return (
     <div className="backtest">

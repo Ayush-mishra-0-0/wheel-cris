@@ -46,6 +46,46 @@ body {
   margin-bottom: 16px;
 }
 
+/* P2.5 UX states */
+.skeleton-table { border: 1px solid var(--line); border-radius: 10px; overflow: hidden; background: #fff; }
+.skeleton-row { display: grid; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--line); }
+.skeleton-row:last-child { border-bottom: none; }
+.skeleton-head { padding: 12px 14px; }
+.skeleton-cell { height: 12px; border-radius: 4px; background: #eef0f5; }
+.skeleton-shimmer {
+  background: linear-gradient(90deg, #eef0f5 25%, #f7f8fb 50%, #eef0f5 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+.skeleton-block { padding: 4px 0; }
+.skeleton-line { height: 11px; border-radius: 4px; margin-bottom: 10px; }
+
+.error-state { display: flex; align-items: center; gap: 10px; }
+.error-state .error { margin-bottom: 0; }
+.btn {
+  padding: 8px 14px;
+  border: 1px solid var(--line);
+  background: #fff;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.empty-state {
+  border: 1px dashed var(--line);
+  border-radius: 10px;
+  background: var(--card);
+  padding: 28px 20px;
+  text-align: center;
+}
+.empty-title { font-size: 14px; color: var(--ink); margin-bottom: 4px; }
+
+.banner { border-radius: 8px; padding: 10px 14px; margin: 12px 0; font-size: 13px; }
+.banner-ok { background: #ecfdf5; border: 1px solid #a7f3d0; color: #065f46; }
+.banner-warn { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+
 .loco-header {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
