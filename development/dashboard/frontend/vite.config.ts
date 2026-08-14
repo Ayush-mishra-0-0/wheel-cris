@@ -10,7 +10,7 @@ export default defineConfig({
       "/api": {
         target: "http://127.0.0.1:8033",
         changeOrigin: true,
-        rewrite: (p) => p.replace(/^\/api/, ""),
+        // no rewrite: versioned contract is served under /api/v1/... on the backend
       },
     },
   },

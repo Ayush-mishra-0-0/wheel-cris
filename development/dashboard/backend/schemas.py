@@ -272,3 +272,74 @@ class Capabilities(BaseModel):
     p0_2_dia_fix: bool = False
     degradation_serving: dict = Field(default_factory=dict)
     validation: dict = Field(default_factory=dict)
+
+
+# ---------------------------------------------------------------------------
+# P1.2 fleet endpoints (snapshot-backed)
+# ---------------------------------------------------------------------------
+
+class FleetOverview(BaseModel):
+    n_wheelsets: int = 0
+    snapshot_built_at: str | None = None
+    model_version: str | None = None
+    train_cutoff: str | None = None
+    staleness_days_median: float | None = None
+    limiting_dim: dict[str, int] = Field(default_factory=dict)
+    pturn_share_above_threshold_pct: dict[str, float] = Field(default_factory=dict)
+    wear_distribution_mm: dict[str, dict[str, float | None]] = Field(default_factory=dict)
+    days_to_condemning_within_180d: int = 0
+    feature_days_since_turning: dict[str, float | None] = Field(default_factory=dict)
+    top_sheds: list[dict] = Field(default_factory=list)
+
+
+class RiskRow(BaseModel):
+    wheelset_equipment_id: int
+    loco_number: str | None = None
+    shed_any: str | None = None
+    loco_type: str | None = None
+    limiting_dim: str | None = None
+    limiting_reason: str | None = None
+    days_to_condemning_dia: float | None = None
+    mean_wsmDia: float | None = None
+    mean_wsmFlange: float | None = None
+    mean_wsmRoot: float | None = None
+    mean_wsmThread: float | None = None
+    pturn_30d: float | None = None
+    pturn_60d: float | None = None
+    pturn_90d: float | None = None
+    feature_coverage: float | None = None
+    staleness_days: float | None = None
+    latest_measurement: str | None = None
+
+
+class FleetRiskResponse(BaseModel):
+    total: int = 0
+    page: int = 1
+    page_size: int = 50
+    items: list[RiskRow] = Field(default_factory=list)
+    columns: list[str] = Field(default_factory=list)
+
+
+class SearchHit(BaseModel):
+    loco_number: str | None = None
+    shed: str | None = None
+    loco_type: str | None = None
+    n_wheelsets: int = 0
+
+
+class FleetSearchResponse(BaseModel):
+    query: str
+    total: int = 0
+    items: list[SearchHit] = Field(default_factory=list)
+
+
+class ShedOverview(BaseModel):
+    shed: str
+    n_wheelsets: int = 0
+    n_locos: int = 0
+    limiting_dim: dict[str, int] = Field(default_factory=dict)
+    pturn_90d_mean_pct: float | None = None
+    pturn_90d_p90_pct: float | None = None
+    days_to_condemning_within_180d: int = 0
+    staleness_days_median: float | None = None
+    error: str | None = None

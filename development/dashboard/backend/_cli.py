@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import os
 
-from ._paths import REPO_ROOT  # noqa: F401  (ensures sys.path has the ml root)
+from ._paths import ML_ROOT  # noqa: F401  (ensures sys.path has the ml root)
 
 
 def serve() -> None:

@@ -1,17 +1,28 @@
 import type {
   Capabilities,
   FleetBacktest,
+  FleetOverview,
+  FleetRiskResponse,
+  FleetSearchResponse,
   LocomotiveSummary,
   OperationalCapture,
+  ShedOverview,
   TrajectoryContract,
   WheelsetDetail,
   WheelsetReplay,
 } from "./types";
 
-const BASE = "/api";
+const BASE = "/api/v1";
 
-async function get<T>(path: string): Promise<T> {
-  const res = await fetch(`${BASE}${path}`);
+async function get<T>(path: string, params?: Record<string, string | number | boolean>): Promise<T> {
+  const qs = params
+    ? "?" + new URLSearchParams(
+        Object.entries(params)
+          .filter(([, v]) => v !== undefined && v !== null && v !== "")
+          .map(([k, v]) => [k, String(v)])
+      ).toString()
+    : "";
+  const res = await fetch(`${BASE}${path}${qs}`);
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `HTTP ${res.status}`);
@@ -24,15 +35,24 @@ export const api = {
   wheelsetOverview: (id: number) =>
     get<WheelsetDetail>(`/wheelset/${id}/overview`),
   wheelsetBacktest: (id: number, asof: string) =>
-    get<WheelsetReplay>(`/wheelset/${id}/backtest?asof=${encodeURIComponent(asof)}`),
+    get<WheelsetReplay>(`/wheelset/${id}/backtest`, { asof }),
   trajectory: (id: number, asof?: string) =>
-    get<TrajectoryContract>(
-      asof
-        ? `/wheelset/${id}/trajectory?asof=${encodeURIComponent(asof)}`
-        : `/wheelset/${id}/trajectory`
-    ),
+    get<TrajectoryContract>(`/wheelset/${id}/lifecycle`, asof ? { asof } : undefined),
   fleetBacktest: () => get<FleetBacktest>(`/backtest/fleet`),
   fleetCapture: () => get<OperationalCapture>(`/backtest/fleet/capture`),
+  fleetOverview: () => get<FleetOverview>(`/fleet/overview`),
+  fleetRisk: (params?: {
+    shed?: string;
+    loco_type?: string;
+    limiting_dim?: string;
+    risk_level?: string;
+    sort_by?: string;
+    descending?: boolean;
+    page?: number;
+    page_size?: number;
+  }) => get<FleetRiskResponse>(`/fleet/risk`, params),
+  fleetSearch: (q: string) => get<FleetSearchResponse>(`/fleet/search`, { q }),
+  shed: (shed: string) => get<ShedOverview>(`/shed/${encodeURIComponent(shed)}`),
   config: () => get<Capabilities>(`/config`),
   locoPlots: (loco: string) =>
     get<{ loco: string; images: Record<string, string>; svgs: Record<string, string> }>(

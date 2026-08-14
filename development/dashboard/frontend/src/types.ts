@@ -277,6 +277,73 @@ export interface Capabilities {
   };
 }
 
+export interface FleetOverview {
+  n_wheelsets: number;
+  snapshot_built_at: string | null;
+  model_version: string | null;
+  train_cutoff: string | null;
+  staleness_days_median: number | null;
+  limiting_dim: Record<string, number>;
+  pturn_share_above_threshold_pct: Record<string, number>;
+  wear_distribution_mm: Record<string, Record<string, number | null>>;
+  days_to_condemning_within_180d: number;
+  feature_days_since_turning: Record<string, number | null>;
+  top_sheds: Array<{ shed_any?: string | null; n_wheelsets: number }>;
+}
+
+export interface RiskRow {
+  wheelset_equipment_id: number;
+  loco_number: string | null;
+  shed_any: string | null;
+  loco_type: string | null;
+  limiting_dim: string | null;
+  limiting_reason: string | null;
+  days_to_condemning_dia: number | null;
+  mean_wsmDia: number | null;
+  mean_wsmFlange: number | null;
+  mean_wsmRoot: number | null;
+  mean_wsmThread: number | null;
+  pturn_30d: number | null;
+  pturn_60d: number | null;
+  pturn_90d: number | null;
+  feature_coverage: number | null;
+  staleness_days: number | null;
+  latest_measurement: string | null;
+}
+
+export interface FleetRiskResponse {
+  total: number;
+  page: number;
+  page_size: number;
+  items: RiskRow[];
+  columns: string[];
+}
+
+export interface SearchHit {
+  loco_number: string | null;
+  shed: string | null;
+  loco_type: string | null;
+  n_wheelsets: number;
+}
+
+export interface FleetSearchResponse {
+  query: string;
+  total: number;
+  items: SearchHit[];
+}
+
+export interface ShedOverview {
+  shed: string;
+  n_wheelsets: number;
+  n_locos: number;
+  limiting_dim: Record<string, number>;
+  pturn_90d_mean_pct: number | null;
+  pturn_90d_p90_pct: number | null;
+  days_to_condemning_within_180d: number;
+  staleness_days_median: number | null;
+  error?: string | null;
+}
+
 export interface BacktestModel {
   n_test: number;
   turn_rate_test: number;

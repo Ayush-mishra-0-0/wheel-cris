@@ -195,18 +195,22 @@ Build the clean backend interface the current UI and the future SLAM frontend wi
 
 ### P1.2 — Versioned, typed API (the contract of record)
 
-- [ ] Prefix endpoints `/api/v1/...`; keep `/health`.
-- [ ] Add endpoints:
-  - [ ] `GET /api/v1/fleet/overview` — fleet KPI summary + distributions (profile state, vs limits, turning-risk, shed summary).
-  - [ ] `GET /api/v1/fleet/risk` — paginated, filterable, rankable wheelset list (shed, loco type, limiting dimension, risk level; sort by P(turn)/wear rate/limit proximity).
-  - [ ] `GET /api/v1/fleet/search?q=` — search by loco number / shed / loco type.
-  - [ ] `GET /api/v1/shed/{shed}` — shed-level aggregation.
-  - [ ] `GET /api/v1/loco/{loco}` and `GET /api/v1/wheelset/{ws}/overview` (existing, moved under v1).
-  - [ ] `GET /api/v1/wheelset/{ws}/lifecycle` — the **chart-data contract** (see P1.3).
-  - [ ] `GET /api/v1/wheelset/{ws}/backtest` and `GET /api/v1/backtest/fleet` (existing, moved under v1).
-- [ ] Typed Pydantic response models for all new endpoints (extend `schemas.py`).
-- [ ] Configuration via environment variables (paths, ports); remove hardcoded `127.0.0.1:8033` and `parents[3]` path math where feasible.
-- [ ] **CORS configurable** via env (allow-list), not hardcoded `*` — the host SLAM app controls its own origins.
+- [x] Prefix endpoints `/api/v1/...`; keep `/health`.
+- [x] Add endpoints:
+  - [x] `GET /api/v1/fleet/overview` — fleet KPI summary + distributions (profile state, vs limits, turning-risk, shed summary).
+  - [x] `GET /api/v1/fleet/risk` — paginated, filterable, rankable wheelset list (shed, loco type, limiting dimension, risk level; sort by P(turn)/wear rate/limit proximity).
+  - [x] `GET /api/v1/fleet/search?q=` — search by loco number / shed / loco type.
+  - [x] `GET /api/v1/shed/{shed}` — shed-level aggregation.
+  - [x] `GET /api/v1/loco/{loco}` and `GET /api/v1/wheelset/{ws}/overview` (existing, moved under v1).
+  - [x] `GET /api/v1/wheelset/{ws}/lifecycle` — the **chart-data contract** (see P1.3).
+  - [x] `GET /api/v1/wheelset/{ws}/backtest` and `GET /api/v1/backtest/fleet` (existing, moved under v1).
+- [x] Typed Pydantic response models for all new endpoints (extend `schemas.py`).
+- [x] Configuration via environment variables (paths, ports); remove hardcoded `127.0.0.1:8033` and `parents[3]` path math where feasible.
+- [x] **CORS configurable** via env (allow-list), not hardcoded `*` — the host SLAM app controls its own origins.
+
+Note: the frontend is on `/api/v1` now; legacy unversioned paths remain as thin aliases
+for migration. `/lifecycle` currently serves the same payload as `/trajectory` (the
+trajectory_chart_v1 builder); P1.3 makes it the single chart-data contract.
 
 ### P1.3 — Chart-data contract (single source of truth for all plots)
 

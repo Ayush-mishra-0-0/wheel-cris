@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from ._paths import ML_ROOT
+from .config import SNAPSHOT_MANIFEST, SNAPSHOT_PARQUET
 from models.phase5.dashboard.backend.features import (
     extract_features, latest_anchor, load_segments, load_wes,
 )
@@ -676,4 +677,160 @@ def _f(v) -> float | None:
         x = float(v)
         return None if np.isnan(x) else round(x, 4)
     except (TypeError, ValueError):
+        return None
+
+
+# ---------------------------------------------------------------------------
+# P1.1 fleet snapshot -> fleet overview / risk / search / shed endpoints
+# ---------------------------------------------------------------------------
+
+@lru_cache(maxsize=1)
+def _snapshot_df() -> pd.DataFrame | None:
+    if not SNAPSHOT_PARQUET.exists():
+        return None
+    return pd.read_parquet(SNAPSHOT_PARQUET)
+
+
+def fleet_overview() -> dict:
+    """Fleet KPI summary + distributions from the P1.1 snapshot (single row/wheelset)."""
+    df = _snapshot_df()
+    if df is None:
+        return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
+    pturn_cols = [c for c in df.columns if c.startswith("pturn_")]
+    wear_cols = ["wsmRoot", "wsmFlange", "wsmThread"]
+    shed = (df.groupby("shed_any").size()
+            .sort_values(ascending=False).head(10).rename("n_wheelsets").reset_index())
+    return {
+        "n_wheelsets": int(len(df)),
+        "snapshot_built_at": _manifest_ts(),
+        "model_version": _first_str(df, "model_version"),
+        "train_cutoff": _first_str(df, "train_cutoff"),
+        "staleness_days_median": _f(df["staleness_days"].median()) if "staleness_days" in df else None,
+        "limiting_dim": {k: int(v) for k, v in df["limiting_dim"].value_counts(dropna=False).items()
+                         if pd.notna(k)},
+        "pturn_share_above_threshold_pct": {
+            c.replace("pturn_", ""): round(float((df[c] >= 0.01).mean()) * 100, 2) for c in pturn_cols},
+        "wear_distribution_mm": {
+            c: {"q50": _f(df[c].quantile(0.5)), "q90": _f(df[c].quantile(0.9)),
+                "q99": _f(df[c].quantile(0.99))} for c in wear_cols if c in df},
+        "days_to_condemning_within_180d": int((df.get("days_to_condemning_dia", 0) <= 180).sum()),
+        "feature_days_since_turning": {
+            "q50": _f(df["days_since_turning"].quantile(0.5)) if "days_since_turning" in df else None,
+            "q90": _f(df["days_since_turning"].quantile(0.9)) if "days_since_turning" in df else None},
+        "top_sheds": shed.to_dict(orient="records"),
+    }
+
+
+def fleet_risk(shed: str | None = None, loco_type: str | None = None,
+               limiting_dim: str | None = None, risk_level: str | None = None,
+               sort_by: str = "pturn_90d", descending: bool = True,
+               page: int = 1, page_size: int = 50) -> dict:
+    """Paginated, filterable, rankable wheelset risk table (P2.2 fleet view)."""
+    df = _snapshot_df()
+    if df is None:
+        return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
+    if shed:
+        df = df[df["shed_any"].astype(str).eq(shed)]
+    if loco_type:
+        df = df[df["loco_type"].astype(str).eq(loco_type)]
+    if limiting_dim:
+        df = df[df["limiting_dim"].astype(str).eq(limiting_dim)]
+    if risk_level:
+        # risk_level: "pturn" | "condemning" | "wear" - each level is its own cut
+        if risk_level == "pturn":
+            df = df[df["pturn_90d"] >= 0.01]
+        elif risk_level == "condemning":
+            df = df[df.get("days_to_condemning_dia", np.inf) <= 180]
+        elif risk_level == "wear":
+            df = df[df["limiting_dim"].isin(["wsmRoot", "wsmFlange", "wsmThread"])]
+
+    if sort_by in df.columns and df[sort_by].notna().any():
+        df = df.sort_values(sort_by, ascending=not descending, na_position="last")
+    total = int(len(df))
+    start = (page - 1) * page_size
+    page_df = df.iloc[start:start + page_size]
+    cols = ["wheelset_equipment_id", "loco_number", "shed_any", "loco_type",
+            "limiting_dim", "limiting_reason", "days_to_condemning_dia",
+            "mean_wsmDia", "mean_wsmFlange", "mean_wsmRoot", "mean_wsmThread",
+            "feature_coverage", "staleness_days", "latest_measurement"]
+    cols = [c for c in cols if c in page_df.columns]
+    items = (page_df[cols].fillna(np.nan).replace({np.nan: None}).to_dict("records"))
+    for item in items:
+        lm = item.get("latest_measurement")
+        if lm is not None:
+            item["latest_measurement"] = str(lm) if isinstance(lm, (pd.Timestamp, str)) else lm
+    pt_cols = [c for c in page_df.columns if c.startswith("pturn_")]
+    for item, (_, r) in zip(items, page_df.iterrows()):
+        for c in pt_cols:
+            item[c] = _f(r[c])
+    return {"total": total, "page": page, "page_size": page_size,
+            "items": items, "columns": cols + pt_cols}
+
+
+def fleet_search(q: str) -> dict:
+    """Search loco number / shed / loco type from the snapshot."""
+    df = _snapshot_df()
+    if df is None:
+        return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
+    qn = str(q).strip().lower()
+    if not qn:
+        return {"query": q, "items": []}
+    masks = []
+    if "loco_number" in df.columns:
+        masks.append(df["loco_number"].astype(str).str.lower().str.contains(qn, na=False))
+    if "shed_any" in df.columns:
+        masks.append(df["shed_any"].astype(str).str.lower().str.contains(qn, na=False))
+    if "loco_type" in df.columns:
+        masks.append(df["loco_type"].astype(str).str.lower().str.contains(qn, na=False))
+    hit = masks[0] if len(masks) == 1 else (masks[0] | pd.Series(False, index=df.index))
+    for m in masks[1:]:
+        hit |= m
+    sub = df.loc[hit]
+    items = []
+    if "loco_number" in sub.columns:
+        for lnum, grp in sub.groupby("loco_number"):
+            items.append({"loco_number": lnum,
+                          "shed": str(grp["shed_any"].iloc[0]) if "shed_any" in grp else None,
+                          "loco_type": str(grp["loco_type"].iloc[0]) if "loco_type" in grp else None,
+                          "n_wheelsets": int(len(grp))})
+    return {"query": q, "total": int(len(items)), "items": items}
+
+
+def shed_overview(shed: str) -> dict:
+    """Shed-level aggregation from the snapshot."""
+    df = _snapshot_df()
+    if df is None:
+        return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
+    if "shed_any" not in df.columns:
+        return {"shed": shed, "n_wheelsets": 0, "error": "snapshot has no shed_any column"}
+    sub = df[df["shed_any"].astype(str).eq(str(shed))]
+    if sub.empty:
+        locos = df[df["loco_number"].astype(str).eq(str(shed))]
+        if locos.empty:
+            return {"shed": shed, "n_wheelsets": 0}
+        sub = locos
+    return {
+        "shed": shed,
+        "n_wheelsets": int(len(sub)),
+        "n_locos": int(sub["loco_number"].nunique()) if "loco_number" in sub else 0,
+        "limiting_dim": {k: int(v) for k, v in sub["limiting_dim"].value_counts(dropna=False).items()
+                         if pd.notna(k)},
+        "pturn_90d_mean_pct": round(float(sub["pturn_90d"].mean()) * 100, 2) if "pturn_90d" in sub else None,
+        "pturn_90d_p90_pct": round(float(sub["pturn_90d"].quantile(0.9)) * 100, 2) if "pturn_90d" in sub else None,
+        "days_to_condemning_within_180d": int((sub.get("days_to_condemning_dia", 0) <= 180).sum()),
+        "staleness_days_median": _f(sub["staleness_days"].median()) if "staleness_days" in sub else None,
+    }
+
+
+def _first_str(df: pd.DataFrame, col: str) -> str | None:
+    if col not in df.columns:
+        return None
+    v = df[col].dropna()
+    return str(v.iloc[0]) if len(v) else None
+
+
+def _manifest_ts() -> str | None:
+    try:
+        return json.loads(SNAPSHOT_MANIFEST.read_text()).get("built_at_utc")
+    except Exception:
         return None
