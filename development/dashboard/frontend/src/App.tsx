@@ -1,13 +1,16 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
-import type { Capabilities, LocomotiveSummary, WheelsetDetail } from "./types";
+import type { Capabilities, LocomotiveSummary, SearchHit, WheelsetDetail } from "./types";
 import { WearTimeline } from "./WearTimeline";
 import AllWheelPlots from "./AllWheelPlots";
 import { BacktestView } from "./BacktestView";
 import { TrajectoryPanel } from "./TrajectoryPanel";
+import { FleetView } from "./FleetView";
+
+type Page = "fleet" | "search" | "validation" | "loco";
 
 export function App() {
-  const [loco, setLoco] = useState<string>("37597");
+  const [page, setPage] = useState<Page>("fleet");
   const [summary, setSummary] = useState<LocomotiveSummary | null>(null);
   const [detail, setDetail] = useState<WheelsetDetail | null>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -16,6 +19,12 @@ export function App() {
   const [view, setView] = useState<"overview" | "backtest">("overview");
   const [caps, setCaps] = useState<Capabilities | null>(null);
 
+  // global search (type-ahead)
+  const [q, setQ] = useState("");
+  const [hits, setHits] = useState<SearchHit[]>([]);
+  const [showHits, setShowHits] = useState(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+
   useEffect(() => {
     api
       .config()
@@ -23,13 +32,30 @@ export function App() {
       .catch(() => setCaps(null));
   }, []);
 
-  async function search() {
+  // debounced type-ahead from /fleet/search
+  useEffect(() => {
+    if (!q.trim()) {
+      setHits([]);
+      return;
+    }
+    const t = setTimeout(() => {
+      api
+        .fleetSearch(q.trim())
+        .then((r) => setHits(r.items.slice(0, 8)))
+        .catch(() => setHits([]));
+    }, 250);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  async function openLoco(num: string) {
+    setPage("loco");
     setError(null);
     setDetail(null);
     setSelected(null);
     setLoading(true);
+    setShowHits(false);
     try {
-      const s = await api.loco(loco.trim());
+      const s = await api.loco(num);
       setSummary(s);
       if (s.wheelsets.length > 0) {
         setSelected(s.wheelsets[0].wheelset_equipment_id);
@@ -51,103 +77,220 @@ export function App() {
       .catch((e) => setError((e as Error).message));
   }, [selected]);
 
+  function go(page: Page) {
+    setPage(page);
+    setError(null);
+  }
+
   return (
     <div className="app">
       <header className="topbar">
-        <h1>Wheel Lifecycle Dashboard</h1>
-        <div className="search">
+        <div className="brand">
+          <span className="brand-dot" />
+          Wheel Lifecycle Dashboard
+        </div>
+        <div className="global-search" ref={searchRef}>
           <input
-            value={loco}
-            onChange={(e) => setLoco(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && search()}
-            placeholder="Loco number e.g. 37597"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onFocus={() => setShowHits(true)}
+            onBlur={() => setTimeout(() => setShowHits(false), 150)}
+            onKeyDown={(e) => e.key === "Enter" && hits[0]?.loco_number && openLoco(hits[0].loco_number)}
+            placeholder="Search loco / shed / type…"
           />
-          <button onClick={search} disabled={loading}>
-            {loading ? "Loading…" : "Search"}
-          </button>
+          {showHits && q.trim() && (
+            <div className="search-hits">
+              {hits.length === 0 ? (
+                <div className="search-hit muted">No matches for “{q}”</div>
+              ) : (
+                hits.map((h, i) => (
+                  <button
+                    key={i}
+                    className="search-hit"
+                    onMouseDown={() => h.loco_number && openLoco(h.loco_number)}
+                  >
+                    <span className="search-hit-loco">{h.loco_number ?? "—"}</span>
+                    <span className="muted small">
+                      {h.shed ?? ""}
+                      {h.shed ? " · " : ""}
+                      {h.loco_type ?? ""} · {h.n_wheelsets} ws
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
+          )}
         </div>
       </header>
 
-      {error && <div className="error">{error}</div>}
-
-      {summary && (
-        <div className="loco-header">
-          <div className="kpi">
-            <span className="kpi-label">Loco</span>
-            <span className="kpi-value">{summary.loco_number}</span>
-          </div>
-          <div className="kpi">
-            <span className="kpi-label">Type</span>
-            <span className="kpi-value">{summary.loco_type ?? "—"}</span>
-          </div>
-          <div className="kpi">
-            <span className="kpi-label">Wheelsets</span>
-            <span className="kpi-value">{summary.n_wheelsets}</span>
-          </div>
-          <div className="kpi">
-            <span className="kpi-label">Segments</span>
-            <span className="kpi-value">{summary.n_segments}</span>
-          </div>
-          <div className="kpi">
-            <span className="kpi-label">Confirm turns</span>
-            <span className="kpi-value">{summary.n_turns}</span>
-          </div>
-        </div>
-      )}
-
-      {summary && (
-        <div className="layout">
-          <aside className="ws-list">
-            <h3>Wheelsets ({summary.wheelsets.length})</h3>
-            {summary.wheelsets.map((w) => (
-              <button
-                key={w.wheelset_equipment_id}
-                className={`ws-item ${w.wheelset_equipment_id === selected ? "active" : ""}`}
-                onClick={() => setSelected(w.wheelset_equipment_id)}
-              >
-                <span className="ws-id">#{w.wheelset_equipment_id}</span>
-                <span className="ws-sub">
-                  dia {w.latest_mean_wsmDia?.toFixed(2)}
-                  {" · "}
-                  flg {w.latest_mean_wsmFlange?.toFixed(3)}
-                  {" · "}
-                  {w.n_turns} turns
-                </span>
+      <div className="shell">
+        <aside className="sidebar">
+          <nav>
+            <button className={page === "fleet" ? "nav-item active" : "nav-item"} onClick={() => go("fleet")}>
+              Fleet
+            </button>
+            <button
+              className={page === "search" ? "nav-item active" : "nav-item"}
+              onClick={() => {
+                go("search");
+                setShowHits(true);
+                searchRef.current?.focus();
+              }}
+            >
+              Search
+            </button>
+            <button
+              className={page === "validation" ? "nav-item active" : "nav-item"}
+              onClick={() => go("validation")}
+            >
+              Validation / Backtest
+            </button>
+          </nav>
+          {page === "loco" && summary && (
+            <div className="sidebar-sub">
+              <button className="nav-item back" onClick={() => go("fleet")}>
+                ← Back to fleet
               </button>
-            ))}
-          </aside>
+            </div>
+          )}
+        </aside>
 
-          <main className="detail">
-            {view === "overview" ? (
-              detail ? (
-                <WheelsetView detail={detail} caps={caps} />
+        <main className="content">
+          {error && <div className="error">{error}</div>}
+
+          {page === "fleet" && (
+            <FleetView
+              onSelect={(ws, locoNumber) => {
+                if (locoNumber) {
+                  openLoco(locoNumber);
+                } else {
+                  setPage("loco");
+                  setSelected(ws);
+                }
+              }}
+            />
+          )}
+
+          {page === "search" && (
+            <div className="search-page">
+              <h2>Search</h2>
+              <p className="muted">Type a loco number, shed or loco type in the top bar.</p>
+              {hits.length > 0 && (
+                <ul className="search-results">
+                  {hits.map((h, i) => (
+                    <li key={i}>
+                      <button className="search-result" onClick={() => h.loco_number && openLoco(h.loco_number)}>
+                        <b>{h.loco_number}</b>
+                        <span className="muted">
+                          {h.shed} · {h.loco_type} · {h.n_wheelsets} wheelsets
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          )}
+
+          {page === "validation" && (
+            <div className="validation-page">
+              <h2>Validation / Backtest</h2>
+              <p className="muted small">
+                Fleet-level metrics from <code>/backtest/fleet</code>. For wheelset-level replay,
+                open a loco and use the wheelset tabs.
+              </p>
+              {selected != null ? (
+                <BacktestView wheelsetId={selected} caps={caps} />
               ) : (
-                <p className="hint">Select a wheelset to view details…</p>
-              )
-            ) : selected ? (
-              <BacktestView wheelsetId={selected} caps={caps} />
-            ) : (
-              <p className="hint">Select a wheelset to run a backtest…</p>
-            )}
-            {selected != null && (
-              <div className="tabs">
-                <button
-                  className={view === "overview" ? "tab active" : "tab"}
-                  onClick={() => setView("overview")}
-                >
-                  Overview
-                </button>
-                <button
-                  className={view === "backtest" ? "tab active" : "tab"}
-                  onClick={() => setView("backtest")}
-                >
-                  Validation / Backtest
-                </button>
+                <div className="warn">
+                  No wheelset selected. Open a loco from Fleet or Search to run a replay backtest.
+                </div>
+              )}
+            </div>
+          )}
+
+          {page === "loco" && loading && <p className="muted">Loading loco…</p>}
+
+          {page === "loco" && !loading && summary && (
+            <div className="loco-page">
+              <div className="loco-header">
+                <div className="kpi">
+                  <span className="kpi-label">Loco</span>
+                  <span className="kpi-value">{summary.loco_number}</span>
+                </div>
+                <div className="kpi">
+                  <span className="kpi-label">Type</span>
+                  <span className="kpi-value">{summary.loco_type ?? "—"}</span>
+                </div>
+                <div className="kpi">
+                  <span className="kpi-label">Wheelsets</span>
+                  <span className="kpi-value">{summary.n_wheelsets}</span>
+                </div>
+                <div className="kpi">
+                  <span className="kpi-label">Segments</span>
+                  <span className="kpi-value">{summary.n_segments}</span>
+                </div>
+                <div className="kpi">
+                  <span className="kpi-label">Confirm turns</span>
+                  <span className="kpi-value">{summary.n_turns}</span>
+                </div>
               </div>
-            )}
-          </main>
-        </div>
-      )}
+
+              <div className="layout">
+                <aside className="ws-list">
+                  <h3>Wheelsets ({summary.wheelsets.length})</h3>
+                  {summary.wheelsets.map((w) => (
+                    <button
+                      key={w.wheelset_equipment_id}
+                      className={`ws-item ${w.wheelset_equipment_id === selected ? "active" : ""}`}
+                      onClick={() => setSelected(w.wheelset_equipment_id)}
+                    >
+                      <span className="ws-id">#{w.wheelset_equipment_id}</span>
+                      <span className="ws-sub">
+                        dia {w.latest_mean_wsmDia?.toFixed(2)}
+                        {" · "}
+                        flg {w.latest_mean_wsmFlange?.toFixed(3)}
+                        {" · "}
+                        {w.n_turns} turns
+                      </span>
+                    </button>
+                  ))}
+                </aside>
+
+                <main className="detail">
+                  {view === "overview" ? (
+                    detail ? (
+                      <WheelsetView detail={detail} caps={caps} />
+                    ) : (
+                      <p className="hint">Select a wheelset to view details…</p>
+                    )
+                  ) : selected ? (
+                    <BacktestView wheelsetId={selected} caps={caps} />
+                  ) : (
+                    <p className="hint">Select a wheelset to run a backtest…</p>
+                  )}
+                  {selected != null && (
+                    <div className="tabs">
+                      <button
+                        className={view === "overview" ? "tab active" : "tab"}
+                        onClick={() => setView("overview")}
+                      >
+                        Overview
+                      </button>
+                      <button
+                        className={view === "backtest" ? "tab active" : "tab"}
+                        onClick={() => setView("backtest")}
+                      >
+                        Validation / Backtest
+                      </button>
+                    </div>
+                  )}
+                </main>
+              </div>
+            </div>
+          )}
+        </main>
+      </div>
     </div>
   );
 }

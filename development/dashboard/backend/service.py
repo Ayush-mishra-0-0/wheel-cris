@@ -750,7 +750,7 @@ def fleet_overview() -> dict:
     if df is None:
         return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
     pturn_cols = [c for c in df.columns if c.startswith("pturn_")]
-    wear_cols = ["wsmRoot", "wsmFlange", "wsmThread"]
+    wear_cols = [f"mean_{d}" for d in WEAR_DIMS]
     shed = (df.groupby("shed_any").size()
             .sort_values(ascending=False).head(10).rename("n_wheelsets").reset_index())
     return {
@@ -764,8 +764,8 @@ def fleet_overview() -> dict:
         "pturn_share_above_threshold_pct": {
             c.replace("pturn_", ""): round(float((df[c] >= 0.01).mean()) * 100, 2) for c in pturn_cols},
         "wear_distribution_mm": {
-            c: {"q50": _f(df[c].quantile(0.5)), "q90": _f(df[c].quantile(0.9)),
-                "q99": _f(df[c].quantile(0.99))} for c in wear_cols if c in df},
+            c.replace("mean_", ""): {"q50": _f(df[c].quantile(0.5)), "q90": _f(df[c].quantile(0.9)),
+                                     "q99": _f(df[c].quantile(0.99))} for c in wear_cols if c in df},
         "days_to_condemning_within_180d": int((df.get("days_to_condemning_dia", 0) <= 180).sum()),
         "feature_days_since_turning": {
             "q50": _f(df["days_since_turning"].quantile(0.5)) if "days_since_turning" in df else None,

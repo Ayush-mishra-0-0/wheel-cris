@@ -231,9 +231,9 @@ The actual daily tool for engineers. (Work here transfers directly to SLAM.)
 
 ### P2.1 — App shell & navigation
 
-- [ ] Sidebar nav: **Fleet** · **Search** · **Validation/Backtest**.
-- [ ] Global search box in the topbar (loco number / shed / loco type) with type-ahead from `/fleet/search`.
-- [ ] Fleet-health summary header (compact KPIs + distribution chips).
+- [x] Sidebar nav: **Fleet** · **Search** · **Validation/Backtest**.
+- [x] Global search box in the topbar (loco number / shed / loco type) with type-ahead from `/fleet/search`.
+- [x] Fleet-health summary header (compact KPIs + distribution chips).
 
 ### P2.2 — Fleet view (primary)
 
