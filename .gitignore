@@ -10,6 +10,7 @@ __pycache__/
 .pytest_cache/
 .venv/
 catboost_info
+*.egg-info/
 
 # frontend build artifacts
 node_modules/

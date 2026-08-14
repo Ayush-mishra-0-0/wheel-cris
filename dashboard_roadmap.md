@@ -126,8 +126,12 @@ Tier 1 (make existing Δ-models honest and usable) — **COMPLETE 2026-08-14**:
       Reported, never clipped.
 
 Tier 2 (decision-aligned ranking and remaining life):
-- [ ] **Operational capture@k**: success = wheelsets that cross an action threshold (or are turned)
+- [x] **Operational capture@k**: success = wheelsets that cross an action threshold (or are turned)
       within H days because of flange/root/tread wear (turn-within-H proxy defined in the artefact).
+      → Analysis in the trajectory artefact §4; surfaced as `GET /backtest/fleet/capture` and a
+      capture@k table on the fleet backtest page (`BacktestView.tsx`). Not a ranking mandate — it
+      measures how the predicted-delta top-k list would have caught wheelsets that were actually
+      turned within H days (shed behaviour).
 - [x] **Time-to-threshold / remaining-life** view: Δ forecast + current value + action limits
       (condemning dia 1016 mm hard stop) → expected days-to-limit with interval. **DONE for the dia
       hard stop (serving-side, no retrain):** `service._time_to_limit` piecewise-linear crossing of
@@ -319,20 +323,24 @@ source of truth; recreate the venv from it on each machine.
 
 ```powershell
 # (1) one-time on a new machine — from repo root
+#     requires Python >= 3.12 (the pinned lock needs numpy 2.5 / pandas 3.0)
 python -m venv ayush
 ayush\Scripts\python.exe -m pip install --upgrade pip
-ayush\Scripts\python.exe -m pip install -r ml\environment\requirements-lock.txt
+ayush\Scripts\python.exe -m pip install -e .          # installs pyproject.toml deps + `wheel-dashboard` launcher
 
 # (2) whenever you add/upgrade a library — commit the change to BOTH:
 ayush\Scripts\python.exe -m pip install <pkg>
 ayush\Scripts\python.exe -m pip freeze > ml\environment\requirements-lock.txt
-#    then commit; on the other machine: re-run (1) install step only.
+#    then also update the pinned `dependencies` list in pyproject.toml (same pins);
+#    commit both. On the other machine: re-run (1) install step only.
 ```
 
-- `ml/environment/requirements-lock.txt` = full `pip freeze` (39 pkgs incl. the API
-  stack: fastapi, uvicorn, pydantic, python-multipart) — committed.
-- Backend run: `ayush\Scripts\python.exe -m uvicorn dashboard.backend.main:app
-  --port 8033 --host 127.0.0.1` from repo root with `PYTHONPATH=ml;development`.
+- `pyproject.toml` (repo root) = single reproducible install: pinned deps + editable `dashboard`
+  package + a `wheel-dashboard` console launcher that runs uvicorn with env-driven
+  `WHEEL_HOST`/`WHEEL_PORT`/`WHEEL_RELOAD` (no PYTHONPATH fiddling — `_paths.py` injects the `ml`
+  root). The lockfile (`requirements-lock.txt`) stays as the exact `pip freeze` record; the two
+  must not drift.
+- Backend run (from repo root): `ayush\Scripts\wheel-dashboard`  → http://127.0.0.1:8033
 - Frontend: `npm install` (committed `package-lock.json`), then `npm run dev`.
 - Existing models/datasets (parquets, joblib, JSON) are committed/versioned under
   `ml/` — pull to get them; no library state is ever carried in git.

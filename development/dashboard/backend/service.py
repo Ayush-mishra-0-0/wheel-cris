@@ -244,6 +244,40 @@ def _time_to_limit(dim: str, cur: float | None,
     return ttl
 
 
+def operational_capture() -> dict:
+    """Read operational capture@k from the trajectory artefact (turn-within-H proxy).
+
+    Success = wheelset turned within H days (confirmed lifecycle post_ts in
+    (t, t+H]); ranked by predicted delta for the dim at horizon H. Censored
+    anchors (no turn AND no later measurement) are dropped. capture@1/5/10% =
+    share of turned wheelsets found in the top k% by predicted delta.
+    """
+    a = trajectory_artefact().get("4_operational_capture", {})
+    by_dim = {}
+    for dim, horizons in a.items():
+        by_dim[dim] = {}
+        for h, cell in horizons.items():
+            if cell is None:
+                continue
+            by_dim[dim][h] = {
+                "n_label": int(cell.get("n_label", 0)),
+                "turn_rate": cell.get("turn_rate"),
+                "capture": {k: v for k, v in cell.items()
+                            if k.startswith("capture_")},
+            }
+    return {
+        "task": "operational capture@k (flange/root/tread)",
+        "source": "trajectory_product_analysis.json $4",
+        "label": ("share of wheelsets turned within H days captured in the top k% "
+                  "ranking by predicted delta"),
+        "by_dim": by_dim,
+        "note": ("Proxy from the trajectory artefact: label = confirmed lifecycle "
+                 "turn completes within (t, t+H]; censored anchors dropped. "
+                 "Turn-within-H is shed-maintenance behaviour, NOT an engineering "
+                 "failure threshold — it never ranks wheelsets on its own."),
+    }
+
+
 def _delta_metrics_slim() -> dict:
     a = trajectory_artefact().get("1_delta_metrics", {})
     out = {}

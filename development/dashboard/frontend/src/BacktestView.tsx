@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import type { FleetBacktest, WheelsetReplay } from "./types";
+import type { FleetBacktest, OperationalCapture, WheelsetReplay } from "./types";
 
 const DIMM = ["wsmRoot", "wsmFlange", "wsmThread", "wsmDia"];
 const HORIZONS = [30, 90, 180];
@@ -13,6 +13,7 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
   const [asof, setAsof] = useState<string>("2025-04-13");
   const [replay, setReplay] = useState<WheelsetReplay | null>(null);
   const [fleet, setFleet] = useState<FleetBacktest | null>(null);
+  const [capture, setCapture] = useState<OperationalCapture | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
@@ -20,6 +21,10 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
       .fleetBacktest()
       .then(setFleet)
       .catch((e) => setErr((e as Error).message));
+    api
+      .fleetCapture()
+      .then(setCapture)
+      .catch(() => {}); // capture@k is optional enrichment, not a hard dependency
   }, []);
 
   useEffect(() => {
@@ -137,6 +142,7 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
         {fleet && (
           <FleetTable fleet={fleet} />
         )}
+        {capture && <CaptureTable capture={capture} />}
       </section>
     </div>
   );
@@ -281,6 +287,68 @@ function DegradationDeltaTable({ fleet }: { fleet: FleetBacktest }) {
         })}
       </tbody>
     </table>
+  );
+}
+
+function CaptureTable({ capture }: { capture: OperationalCapture }) {
+  const pctLabel = (k: string) => k.replace("capture_", "").replace("%", "%");
+  return (
+    <div className="capture">
+      <h4>Operational capture@k — turn-within-H (flange/root/tread)</h4>
+      <p className="muted small">{capture.label}</p>
+      <table>
+        <thead>
+          <tr>
+            <th>dim</th>
+            <th>H</th>
+            {capture.by_dim &&
+              Object.values(capture.by_dim).flatMap((hs) =>
+                Object.values(hs).flatMap((c) =>
+                  Object.keys(c.capture ?? {})
+                )
+              ).filter((v, i, a) => a.indexOf(v) === i).map((k) => (
+                <th key={k}>capture top {pctLabel(k)}</th>
+              ))}
+            <th>fleet turn rate</th>
+            <th>n label</th>
+          </tr>
+        </thead>
+        <tbody>
+          {DIMM.filter((d) => d !== "wsmDia").flatMap((dim) =>
+            HORIZONS.map((h) => ({ dim, h }))
+          ).map(({ dim, h }) => {
+            const cell = capture.by_dim?.[dim]?.[`${h}d`];
+            if (!cell) return null;
+            const keys = Object.keys(cell.capture ?? {});
+            return (
+              <tr key={`${dim}-${h}`}>
+                <td>{dim}</td>
+                <td>{h}d</td>
+                {keys.map((k) => (
+                  <td key={k} className={cell.capture[k] != null && cell.capture[k] >= 0.7 ? "capture-good" : ""}>
+                    {cell.capture[k] != null
+                      ? `${(cell.capture[k]! * 100).toFixed(0)}%`
+                      : "—"}
+                  </td>
+                ))}
+                <td>
+                  {cell.turn_rate != null ? `${(cell.turn_rate * 100).toFixed(2)}%` : "—"}
+                </td>
+                <td>{cell.n_label.toLocaleString()}</td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+      <p className="muted small">
+        Success = confirmed lifecycle turn completes within H days; anchors ranked by
+        predicted delta for that dim at that horizon. High capture@k means the ranked
+        inspection list catches the wheelsets that actually got turned. P(turn) is a
+        prioritisation launcher, never the sole ranking signal — this table measures
+        the wear-risk ranking, not a mandate.
+      </p>
+      {capture.note && <p className="muted small">{capture.note}</p>}
+    </div>
   );
 }
 

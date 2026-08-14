@@ -140,6 +140,21 @@ export interface FleetBacktest {
   >;
 }
 
+export interface OperationalCaptureCell {
+  n_label: number;
+  turn_rate: number | null;
+  capture: Record<string, number | null>;
+  note?: string | null;
+}
+
+export interface OperationalCapture {
+  task: string;
+  source: string;
+  label: string;
+  by_dim: Record<string, Record<string, OperationalCaptureCell>>;
+  note: string | null;
+}
+
 export interface TrajectoryObserved {
   ts: string;
   value: number | null;

@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wheel-lifecycle-dashboard"
+version = "0.1.0"
+description = "Wheel Lifecycle Intelligence (Layer 5) - FastAPI dashboard + ML serving"
+readme = "dashboard_roadmap.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+dependencies = [
+  "annotated-doc==0.0.5",
+  "annotated-types==0.8.0",
+  "anyio==4.14.2",
+  "catboost==1.2.10",
+  "click==8.4.2",
+  "colorama==0.4.6",
+  "contourpy==1.3.3",
+  "cycler==0.12.1",
+  "fastapi==0.141.1",
+  "fonttools==4.63.0",
+  "graphviz==0.21",
+  "h11==0.16.0",
+  "idna==3.18",
+  "joblib==1.5.3",
+  "kiwisolver==1.5.0",
+  "lightgbm==4.7.0",
+  "matplotlib==3.11.1",
+  "narwhals==2.24.0",
+  "numpy==2.5.1",
+  "packaging==26.3",
+  "pandas==3.0.5",
+  "pillow==12.3.0",
+  "plotly==6.9.0",
+  "pyarrow==25.0.0",
+  "pydantic==2.13.4",
+  "pydantic_core==2.46.4",
+  "pyparsing==3.3.2",
+  "python-dateutil==2.9.0.post0",
+  "python-multipart==0.0.32",
+  "scikit-learn==1.9.0",
+  "scipy==1.18.0",
+  "six==1.17.0",
+  "starlette==1.6.0",
+  "threadpoolctl==3.6.0",
+  "typing-inspection==0.4.4",
+  "typing_extensions==4.16.0",
+  "tzdata==2026.3",
+  "uvicorn==0.52.3",
+  "xgboost==3.4.0",
+]
+
+[project.scripts]
+wheel-dashboard = "dashboard.backend._cli:serve"
+
+[tool.setuptools]
+# `dashboard` is the only importable application package in this repo, rooted
+# at development/dashboard. The ML code and data live under `ml/` and are read
+# from their on-disk location: dashboard.backend._paths injects the repo's `ml`
+# root onto sys.path so `models.phase5...` imports resolve. No ml wheel is
+# built; serving models / datasets / features.json are versioned data, not code.
+package-dir = { "" = "development" }
+packages = ["dashboard", "dashboard.backend"]

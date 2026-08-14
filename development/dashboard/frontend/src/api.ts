@@ -1,6 +1,7 @@
 import type {
   FleetBacktest,
   LocomotiveSummary,
+  OperationalCapture,
   TrajectoryContract,
   WheelsetDetail,
   WheelsetReplay,
@@ -30,6 +31,7 @@ export const api = {
         : `/wheelset/${id}/trajectory`
     ),
   fleetBacktest: () => get<FleetBacktest>(`/backtest/fleet`),
+  fleetCapture: () => get<OperationalCapture>(`/backtest/fleet/capture`),
   locoPlots: (loco: string) =>
     get<{ loco: string; images: Record<string, string>; svgs: Record<string, string> }>(
       `/loco/${encodeURIComponent(loco)}/plots`

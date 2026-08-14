@@ -152,6 +152,21 @@ class FleetBacktest(BaseModel):
     implausibility_diagnostics: dict = Field(default_factory=dict)
 
 
+class OperationalCaptureCell(BaseModel):
+    n_label: int = 0
+    turn_rate: float | None = None
+    capture: dict[str, float | None] = Field(default_factory=dict)
+    note: str | None = None
+
+
+class OperationalCapture(BaseModel):
+    task: str
+    source: str
+    label: str
+    by_dim: dict[str, dict[str, OperationalCaptureCell]] = Field(default_factory=dict)
+    note: str | None = None
+
+
 class TrajectoryObserved(BaseModel):
     ts: dt.datetime
     value: float | None = None

@@ -18,7 +18,8 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import (
-    FleetBacktest, LocomotiveSummary, TrajectoryContract, WheelsetDetail, WheelsetReplay,
+    FleetBacktest, LocomotiveSummary, OperationalCapture, TrajectoryContract,
+    WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
 import base64
@@ -117,6 +118,17 @@ def fleet_backtest():
     if "error" in data:
         raise HTTPException(status_code=404, detail=data["error"])
     return FleetBacktest(**data)
+
+
+@app.get("/backtest/fleet/capture", response_model=OperationalCapture)
+def fleet_capture():
+    """Operational capture@k for wear-dim turn-within-H, from the trajectory artefact.
+
+    Not a ranking mandate: it measures how well ranking by predicted delta finds
+    wheelsets that were actually turned within H days (shed behaviour), so an
+    engineer knows what the top-k inspection list would have caught.
+    """
+    return OperationalCapture(**service.operational_capture())
 
 
 @app.get("/loco/{loco_number}/plots")
