@@ -124,6 +124,8 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
 
     # ---- model predictions ----
     deg_svc = service.degradation_models()
+    deg_meta = service.degradation_meta()
+    cov = service.feature_coverage(fr, deg_svc["num_feats"])
     Xdeg = service._feature_vector(fr, deg_svc["num_feats"], deg_svc["cat_feats"], deg_svc["enc"])
     forecasts = []
     for dim in DIMM:
@@ -152,6 +154,9 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
                 "actual_ts": str(pd.Timestamp(act_ts).date()) if act_ts is not None else None,
                 "observed_in_horizon": actual is not None and np.isfinite(actual),
                 "implausibility_flag": flag,
+                "model_version": deg_meta.get("model_version"),
+                "train_cutoff": deg_meta.get("train_cutoff"),
+                "feature_coverage": cov,
                 "mae": round(abs(pred - actual), 4) if pred is not None and actual is not None and np.isfinite(actual) else None,
             })
 
@@ -194,6 +199,7 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
         "anchor": str(anchor_ts),
         "loco_number": str(w.iloc[p]["LomNumber"]) if pd.notna(w.iloc[p]["LomNumber"]) else None,
         "degradation": forecasts,
+        "model": deg_meta,
         "turn_probability": pturn,
         "time_to_limit_summary": ttl_summary,
         "time_to_limit": ttl_by_dim,

@@ -2,6 +2,7 @@
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from functools import lru_cache
 
@@ -66,6 +67,109 @@ def pturn_models() -> dict:
             "cat_feats": feats["cat_feats"], "turn_rate_train": rate}
 
 
+def _artifact_version() -> str:
+    """Deterministic serving-model version from the on-disk artifacts.
+
+    A content hash of the feature schema + manifest (+ model file sizes so a
+    retrained model bumps the version). Short enough for a footnote, stable
+    across restarts, and changes whenever the artifacts change.
+    """
+    parts = []
+    for f in ("features.json", "manifest.json"):
+        p = DEG_DIR / f
+        parts.append(p.read_bytes() if p.exists() else b"")
+    for dim in DIMM:
+        for h in HORIZONS:
+            p = DEG_DIR / f"model_{dim}_{h}d.joblib"
+            parts.append(str(p.stat().st_size).encode() if p.exists() else b"")
+    return hashlib.sha256(b"|".join(parts)).hexdigest()[:10]
+
+
+def degradation_meta() -> dict:
+    """Model version, train cutoff and target mode for the degradation service."""
+    feats = json.loads((DEG_DIR / "features.json").read_text())
+    mf = json.loads((DEG_DIR / "manifest.json").read_text())
+    targets = {m["target"] for m in mf.get("models", [])}
+    return {
+        "model_version": _artifact_version(),
+        "train_cutoff": feats.get("train_cutoff"),
+        "n_train": feats.get("n_train_rows"),
+        "target_mode": "delta" if targets == {"delta"} else "level",
+        "task": mf.get("task"),
+    }
+
+
+def feature_coverage(feat: dict, num_feats: list[str]) -> float | None:
+    """Share of numeric serving inputs that are present and finite (0..1)."""
+    if not num_feats:
+        return None
+    present = 0
+    for c in num_feats:
+        v = feat.get(c)
+        if v is not None and not pd.isna(v) and np.isfinite(float(v)):
+            present += 1
+    return round(present / len(num_feats), 4)
+
+
+def validate_serving() -> list[str]:
+    """Fail-fast check of the serving artifacts at load (not request time).
+
+    Raises RuntimeError on a missing file / malformed schema so a broken
+    deployment surfaces at startup, not as a KeyError on the first request.
+    Returns a list of warnings (non-fatal, e.g. unknown dims in manifest).
+    """
+    warnings: list[str] = []
+    for name, d, feats_key, dims, horizons in (
+        ("degradation", DEG_DIR, "num_feats", DIMM, HORIZONS),
+        ("turn_probability", PTURN_DIR, "num_feats", None, None),
+    ):
+        feats_p = d / "features.json"
+        man_p = d / "manifest.json"
+        if not feats_p.exists():
+            raise RuntimeError(f"[{name}] missing features.json: {feats_p.relative_to(ROOT)}")
+        if not man_p.exists():
+            raise RuntimeError(f"[{name}] missing manifest.json: {man_p.relative_to(ROOT)}")
+        feats = json.loads(feats_p.read_text())
+        for key in ("num_feats", "cat_feats"):
+            if key not in feats or not feats[key]:
+                raise RuntimeError(f"[{name}] features.json missing/empty {key}")
+        if "train_cutoff" not in feats:
+            warnings.append(f"[{name}] features.json has no train_cutoff")
+        if not (d / "encoder.joblib").exists():
+            raise RuntimeError(f"[{name}] missing encoder.joblib")
+        manifest = json.loads(man_p.read_text())
+        models = manifest.get("models", [])
+        if not models:
+            raise RuntimeError(f"[{name}] manifest has no models")
+        for m in models:
+            if not (d / m["path"]).exists():
+                raise RuntimeError(f"[{name}] manifest model missing: {m['path']}")
+        if name == "degradation":
+            have = {(m["dim"], int(m["horizon"])) for m in models}
+            want = {(dim, h) for dim in DIMM for h in HORIZONS}
+            missing = want - have
+            if missing:
+                raise RuntimeError(f"[degradation] manifest missing models: {sorted(missing)}")
+    return warnings
+
+
+def capabilities() -> dict:
+    """Feature flags for the UI. `p0_2_dia_fix` gates forecast rendering."""
+    try:
+        meta = degradation_meta()
+    except Exception:
+        meta = {}
+    return {
+        "p0_2_dia_fix": meta.get("target_mode") == "delta",
+        "degradation_serving": {
+            "model_version": meta.get("model_version"),
+            "train_cutoff": meta.get("train_cutoff"),
+            "n_train": meta.get("n_train"),
+            "target_mode": meta.get("target_mode"),
+        },
+    }
+
+
 def _feature_vector(feat_row: dict, num_feats, cat_feats, enc) -> np.ndarray:
     Xn = np.array([[feat_row.get(c, np.nan) for c in num_feats]], dtype=float)
     cat = np.array([[str(feat_row.get(c, "NA")) if feat_row.get(c) is not None
@@ -84,6 +188,8 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
     if fr is None:
         return {"wheelset_equipment_id": wheelset_id, "anchor": anchor, "forecasts": []}
     svc = degradation_models()
+    meta = degradation_meta()
+    cov = feature_coverage(fr, svc["num_feats"])
     X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
     fc = []
     for dim in DIMM:
@@ -96,14 +202,21 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
             value = None
             if np.isfinite(delta) and current is not None and np.isfinite(current):
                 value = round(current + delta, 4)
+            width = _conformal_width_mm(dim, h)
             flags = _physics_flags(dim, current, value)
             fc.append({"horizon": h, "dim": dim, "value": value,
                        "delta": round(delta, 4) if np.isfinite(delta) else None,
                        "current": round(float(current), 4)
                        if current is not None and np.isfinite(current) else None,
+                       "low": round(value - width, 4) if value is not None and width is not None else None,
+                       "high": round(value + width, 4) if value is not None and width is not None else None,
                        "implausibility_flag": flags[0] if flags else None,
+                       "model_version": meta.get("model_version"),
+                       "train_cutoff": meta.get("train_cutoff"),
+                       "feature_coverage": cov,
                        "subgroup_flags": subgroup_flags(fr, dim, h)})
-    return {"wheelset_equipment_id": wheelset_id, "anchor": anchor, "forecasts": fc}
+    return {"wheelset_equipment_id": wheelset_id, "anchor": anchor,
+            "model": meta, "feature_coverage": cov, "forecasts": fc}
 
 
 def predict_pturn(wheelset_id: int, anchor=None) -> dict:
@@ -314,6 +427,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     if w.empty:
         return {"wheelset_equipment_id": wheelset_id, "anchor": None, "asof": None,
                 "contract": "trajectory_chart_v1", "model": None, "dims": [],
+                "feature_coverage": None,
                 "delta_metrics": {}, "time_to_limit_summary": None, "note": None}
 
     anchor = asof if asof is not None else pd.Timestamp(w.iloc[-1]["measurement_timestamp"])
@@ -325,12 +439,15 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         return {"wheelset_equipment_id": wheelset_id, "anchor": None,
                 "asof": pd.Timestamp(anchor),
                 "contract": "trajectory_chart_v1", "model": None, "dims": [],
+                "feature_coverage": None,
                 "delta_metrics": {}, "time_to_limit_summary": None,
                 "note": "as-of is not a measurement timestamp"}
     p = int(pos[0])
 
     fr = extract_features(wheelset_id, pd.Timestamp(anchor), w=w)
     svc = degradation_models()
+    meta = degradation_meta()
+    cov = feature_coverage(fr, svc["num_feats"]) if fr is not None else None
     deg = {}
     if fr is not None:
         X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
@@ -375,6 +492,9 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                 "predicted": round(float(pred), 4) if pred is not None else None,
                 "low": round(float(low_map[h]), 4) if low_map[h] is not None else None,
                 "high": round(float(high_map[h]), 4) if high_map[h] is not None else None,
+                "model_version": meta.get("model_version"),
+                "train_cutoff": meta.get("train_cutoff"),
+                "feature_coverage": cov,
                 "subgroup_flags": subgroup_flags(fr, dim, h) if fr is not None else [],
             })
             flags.update(_physics_flags(dim, cur, pred))
@@ -411,13 +531,12 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     # model metadata from the degradation serving manifest + features.json
     meta = None
     try:
-        feats = json.loads((DEG_DIR / "features.json").read_text())
-        mf = json.loads((DEG_DIR / "manifest.json").read_text())
         meta = {
-            "task": mf.get("task"),
+            "task": degradation_meta().get("task"),
             "target_mode": "delta",
-            "train_cutoff": feats.get("train_cutoff"),
-            "n_train": feats.get("n_train_rows"),
+            "train_cutoff": degradation_meta().get("train_cutoff"),
+            "n_train": degradation_meta().get("n_train"),
+            "model_version": degradation_meta().get("model_version"),
         }
     except Exception:
         pass
@@ -451,6 +570,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         "asof": pd.Timestamp(anchor),
         "contract": "trajectory_chart_v1",
         "model": meta,
+        "feature_coverage": cov,
         "dims": dims,
         "delta_metrics": _delta_metrics_slim(),
         "time_to_limit_summary": summary,

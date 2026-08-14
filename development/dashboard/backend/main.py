@@ -18,8 +18,8 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 
 from .schemas import (
-    FleetBacktest, LocomotiveSummary, OperationalCapture, TrajectoryContract,
-    WheelsetDetail, WheelsetReplay,
+    Capabilities, FleetBacktest, LocomotiveSummary, OperationalCapture,
+    TrajectoryContract, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
 import base64
@@ -34,13 +34,31 @@ app = FastAPI(
     description=("Locomotive-first dashboard: wheel profile state, degradation "
                  "forecasts (30/90/180d) and turning probability (30/60/90d)."),
 )
+
+# Fail fast: a broken serving artifact set should surface at startup, not as a
+# KeyError on the first forecast request.
+_validation_warnings: list[str] = service.validate_serving()
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
 @app.get("/health")
 def health() -> dict:
-    return {"status": "ok", "t": time.time()}
+    return {"status": "ok", "t": time.time(),
+            "validation": {"warnings": _validation_warnings}}
+
+
+@app.get("/config", response_model=Capabilities)
+def config() -> Capabilities:
+    """Feature flags + serving model identity for the UI.
+
+    `p0_2_dia_fix` gates forecast rendering: the UI shows degradation
+    forecasts only when the serving models are in delta mode (P0.2 fix
+    deployed). Read-only; the flag is derived from the artifacts on disk.
+    """
+    caps = service.capabilities()
+    caps["validation"] = {"warnings": _validation_warnings}
+    return Capabilities(**caps)
 
 
 @app.get("/loco/{loco_number}", response_model=LocomotiveSummary)
@@ -70,6 +88,8 @@ def wheelset_overview(ws: int) -> WheelsetDetail:
         loco_number=loco_n,
         latest_measurement=latest,
         forecasts=deg["forecasts"],
+        model=deg.get("model"),
+        feature_coverage=deg.get("feature_coverage"),
         turn_probabilities=pt["probabilities"],
         turns=hist["turns"],
         measurements=hist["measurements"],

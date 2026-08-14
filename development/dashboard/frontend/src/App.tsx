@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import type { LocomotiveSummary, WheelsetDetail } from "./types";
+import type { Capabilities, LocomotiveSummary, WheelsetDetail } from "./types";
 import { WearTimeline } from "./WearTimeline";
 import AllWheelPlots from "./AllWheelPlots";
 import { BacktestView } from "./BacktestView";
@@ -14,6 +14,14 @@ export function App() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [view, setView] = useState<"overview" | "backtest">("overview");
+  const [caps, setCaps] = useState<Capabilities | null>(null);
+
+  useEffect(() => {
+    api
+      .config()
+      .then(setCaps)
+      .catch(() => setCaps(null));
+  }, []);
 
   async function search() {
     setError(null);
@@ -112,12 +120,12 @@ export function App() {
           <main className="detail">
             {view === "overview" ? (
               detail ? (
-                <WheelsetView detail={detail} />
+                <WheelsetView detail={detail} caps={caps} />
               ) : (
                 <p className="hint">Select a wheelset to view details…</p>
               )
             ) : selected ? (
-              <BacktestView wheelsetId={selected} />
+              <BacktestView wheelsetId={selected} caps={caps} />
             ) : (
               <p className="hint">Select a wheelset to run a backtest…</p>
             )}
@@ -144,7 +152,8 @@ export function App() {
   );
 }
 
-function WheelsetView({ detail }: { detail: WheelsetDetail }) {
+function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabilities | null }) {
+  const diaFix = caps?.p0_2_dia_fix ?? false;
   return (
     <div className="wheelset-view">
       <h2>
@@ -155,26 +164,39 @@ function WheelsetView({ detail }: { detail: WheelsetDetail }) {
         <p className="muted">Latest measurement {detail.latest_measurement.slice(0, 10)}</p>
       )}
 
-      <section className="forecast">
-        <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
-      </section>
-
-      <section className="pturn">
-        <h3>Turning probability (P<sub>turn</sub>)</h3>
-        <div className="pturn-cards">
-          {detail.turn_probabilities.map((p) => (
-            <div className="pturn-card" key={p.horizon}>
-              <span className="pturn-h">{p.horizon}d</span>
-              <span className="pturn-p">{((p.probability ?? 0) * 100).toFixed(1)}%</span>
-              <span className="pturn-base">fleet rate {((p.turn_rate_train ?? 0) * 100).toFixed(1)}%</span>
-            </div>
-          ))}
+      {!caps && <p className="muted small">…checking serving capabilities</p>}
+      {caps && !diaFix && (
+        <div className="warn">
+          <strong>Forecasts hidden (safe mode).</strong> The P0.2 diameter fix is not deployed:
+          serving models are not in delta mode, so degradation forecasts are not renderable as
+          engineering outputs. History and turn records below are unaffected.
         </div>
-        <p className="muted small">
-          Estimated turning probability from historical maintenance behaviour – not a mandatory
-          turning recommendation.
-        </p>
-      </section>
+      )}
+
+      {diaFix && (
+        <section className="forecast">
+          <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
+        </section>
+      )}
+
+      {diaFix && (
+        <section className="pturn">
+          <h3>Turning probability (P<sub>turn</sub>)</h3>
+          <div className="pturn-cards">
+            {detail.turn_probabilities.map((p) => (
+              <div className="pturn-card" key={p.horizon}>
+                <span className="pturn-h">{p.horizon}d</span>
+                <span className="pturn-p">{((p.probability ?? 0) * 100).toFixed(1)}%</span>
+                <span className="pturn-base">fleet rate {((p.turn_rate_train ?? 0) * 100).toFixed(1)}%</span>
+              </div>
+            ))}
+          </div>
+          <p className="muted small">
+            Estimated turning probability from historical maintenance behaviour – not a mandatory
+            turning recommendation.
+          </p>
+        </section>
+      )}
 
       <section className="history">
         <h3>

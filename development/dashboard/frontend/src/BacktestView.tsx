@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import type { FleetBacktest, OperationalCapture, WheelsetReplay } from "./types";
+import type { Capabilities, FleetBacktest, OperationalCapture, WheelsetReplay } from "./types";
 
 const DIMM = ["wsmRoot", "wsmFlange", "wsmThread", "wsmDia"];
 const HORIZONS = [30, 90, 180];
@@ -9,7 +9,7 @@ function fmtNum(v: number | undefined | null, d = 3): string {
   return v == null || !isFinite(v) ? "—" : v.toFixed(d);
 }
 
-export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
+export function BacktestView({ wheelsetId, caps }: { wheelsetId: number; caps: Capabilities | null }) {
   const [asof, setAsof] = useState<string>("2025-04-13");
   const [replay, setReplay] = useState<WheelsetReplay | null>(null);
   const [fleet, setFleet] = useState<FleetBacktest | null>(null);
@@ -36,6 +36,7 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
   }, [wheelsetId, asof]);
 
   const implausible = replay?.degradation.filter((f) => f.implausibility_flag) ?? [];
+  const diaFix = caps?.p0_2_dia_fix ?? false;
 
   return (
     <div className="backtest">
@@ -46,6 +47,13 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
           <input type="date" value={asof} onChange={(e) => setAsof(e.target.value)} />
         </label>
         {err && <div className="error">{err}</div>}
+        {!caps && <p className="muted small">…checking serving capabilities</p>}
+        {caps && !diaFix && (
+          <div className="warn">
+            <strong>Replay forecasts hidden (safe mode).</strong> The P0.2 diameter fix is not
+            deployed — degradation forecasts are not renderable as engineering outputs.
+          </div>
+        )}
         {replay && (
           <div className="replay-body">
             <p className="muted small">
@@ -90,22 +98,24 @@ export function BacktestView({ wheelsetId }: { wheelsetId: number }) {
               </div>
             )}
 
-            <h4>Degradation — predicted vs actual</h4>
-            <ReplayDegradationTable replay={replay} />
-            {implausible.length > 0 && (
-              <div className="warn">
-                <strong>Implausibility flags ({implausible.length}):</strong>
-                <ul>
-                  {implausible.map((f, i) => (
-                    <li key={i}>
-                      {f.dim}@{f.horizon}d current={f.current} predicted={f.predicted}
-                      {"> "}
-                      {f.implausibility_flag}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            {diaFix && <>
+              <h4>Degradation — predicted vs actual</h4>
+              <ReplayDegradationTable replay={replay} />
+              {implausible.length > 0 && (
+                <div className="warn">
+                  <strong>Implausibility flags ({implausible.length}):</strong>
+                  <ul>
+                    {implausible.map((f, i) => (
+                      <li key={i}>
+                        {f.dim}@{f.horizon}d current={f.current} predicted={f.predicted}
+                        {"> "}
+                        {f.implausibility_flag}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </>}
 
             <h4>Turning probability — raw P(turn) vs actual</h4>
             <table>
@@ -393,6 +403,13 @@ function FleetTable({ fleet }: { fleet: FleetBacktest }) {
       ) : (
         <p className="muted">no 90d horizon data</p>
       )}
+
+      <h4>Degradation — Δ-space metrics, static grid (C1 XGB)</h4>
+      <p className="muted small">
+        ΔMAE == level MAE (level = anchor + Δ). The honest skill signal is ΔR² / Δρ —
+        positive ΔR² means real change-prediction beyond persistence.
+      </p>
+      <DegradationDeltaTable fleet={fleet} />
 
       <h4>Degradation — Δ-space metrics, static grid (C1 XGB)</h4>
       <p className="muted small">

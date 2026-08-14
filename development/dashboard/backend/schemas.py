@@ -44,7 +44,12 @@ class ForecastPoint(BaseModel):
     value: float | None = None
     delta: float | None = None
     current: float | None = None
+    low: float | None = None
+    high: float | None = None
     implausibility_flag: str | None = None
+    model_version: str | None = None
+    train_cutoff: str | None = None
+    feature_coverage: float | None = None
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
     unit: str = "mm"
     note: str | None = None
@@ -103,6 +108,8 @@ class WheelsetDetail(BaseModel):
     loco_number: str | None = None
     latest_measurement: dt.datetime | None = None
     forecasts: list[ForecastPoint] = Field(default_factory=list)
+    model: dict | None = None
+    feature_coverage: float | None = None
     turn_probabilities: list[TurnProbability] = Field(default_factory=list)
     turns: list[TurnEvent] = Field(default_factory=list)
     measurements: list[MeasurementPoint] = Field(default_factory=list)
@@ -118,6 +125,9 @@ class ReplayForecast(BaseModel):
     actual_ts: str | None = None
     observed_in_horizon: bool = False
     implausibility_flag: str | None = None
+    model_version: str | None = None
+    train_cutoff: str | None = None
+    feature_coverage: float | None = None
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
     mae: float | None = None
 
@@ -136,6 +146,7 @@ class WheelsetReplay(BaseModel):
     anchor: dt.datetime | None = None
     loco_number: str | None = None
     degradation: list[ReplayForecast] = Field(default_factory=list)
+    model: dict | None = None
     turn_probability: list[ReplayPTurn] = Field(default_factory=list)
     time_to_limit_summary: TimeToLimitSummary | None = None
     time_to_limit: dict[str, TimeToLimit] = Field(default_factory=dict)
@@ -184,6 +195,9 @@ class TrajectoryForecast(BaseModel):
     predicted: float | None = None
     low: float | None = None
     high: float | None = None
+    model_version: str | None = None
+    train_cutoff: str | None = None
+    feature_coverage: float | None = None
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
 
 
@@ -234,10 +248,11 @@ class TrajectoryDim(BaseModel):
 
 
 class TrajectoryModelMeta(BaseModel):
-    task: str
-    target_mode: str
+    task: str | None = None
+    target_mode: str | None = None
     train_cutoff: str | None = None
     n_train: int | None = None
+    model_version: str | None = None
 
 
 class TrajectoryContract(BaseModel):
@@ -246,7 +261,14 @@ class TrajectoryContract(BaseModel):
     asof: dt.datetime | None = None
     contract: str = "trajectory_chart_v1"
     model: TrajectoryModelMeta | None = None
+    feature_coverage: float | None = None
     dims: list[TrajectoryDim] = Field(default_factory=list)
     delta_metrics: dict = Field(default_factory=dict)
     time_to_limit_summary: TimeToLimitSummary | None = None
     note: str | None = None
+
+
+class Capabilities(BaseModel):
+    p0_2_dia_fix: bool = False
+    degradation_serving: dict = Field(default_factory=dict)
+    validation: dict = Field(default_factory=dict)

@@ -1,4 +1,5 @@
 import type {
+  Capabilities,
   FleetBacktest,
   LocomotiveSummary,
   OperationalCapture,
@@ -32,6 +33,7 @@ export const api = {
     ),
   fleetBacktest: () => get<FleetBacktest>(`/backtest/fleet`),
   fleetCapture: () => get<OperationalCapture>(`/backtest/fleet/capture`),
+  config: () => get<Capabilities>(`/config`),
   locoPlots: (loco: string) =>
     get<{ loco: string; images: Record<string, string>; svgs: Record<string, string> }>(
       `/loco/${encodeURIComponent(loco)}/plots`

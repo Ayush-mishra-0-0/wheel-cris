@@ -44,7 +44,12 @@ export interface ForecastPoint {
   value: number | null;
   delta: number | null;
   current: number | null;
+  low: number | null;
+  high: number | null;
   implausibility_flag: string | null;
+  model_version: string | null;
+  train_cutoff: string | null;
+  feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
   unit: string;
 }
@@ -86,9 +91,19 @@ export interface WheelsetDetail {
   loco_number: string | null;
   latest_measurement: string | null;
   forecasts: ForecastPoint[];
+  model: ModelMeta | null;
+  feature_coverage: number | null;
   turn_probabilities: TurnProbability[];
   turns: TurnEvent[];
   measurements: MeasurementPoint[];
+}
+
+export interface ModelMeta {
+  task?: string | null;
+  target_mode?: string | null;
+  train_cutoff?: string | null;
+  n_train?: number | null;
+  model_version?: string | null;
 }
 
 export interface ReplayForecast {
@@ -100,6 +115,9 @@ export interface ReplayForecast {
   actual_ts: string | null;
   observed_in_horizon: boolean;
   implausibility_flag: string | null;
+  model_version: string | null;
+  train_cutoff: string | null;
+  feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
   mae: number | null;
 }
@@ -118,6 +136,7 @@ export interface WheelsetReplay {
   anchor: string | null;
   loco_number: string | null;
   degradation: ReplayForecast[];
+  model: ModelMeta | null;
   turn_probability: ReplayPTurn[];
   time_to_limit_summary: TimeToLimitSummary | null;
   time_to_limit: Record<string, TimeToLimit>;
@@ -172,6 +191,9 @@ export interface TrajectoryForecast {
   predicted: number | null;
   low: number | null;
   high: number | null;
+  model_version: string | null;
+  train_cutoff: string | null;
+  feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
 }
 
@@ -226,6 +248,7 @@ export interface TrajectoryModelMeta {
   target_mode: string | null;
   train_cutoff: string | null;
   n_train: number | null;
+  model_version: string | null;
 }
 
 export interface TrajectoryContract {
@@ -234,10 +257,24 @@ export interface TrajectoryContract {
   asof: string | null;
   contract: string;
   model: TrajectoryModelMeta | null;
+  feature_coverage: number | null;
   dims: TrajectoryDim[];
   delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
   time_to_limit_summary: TimeToLimitSummary | null;
   note: string | null;
+}
+
+export interface Capabilities {
+  p0_2_dia_fix: boolean;
+  degradation_serving: {
+    model_version?: string | null;
+    train_cutoff?: string | null;
+    n_train?: number | null;
+    target_mode?: string | null;
+  };
+  validation?: {
+    warnings?: string[];
+  };
 }
 
 export interface BacktestModel {

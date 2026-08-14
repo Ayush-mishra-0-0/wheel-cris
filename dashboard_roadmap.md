@@ -155,11 +155,19 @@ Tier 3 (only after Tier 1–2 are visible):
 
 ### P0.3 — Honest API surface
 
-- [ ] Every forecast response carries: model version, train cutoff, feature coverage (share of non-NaN
-      inputs), implausibility flags, and conformal interval bounds.
-- [ ] Serving code loads a `manifest.json`/`features.json` and validates feature schema at load (fail fast,
-      not `KeyError` at request time).
-- [ ] Dashboard UI renders a forecast only when the P0.2 dia fix is deployed (feature-flagged).
+- [x] Every forecast response carries: model version, train cutoff, feature coverage (share of non-NaN
+      inputs), implausibility flags, and conformal interval bounds. → Degradation overview, trajectory
+      contract and wheelset replay all attach `model_version` (content hash of the serving artifacts),
+      `train_cutoff`, `feature_coverage`, conformal `low`/`high`, and phys/unphys flags. `GET /config`
+      exposes serving identity + `p0_2_dia_fix`.
+- [x] Serving code loads a `manifest.json`/`features.json` and validates feature schema at load (fail fast,
+      not `KeyError` at request time). → `service.validate_serving()` runs at app import and raises on
+      missing manifest/features/encoder/model files or a wrong dim×horizon grid; non-fatal warnings are
+      exposed on `/health` and `/config`.
+- [x] Dashboard UI renders a forecast only when the P0.2 dia fix is deployed (feature-flagged). → `/config`
+      returns `p0_2_dia_fix` (true when degradation serving models are in delta mode); the overview and
+      replay/backtest views render forecasts only when the flag is true, otherwise a safe-mode banner is
+      shown and history/turn data remain available.
 
 ---
 
