@@ -279,36 +279,36 @@ The actual daily tool for engineers. (Work here transfers directly to SLAM.)
 
 ### P3.1 — Design tokens & theme
 
-- [ ] Adopt **Inter** as the UI font (self-hosted `@fontsource/inter` or local asset; no runtime CDN dependency for offline shed use).
-- [ ] Define tokens in CSS: background (`#fafafa`-ish off-white), card, hairline border, ink, muted, accent (indigo ~`#4f46e5`), success/warning/danger semantic colors used sparingly.
-- [ ] Typography scale: small (11–13px) labels, clear but restrained headings; uppercase micro-labels with letter-spacing for section headers (PostHog feel).
-- [ ] Consistent card/table/border/radius/spacing system; no drop shadows (or extremely subtle).
+- [x] Adopt **Inter** as the UI font (self-hosted `@fontsource/inter` or local asset; no runtime CDN dependency for offline shed use).
+- [x] Define tokens in CSS: background (`#fafafa`-ish off-white), card, hairline border, ink, muted, accent (indigo ~`#4f46e5`), success/warning/danger semantic colors used sparingly.
+- [x] Typography scale: small (11–13px) labels, clear but restrained headings; uppercase micro-labels with letter-spacing for section headers (PostHog feel).
+- [x] Consistent card/table/border/radius/spacing system; no drop shadows (or extremely subtle).
 
 ### P3.2 — Component layer
 
-- [ ] Add **ECharts** (`echarts` + a thin React wrapper).
-- [ ] Replace hand-rolled SVG `WearTimeline.tsx` with ECharts-backed components.
-- [ ] Shared UI primitives: KPI card, table, badge/pill, filter bar, search box, empty state, loading skeleton.
-- [ ] Responsive layout (existing 860px breakpoint; verify on field laptops).
-- [ ] Keep chart components **data-agnostic**: they consume the chart-data contract objects only (swappable if ECharts is replaced later).
-- [ ] Rich tooltips (per-dimension + turn markers with pre-turn flange/root/tread + `dia_cut`).
+- [x] Add **ECharts** (`echarts` + a thin React wrapper).
+- [x] Replace hand-rolled SVG `WearTimeline.tsx` with ECharts-backed components.
+- [x] Shared UI primitives: KPI card, table, badge/pill, filter bar, search box, empty state, loading skeleton.
+- [x] Responsive layout (existing 860px breakpoint; verify on field laptops).
+- [x] Keep chart components **data-agnostic**: they consume the chart-data contract objects only (swappable if ECharts is replaced later).
+- [x] Rich tooltips (per-dimension + turn markers with pre-turn flange/root/tread + `dia_cut`).
 
 ### P3.3 — Lifecycle + forecast chart (ECharts)
 
 Rendered from `/api/v1/wheelset/{ws}/lifecycle`. Must preserve:
-- [ ] **within-segment wear evolution** — wear grows inside each lifecycle segment
-- [ ] **discrete turning/reset events** — vertical reset markers, not smoothed across the boundary
-- [ ] **pre-turn flange/root/tread + `dia_cut`** in the turn tooltip (from the contract's turn events)
-- [ ] **diameter behaviour physically valid** — non-increasing within a segment; never render an invalid increasing-diameter forecast (P0 gate)
-- [ ] **observed vs forecast clearly distinguished** — forecast rendered as dashed/muted continuation from the anchor, with interval band; a visual divider at the anchor
-- [ ] **interaction** — hover tooltips, zoom/pan on the time axis
-- [ ] optional: per-dimension toggles / dual-axis for dia vs wear
+- [x] **within-segment wear evolution** — wear grows inside each lifecycle segment
+- [x] **discrete turning/reset events** — vertical reset markers, not smoothed across the boundary
+- [x] **pre-turn flange/root/tread + `dia_cut`** in the turn tooltip (from the contract's turn events)
+- [x] **diameter behaviour physically valid** — non-increasing within a segment; never render an invalid increasing-diameter forecast (P0 gate)
+- [x] **observed vs forecast clearly distinguished** — forecast rendered as dashed/muted continuation from the anchor, with interval band; a visual divider at the anchor
+- [x] **interaction** — hover tooltips, zoom/pan on the time axis
+- [x] optional: per-dimension toggles / dual-axis for dia vs wear
 
 ### P3.4 — Exports
 
-- [ ] Retain Matplotlib SVG/PNG lifecycle plots as **downloadable/report exports** (rendered server-side from the same contract).
-- [ ] Add CSV export of the chart-data contract on the detail page.
-- [ ] "Download report" = regenerate the server-side matplotlib figure for the current wheelset/loco.
+- [x] Retain Matplotlib SVG/PNG lifecycle plots as **downloadable/report exports** (rendered server-side from the same contract).
+- [x] Add CSV export of the chart-data contract on the detail page.
+- [x] "Download report" = regenerate the server-side matplotlib figure for the current wheelset/loco.
 
 ---
 

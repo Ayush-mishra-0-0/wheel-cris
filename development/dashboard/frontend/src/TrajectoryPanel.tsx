@@ -34,6 +34,7 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [reload, setReload] = useState(0);
+  const [exporting, setExporting] = useState<string | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -45,6 +46,32 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
   }, [wheelsetId, asof, reload]);
+
+  const handleExport = async (format: "csv" | "png" | "svg") => {
+    setExporting(format);
+    try {
+      const params = new URLSearchParams();
+      params.set("format", format);
+      if (asof) params.set("asof", asof);
+      const url = `/api/v1/wheelset/${wheelsetId}/lifecycle/export?${params.toString()}`;
+      const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.statusText}`);
+      }
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `wheelset_${wheelsetId}_lifecycle.${format}`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setExporting(null);
+    }
+  };
 
   const dimOrder = [...PRIMARY_DIMS, ...DERIVED_DIMS];
 
@@ -70,6 +97,31 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
             </button>
           )}
         </label>
+      </div>
+
+      <div className="export-buttons">
+        <label className="muted small">Export:</label>
+        <button 
+          onClick={() => handleExport("csv")} 
+          disabled={exporting !== null}
+          className="export-btn"
+        >
+          {exporting === "csv" ? "…" : "CSV"}
+        </button>
+        <button 
+          onClick={() => handleExport("png")} 
+          disabled={exporting !== null}
+          className="export-btn"
+        >
+          {exporting === "png" ? "…" : "PNG"}
+        </button>
+        <button 
+          onClick={() => handleExport("svg")} 
+          disabled={exporting !== null}
+          className="export-btn"
+        >
+          {exporting === "svg" ? "…" : "SVG"}
+        </button>
       </div>
 
       {err && !loading && <ErrorState message={err} onRetry={() => setReload((r) => r + 1)} />}

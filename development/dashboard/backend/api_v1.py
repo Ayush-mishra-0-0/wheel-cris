@@ -7,10 +7,15 @@ consumers migrate to the versioned contract.
 from __future__ import annotations
 
 import base64
+import csv
+import io
+import tempfile
 from functools import lru_cache
+from datetime import datetime
 
 import pandas as pd
 from fastapi import APIRouter, HTTPException, Query
+from fastapi.responses import FileResponse, StreamingResponse
 from pathlib import Path
 
 from .schemas import (
@@ -177,7 +182,134 @@ def wheelset_lifecycle(ws: int, asof: str | None = Query(None, description="re-a
     return TrajectoryContract(**data)
 
 
-@router.get("/wheelset/{ws}/backtest", response_model=WheelsetReplay, tags=["backtest"])
+def _trajectory_contract_to_csv(contract: dict) -> bytes:
+    """Convert TrajectoryContract to CSV format.
+    
+    Format: one row per observation with columns:
+    dim, timestamp, value, segment_index, turn_event, replacement, ... forecast data
+    """
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow([
+        "dim", "timestamp", "value", "segment_index", "turn_event", "replacement",
+        "forecast_30d", "forecast_90d", "forecast_180d",
+        "low_30d", "low_90d", "low_180d",
+        "high_30d", "high_90d", "high_180d"
+    ])
+    
+    # Collect all observations by dimension
+    for d in contract.get("dims", []):
+        dim = d.get("dim")
+        observed = d.get("observed", [])
+        forecasts = d.get("forecasts", [])
+        
+        # Index forecasts by horizon (30/90/180d)
+        fc_by_horizon = {}
+        for fc in forecasts:
+            # Try to infer horizon from asof_ts or use placeholder
+            h_str = fc.get("asof_ts", "")
+            if "30" in h_str or len(fc_by_horizon) == 0:
+                fc_by_horizon[30] = fc
+            elif "90" in h_str or len(fc_by_horizon) == 1:
+                fc_by_horizon[90] = fc
+            elif "180" in h_str or len(fc_by_horizon) == 2:
+                fc_by_horizon[180] = fc
+        
+        # Write observation rows
+        for obs in observed:
+            row = [
+                dim,
+                obs.get("ts", ""),
+                obs.get("value", ""),
+                obs.get("segment_index", ""),
+                obs.get("turn_event", False),
+                obs.get("replacement", False),
+                fc_by_horizon.get(30, {}).get("predicted", ""),
+                fc_by_horizon.get(90, {}).get("predicted", ""),
+                fc_by_horizon.get(180, {}).get("predicted", ""),
+                fc_by_horizon.get(30, {}).get("low", ""),
+                fc_by_horizon.get(90, {}).get("low", ""),
+                fc_by_horizon.get(180, {}).get("low", ""),
+                fc_by_horizon.get(30, {}).get("high", ""),
+                fc_by_horizon.get(90, {}).get("high", ""),
+                fc_by_horizon.get(180, {}).get("high", ""),
+            ]
+            writer.writerow(row)
+    
+    return output.getvalue().encode("utf-8")
+
+
+@router.get("/wheelset/{ws}/lifecycle/export", tags=["wheelset"])
+def wheelset_lifecycle_export(
+    ws: int,
+    format: str = Query("csv", description="Export format: png, svg, or csv"),
+    asof: str | None = Query(None, description="re-anchor at YYYY-MM-DD"),
+):
+    """Export lifecycle chart data in the requested format.
+    
+    - format=csv: returns CSV of observations and forecasts
+    - format=png: returns matplotlib PNG rendering
+    - format=svg: returns matplotlib SVG rendering
+    """
+    if format not in ("csv", "png", "svg"):
+        raise HTTPException(status_code=400, detail=f"unsupported format: {format}. Use csv, png, or svg.")
+    
+    # Get the trajectory contract
+    anchor = pd.Timestamp(asof) if asof else None
+    data = service.trajectory(ws, anchor)
+    if not data.get("dims"):
+        raise HTTPException(status_code=404, detail=f"no data for wheelset {ws}")
+    
+    contract = dict(data)  # TrajectoryContract dict representation
+    
+    if format == "csv":
+        # Return CSV as streaming response
+        csv_bytes = _trajectory_contract_to_csv(contract)
+        return StreamingResponse(
+            iter([csv_bytes]),
+            media_type="text/csv",
+            headers={"Content-Disposition": f"attachment; filename=wheelset_{ws}_lifecycle.csv"},
+        )
+    
+    elif format in ("png", "svg"):
+        # Use matplotlib render_contract to generate the image
+        try:
+            # Create temp file that persists beyond this function scope
+            # (It will be cleaned up by the OS after response is sent)
+            temp_file = tempfile.NamedTemporaryFile(
+                suffix=f".{format}",
+                prefix=f"wheelset_{ws}_lifecycle_",
+                delete=False
+            )
+            output_dir = Path(temp_file.name).parent
+            temp_file.close()
+            
+            # render_contract saves both PNG and SVG, returns PNG path
+            png_path = plot_lifecycle_step.render_contract(contract, output_dir, loco=None)
+            
+            if format == "png":
+                file_path = png_path
+            else:  # svg
+                file_path = png_path.with_suffix(".svg")
+            
+            if not file_path.exists():
+                raise HTTPException(status_code=500, detail=f"failed to generate {format}")
+            
+            # Return file as download
+            return FileResponse(
+                path=file_path,
+                media_type="image/png" if format == "png" else "image/svg+xml",
+                filename=f"wheelset_{ws}_lifecycle.{format}",
+            )
+        except HTTPException:
+            raise
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=f"export error: {str(exc)}") from exc
+
+
+
 def wheelset_backtest(ws: int, asof: str = Query(..., description="as-of date YYYY-MM-DD")):
     try:
         anchor = pd.Timestamp(asof)
