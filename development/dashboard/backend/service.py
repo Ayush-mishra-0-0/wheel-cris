@@ -668,14 +668,20 @@ def loco_lookup(loco_number: str) -> pd.DataFrame:
 
 
 def loco_summary(loco_number: str) -> dict:
-    """Loco wheelset list with current fit status based on measurement recency.
-    
+    """Loco wheelset list with an honest measurement-recency split.
+
+    There is NO equipment-assignment table in this dataset (only SQL
+    extraction scripts under ml/sql); the only loco-stamp is the `LomNumber`
+    on each WES measurement. Probe on 39186: A (ever on loco)=25,
+    B (latest measurement still stamped this loco)=8 — including 638d/1098d
+    stale rows — and C (latest + ≤90d)=6, which equals the physical Co-Co
+    axle count. So "recently measured AND latest loco-stamp == this loco"
+    is the defensible proxy; it is measurement recency, NOT a proven fit.
+
     Returns wheelsets grouped into:
-    - wheelsets: recently measured (≤90d staleness) = current fits
-    - wheelsets_all: complete history (for optional toggle later)
-    
-    This filters out 1100+ day old records that would mislead engineers
-    into thinking they're currently on the loco.
+    - wheelsets: recent (≤90d) wheelsets whose latest measurement still
+      carries this loco  (is_recently_measured = True)
+    - wheelsets_all: complete history (for the optional toggle later)
     """
     wes = load_wes()
     lom = str(loco_number).strip().lower()
@@ -698,8 +704,11 @@ def loco_summary(loco_number: str) -> dict:
         last = grp.iloc[-1]
         meas_ts = pd.Timestamp(last["measurement_timestamp"])
         staleness_days = (pd.Timestamp(latest_date) - meas_ts).days
-        is_current_fit = staleness_days <= RECENCY_THRESHOLD_DAYS
-        
+        latest_loco_agrees = str(last["LomNumber"]).strip().lower() == lom
+        is_recently_measured = latest_loco_agrees and staleness_days <= RECENCY_THRESHOLD_DAYS
+        # Backward-compatible alias: this is measurement recency, not a proven fit.
+        is_current_fit = is_recently_measured
+
         row = {
             "wheelset_equipment_id": int(ws),
             "loco_number": loco_number,
@@ -716,10 +725,12 @@ def loco_summary(loco_number: str) -> dict:
             "axle_position_1_6": _f(last["axle_position_1_6"]),
             "wheel_profile_2class": _f(last["wheel_profile_2class"]),
             "staleness_days": staleness_days,
+            "latest_loco_agrees": latest_loco_agrees,
+            "is_recently_measured": is_recently_measured,
             "is_current_fit": is_current_fit,
         }
         rows_all.append(row)
-        if is_current_fit:
+        if is_recently_measured:
             rows.append(row)
     
     s = seg[seg["wheelset_equipment_id"].isin(target["wheelset_equipment_id"])]
@@ -778,6 +789,9 @@ def loco_wheelset_table(loco_number: str) -> dict:
         "home_shed": base["home_shed"],
         "loco_type": base["loco_type"],
         "n_wheelsets": len(rows),
+        "n_wheelsets_current": len(rows),
+        "n_wheelsets_historical": base.get("n_wheelsets_historical", 0),
+        "recency_threshold_days": base.get("recency_threshold_days", 90),
         "n_segments": base["n_segments"],
         "n_turns": base["n_turns"],
         "wheelsets": rows,
@@ -878,11 +892,20 @@ def fleet_overview() -> dict:
 def fleet_risk(shed: str | None = None, loco_type: str | None = None,
                limiting_dim: str | None = None, risk_level: str | None = None,
                sort_by: str = "pturn_90d", descending: bool = True,
-               page: int = 1, page_size: int = 50) -> dict:
-    """Paginated, filterable, rankable wheelset risk table (P2.2 fleet view)."""
+               page: int = 1, page_size: int = 50,
+               max_staleness_days: int | None = 365) -> dict:
+    """Paginated, filterable, rankable wheelset risk table (P2.2 fleet view).
+
+    `max_staleness_days` (default 365) hides wheelsets whose latest measurement
+    is ancient. The risk table ranks "what to look at today"; a wheelset not
+    measured in over a year is not evidence of a live fault. This is measurement
+    recency, not proven equipment fit — pass max_staleness_days=None to show all.
+    """
     df = _snapshot_df()
     if df is None:
         return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
+    if max_staleness_days is not None and "staleness_days" in df.columns:
+        df = df[df["staleness_days"] <= max_staleness_days]
     if shed:
         df = df[df["shed_any"].astype(str).eq(shed)]
     if loco_type:
@@ -918,7 +941,8 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
         for c in pt_cols:
             item[c] = _f(r[c])
     return {"total": total, "page": page, "page_size": page_size,
-            "items": items, "columns": cols + pt_cols}
+            "items": items, "columns": cols + pt_cols,
+            "max_staleness_days": max_staleness_days}
 
 
 def fleet_search(q: str) -> dict:

@@ -70,11 +70,14 @@ def fleet_risk(
     descending: bool = Query(True, description="sort descending"),
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=500),
+    max_staleness_days: int | None = Query(365, ge=0,
+                                           description="hide wheelsets not measured within N days (measurement recency, not proven fit); null = show all"),
 ) -> FleetRiskResponse:
     """Paginated, filterable, rankable wheelset risk table (P2.2 fleet view)."""
     data = service.fleet_risk(shed=shed, loco_type=loco_type, limiting_dim=limiting_dim,
                               risk_level=risk_level, sort_by=sort_by,
-                              descending=descending, page=page, page_size=page_size)
+                              descending=descending, page=page, page_size=page_size,
+                              max_staleness_days=max_staleness_days)
     if "error" in data:
         raise HTTPException(status_code=503, detail=data["error"])
     return FleetRiskResponse(**data)

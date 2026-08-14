@@ -22,6 +22,12 @@ class WheelsetHeader(BaseModel):
     wheel_position_1_12: float | None = None
     axle_position_1_6: float | None = None
     wheel_profile_2class: float | None = None
+    staleness_days: float | None = None
+    latest_loco_agrees: bool | None = None
+    is_recently_measured: bool | None = None
+    # Backward-compatible alias for `is_recently_measured`. This is MEASUREMENT
+    # recency, not a proven equipment fit (no assignment table exists).
+    is_current_fit: bool | None = None
 
 
 class SubgroupFlag(BaseModel):
@@ -124,6 +130,9 @@ class LocoWheelsetTable(BaseModel):
     home_shed: str | None = None
     loco_type: str | None = None
     n_wheelsets: int = 0
+    n_wheelsets_current: int = 0
+    n_wheelsets_historical: int = 0
+    recency_threshold_days: int = 90
     n_segments: int = 0
     n_turns: int = 0
     snapshot_sourced: bool = False
@@ -363,6 +372,7 @@ class FleetRiskResponse(BaseModel):
     total: int = 0
     page: int = 1
     page_size: int = 50
+    max_staleness_days: int | None = None
     items: list[RiskRow] = Field(default_factory=list)
     columns: list[str] = Field(default_factory=list)
 

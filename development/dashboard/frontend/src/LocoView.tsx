@@ -74,13 +74,13 @@ export function LocoView({
             <span className="kpi-value">{table.loco_type ?? "—"}</span>
           </div>
           <div className="kpi">
-            <span className="kpi-label">Wheelsets</span>
+            <span className="kpi-label">Recent wheelsets</span>
             <span className="kpi-value">
               {table.n_wheelsets}
               {table.n_wheelsets_current !== undefined && table.n_wheelsets_historical !== undefined && table.n_wheelsets_historical > 0 && (
                 <>
                   {" "}
-                  <span className="muted" title={`${table.n_wheelsets} recent (≤${table.recency_threshold_days}d) · ${table.n_wheelsets_historical} older`}>
+                  <span className="muted" title={`${table.n_wheelsets} recently measured (≤${table.recency_threshold_days}d, latest measurement still stamped this loco) · ${table.n_wheelsets_historical} older on record`}>
                     (+{table.n_wheelsets_historical})
                   </span>
                 </>
@@ -113,8 +113,9 @@ export function LocoView({
               <h3>Wheelsets ({table.wheelsets.length})</h3>
               {table.n_wheelsets_historical !== undefined && table.n_wheelsets_historical > 0 && (
                 <p className="muted small">
-                  Showing {table.n_wheelsets} recently measured (≤{table.recency_threshold_days}d);
-                  {table.n_wheelsets_historical} older records hidden
+                  Showing {table.wheelsets.length} recently measured (≤{table.recency_threshold_days}d);
+                  {table.n_wheelsets_historical} older records hidden. Recent measurement is a
+                  recency signal, not a confirmed equipment fit.
                 </p>
               )}
             </div>

@@ -15,7 +15,7 @@ import type {
 
 const BASE = "/api/v1";
 
-async function get<T>(path: string, params?: Record<string, string | number | boolean>): Promise<T> {
+async function get<T>(path: string, params?: Record<string, string | number | boolean | null>): Promise<T> {
   const qs = params
     ? "?" + new URLSearchParams(
         Object.entries(params)
@@ -53,6 +53,7 @@ export const api = {
     descending?: boolean;
     page?: number;
     page_size?: number;
+    max_staleness_days?: number | null;
   }) => get<FleetRiskResponse>(`/fleet/risk`, params),
   fleetSearch: (q: string) => get<FleetSearchResponse>(`/fleet/search`, { q }),
   shed: (shed: string) => get<ShedOverview>(`/shed/${encodeURIComponent(shed)}`),

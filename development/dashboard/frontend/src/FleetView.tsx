@@ -13,6 +13,8 @@ function pct(v: number | null | undefined): string {
 
 const RISK_LEVELS = ["", "pturn", "condemning", "wear"] as const;
 const LIMITING_DIMS = ["", "wsmDia", "wsmFlange", "wsmRoot", "wsmThread"] as const;
+/** Hide wheelsets whose latest measurement is older than this (measurement recency, not proven fit). */
+const MAX_STALENESS_DAYS = 365;
 
 type SortKey = "pturn_90d" | "pturn_60d" | "pturn_30d" | "days_to_condemning_dia" | "staleness_days" | "mean_wsmFlange" | "mean_wsmRoot" | "mean_wsmThread";
 
@@ -61,6 +63,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
         descending,
         page,
         page_size: pageSize,
+        max_staleness_days: MAX_STALENESS_DAYS,
       })
       .then((r) => {
         setRows(r.items);
@@ -185,7 +188,9 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
       <section className="fleet-risk">
         <div className="fleet-risk-bar">
           <h3>Risk-ranked wheelsets</h3>
-          <span className="muted small">{total.toLocaleString()} wheelsets</span>
+          <span className="muted small" title={`wheelsets measured within ${MAX_STALENESS_DAYS}d — measurement recency, not proven fit`}>
+            {total.toLocaleString()} wheelsets · measured ≤{MAX_STALENESS_DAYS}d
+          </span>
           <select value={shed} onChange={(e) => { setShed(e.target.value); setPage(1); }}>
             <option value="">Shed: all</option>
             {sheds.slice(0, 40).map((s) => (

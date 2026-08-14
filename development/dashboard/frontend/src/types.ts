@@ -14,6 +14,11 @@ export interface WheelsetHeader {
   wheel_position_1_12: number | null;
   axle_position_1_6: number | null;
   wheel_profile_2class: number | null;
+  staleness_days?: number;
+  latest_loco_agrees?: boolean;
+  is_recently_measured?: boolean;
+  /** Backward-compatible alias for is_recently_measured (measurement recency, not proven fit). */
+  is_current_fit?: boolean;
 }
 
 export interface LocomotiveSummary {
@@ -37,8 +42,6 @@ export interface LocoWheelsetRow extends WheelsetHeader {
   fc_wsmRoot_90d: number | null;
   fc_wsmFlange_90d: number | null;
   fc_wsmThread_90d: number | null;
-  staleness_days?: number;
-  is_current_fit?: boolean;
 }
 
 export interface LocoWheelsetTable {
@@ -367,6 +370,7 @@ export interface FleetRiskResponse {
   total: number;
   page: number;
   page_size: number;
+  max_staleness_days: number | null;
   items: RiskRow[];
   columns: string[];
 }
