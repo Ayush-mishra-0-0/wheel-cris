@@ -32,18 +32,61 @@ WEAR_BETTER_TOL = 0.05      # mm threshold below current to flag "wear improves"
 DIA_INC_TOL = 0.001         # mm; predicted diameter above current
 DAY = np.timedelta64(1, "D")
 
-# Condemning limit register. Only wsmDia has an approved numeric hard stop
-# (domain constant 1016 mm, lower is worse). Flange/root/tread action limits
-# are NOT approved yet -> limit_mm stays None and time-to-limit is not computed.
+# ---------------------------------------------------------------------------
+# Engineering limit register (MAINTENANCE POLICY, not ML).
+# Only wsmDia has an approved numeric hard stop (1016 mm condemning, lower is
+# worse). Flange/root/tread action thresholds (attention / plan turn / turn
+# now) are NOT signed off by C&W / standards yet -> limit_mm stays None and
+# time-to-limit is not reported for them. Every threshold MUST be registered
+# here as a versioned constant (with status), never hardcoded in request code.
+# `status` is surfaced via /api/v1/config so the UI can label approved vs
+# provisional vs pending. Direction: "down" = value falls toward the limit.
+# ---------------------------------------------------------------------------
 CONDEMNING_DIA_MM = 1016.0
 LIMIT_REGISTER = {
-    "wsmDia": {"limit_mm": CONDEMNING_DIA_MM, "direction": "down",
-               "label": "condemning (dia)"},
-    "wsmFlange": None,
-    "wsmRoot": None,
-    "wsmThread": None,
+    "wsmDia": {
+        "limit_mm": CONDEMNING_DIA_MM,
+        "direction": "down",
+        "label": "condemning (dia)",
+        "unit": "mm",
+        "status": "approved",
+        "owner": "maintenance policy (RDSO/shed)",
+        "note": "Hard stop: wheel diameter must not fall below 1016 mm.",
+    },
+    "wsmFlange": {
+        "limit_mm": None,
+        "direction": "down",
+        "label": "action (flange)",
+        "unit": "mm",
+        "status": "pending",
+        "owner": "C&W / standards (IR/RDSO)",
+        "note": "Awaiting signed thresholds: attention / plan turn / turn now.",
+    },
+    "wsmRoot": {
+        "limit_mm": None,
+        "direction": "down",
+        "label": "action (root)",
+        "unit": "mm",
+        "status": "pending",
+        "owner": "C&W / standards (IR/RDSO)",
+        "note": "Awaiting signed thresholds: attention / plan turn / turn now.",
+    },
+    "wsmThread": {
+        "limit_mm": None,
+        "direction": "down",
+        "label": "action (tread)",
+        "unit": "mm",
+        "status": "pending",
+        "owner": "C&W / standards (IR/RDSO)",
+        "note": "Awaiting signed thresholds: attention / plan turn / turn now.",
+    },
 }
 TTL_HORIZONS = (30, 90, 180)
+
+
+def limits_register() -> dict:
+    """Copy of LIMIT_REGISTER for the /config surface (approved vs provisional)."""
+    return {dim: dict(reg) for dim, reg in LIMIT_REGISTER.items()}
 
 
 @lru_cache(maxsize=1)
@@ -188,6 +231,7 @@ def capabilities() -> dict:
             "n_train": meta.get("n_train"),
             "target_mode": meta.get("target_mode"),
         },
+        "limits": limits_register(),
     }
 
 
@@ -324,30 +368,33 @@ def _time_to_limit(dim: str, cur: float | None,
 
     Builds three piecewise-linear paths (point, interval-lo, interval-hi) over
     the horizon grid and finds the first crossing of the approved limit. Only
-    wsmDia has an approved limit; other dims return None until engineering
-    signs off numeric thresholds.
+    dims with `status != pending` and a numeric limit participate; wear dims
+    return None until engineering signs off numeric thresholds.
     """
     reg = LIMIT_REGISTER.get(dim)
-    if reg is None or cur is None or not np.isfinite(cur):
+    if reg is None or reg.get("limit_mm") is None or cur is None or not np.isfinite(cur):
         return None
+    band_ok = any(low.get(h) is not None and high.get(h) is not None for h in TTL_HORIZONS)
     ttl: dict = {
         "dim": dim,
         "limit_mm": reg["limit_mm"],
         "direction": reg["direction"],
         "label": reg["label"],
+        "limit_status": reg["status"],
         "current_mm": round(float(cur), 4),
         "predicted_at": {}, "interval_lo": {}, "interval_hi": {},
         "days_to_limit_point": None,
         "days_to_limit_lo": None,
         "days_to_limit_hi": None,
         "status": "beyond_horizon",
-        "note": ("days-to-condemning from serving delta forecasts at "
-                 "30/90/180; piecewise-linear; hard stop 1016 mm (dia). "
-                 "Conformal bands are calibrated for flange/root/tread only, "
-                 "so the dia band (interval_lo/hi) is not reported until a "
-                 "dia conformal width is calibrated; only the point path is "
-                 "used for the dia hard stop. Flange/root/tread limits are "
-                 "not approved."),
+        "note": (f"days-to-limit from serving delta forecasts at 30/90/180; "
+                 f"piecewise-linear; limit {reg['limit_mm']} mm ({reg['label']}, "
+                 f"status={reg['status']}). "
+                 + ("Conformal interval edges are calibrated, so the band "
+                    "reports a conservative earliest crossing."
+                    if band_ok else
+                    "No calibrated conformal band for this dim, so only the "
+                    "point path is reported.")),
     }
     times = list(TTL_HORIZONS)
     for h in TTL_HORIZONS:
@@ -380,6 +427,19 @@ def _time_to_limit(dim: str, cur: float | None,
     if point is not None:
         ttl["status"] = "within_horizon"
     return ttl
+
+
+def _limit_summary_note() -> str:
+    """Honest summary of which limits are registered, approved or pending."""
+    approved = [f"{d} {r['limit_mm']:g} mm ({r['label']})"
+                for d, r in LIMIT_REGISTER.items()
+                if r.get("limit_mm") is not None and r.get("status") != "pending"]
+    pending = [d for d, r in LIMIT_REGISTER.items() if r.get("limit_mm") is None]
+    base = ("Time-to-limit is only defined for approved limits. "
+            + (f"Approved: {', '.join(approved)}. " if approved else "")
+            + (f"Pending C&W/standards sign-off (not reported): {', '.join(pending)}."
+               if pending else "All registered limits approved."))
+    return base
 
 
 def operational_capture() -> dict:
@@ -619,13 +679,12 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         "status": limiting["status"] if limiting else "no_approved_limit",
         "limiting_dim": limiting["dim"] if limiting else None,
         "limit_mm": limiting["limit_mm"] if limiting else None,
+        "limit_status": limiting["limit_status"] if limiting else None,
         "current_mm": limiting["current_mm"] if limiting else None,
         "days_to_limit_point": limiting["days_to_limit_point"] if limiting else None,
         "days_to_limit_lo": limiting["days_to_limit_lo"] if limiting else None,
         "days_to_limit_hi": limiting["days_to_limit_hi"] if limiting else None,
-        "note": ("Condemning limit 1016 mm (dia) is the only approved hard stop. "
-                 "Flange/root/tread action limits are pending engineering "
-                 "sign-off and are not reported."),
+        "note": _limit_summary_note(),
     }
 
     # loco number + identity for full context in the contract
@@ -734,6 +793,8 @@ def loco_summary(loco_number: str) -> dict:
             rows.append(row)
     
     s = seg[seg["wheelset_equipment_id"].isin(target["wheelset_equipment_id"])]
+    axle_pos = target["axle_position_1_6"].dropna()
+    n_expected_axles = int(axle_pos.max()) if not axle_pos.empty else None
     return {
         "loco_number": loco_number,
         "locomotive_id": int(target.iloc[0]["locomotive_id"]),
@@ -742,6 +803,7 @@ def loco_summary(loco_number: str) -> dict:
         "n_wheelsets": len(rows),
         "n_wheelsets_current": len(rows),
         "n_wheelsets_historical": len(rows_all) - len(rows),
+        "n_expected_axles": n_expected_axles,
         "recency_threshold_days": RECENCY_THRESHOLD_DAYS,
         "n_segments": int(s[["wheelset_equipment_id", "segment_index"]].drop_duplicates().shape[0]) if not s.empty else 0,
         "n_turns": int(turns.shape[0]),
@@ -767,7 +829,8 @@ def loco_wheelset_table(loco_number: str) -> dict:
         snap_loco = snap[snap["loco_number"].astype(str).eq(str(loco_number))]
 
     rows = []
-    for w in base["wheelsets"]:
+    rows_all = []
+    for w in base["wheelsets_all"]:
         ws = w["wheelset_equipment_id"]
         row = dict(w)
         if snap_loco is not None:
@@ -781,7 +844,9 @@ def loco_wheelset_table(loco_number: str) -> dict:
                     row[f"pturn_{h}d"] = _f(r.get(f"pturn_{h}d"))
                 for dim in WEAR_DIMS:
                     row[f"fc_{dim}_90d"] = _f(r.get(f"fc_{dim}_90d_pred"))
-        rows.append(row)
+        rows_all.append(row)
+        if w["is_recently_measured"]:
+            rows.append(row)
 
     return {
         "loco_number": base["loco_number"],
@@ -791,10 +856,12 @@ def loco_wheelset_table(loco_number: str) -> dict:
         "n_wheelsets": len(rows),
         "n_wheelsets_current": len(rows),
         "n_wheelsets_historical": base.get("n_wheelsets_historical", 0),
+        "n_expected_axles": base.get("n_expected_axles"),
         "recency_threshold_days": base.get("recency_threshold_days", 90),
         "n_segments": base["n_segments"],
         "n_turns": base["n_turns"],
         "wheelsets": rows,
+        "wheelsets_all": rows_all,
         "snapshot_sourced": snap_loco is not None,
     }
 

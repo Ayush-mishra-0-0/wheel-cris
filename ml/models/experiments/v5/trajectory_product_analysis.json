@@ -1,9 +1,9 @@
 {
-  "task": "phase 5 layer 2 trajectory-product analysis (flange/root/tread)",
+  "task": "phase 5 layer 2 trajectory-product analysis (flange/root/tread + dia conformal)",
   "contract": "wheel_profile_lifecycle_contract_v1",
   "target_mode": "delta",
   "alpha": 0.2,
-  "note": "Delta forecasts regress tgt-anchor; level = anchor + delta. Absolute and delta metrics shown side by side. Residual = realised - predicted CHANGE. Noise floor from central same-timestamp non-turn repeated readings (sigma_single = std/sqrt(2)).",
+  "note": "Delta forecasts regress tgt-anchor; level = anchor + delta. Absolute and delta metrics shown side by side. Residual = realised - predicted CHANGE. Noise floor from central same-timestamp non-turn repeated readings (sigma_single = std/sqrt(2)). Conformal widths are calibrated for the wear dims AND wsmDia so the dia band / conservative days-to-condemning can be reported.",
   "1_delta_metrics": {
     "wsmFlange": {
       "30d": {
@@ -312,6 +312,35 @@
         "coverage": 0.8009,
         "mean_interval_mm": 2.2834,
         "p90_interval_mm": 2.2834
+      }
+    },
+    "wsmDia": {
+      "30d": {
+        "n_fit": 73976,
+        "n_cal": 18495,
+        "n_test": 29145,
+        "conformal_width_mm": 3.151,
+        "coverage": 0.801,
+        "mean_interval_mm": 6.3019,
+        "p90_interval_mm": 6.3019
+      },
+      "90d": {
+        "n_fit": 102751,
+        "n_cal": 25688,
+        "n_test": 41885,
+        "conformal_width_mm": 4.4899,
+        "coverage": 0.8149,
+        "mean_interval_mm": 8.9798,
+        "p90_interval_mm": 8.9798
+      },
+      "180d": {
+        "n_fit": 107635,
+        "n_cal": 26909,
+        "n_test": 47311,
+        "conformal_width_mm": 6.4444,
+        "coverage": 0.7347,
+        "mean_interval_mm": 12.8887,
+        "p90_interval_mm": 12.8887
       }
     }
   },

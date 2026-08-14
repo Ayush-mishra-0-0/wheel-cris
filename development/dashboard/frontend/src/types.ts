@@ -52,11 +52,13 @@ export interface LocoWheelsetTable {
   n_wheelsets: number;
   n_wheelsets_current?: number;
   n_wheelsets_historical?: number;
+  n_expected_axles?: number | null;
   recency_threshold_days?: number;
   n_segments: number;
   n_turns: number;
   snapshot_sourced: boolean;
   wheelsets: LocoWheelsetRow[];
+  wheelsets_all?: LocoWheelsetRow[];
 }
 
 export interface SubgroupFlag {

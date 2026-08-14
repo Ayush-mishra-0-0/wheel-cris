@@ -49,6 +49,11 @@ SERV = ROOT / "models" / "phase5" / "serving" / "degradation"
 OUT = ROOT / "models" / "experiments" / "v5"
 
 DIMS = ("wsmFlange", "wsmRoot", "wsmThread")
+# Dia conformal: same split-conformal path as the wear dims, so the dia
+# forecast band + conservative days-to-condemning can be reported. Dia is a
+# derived/diagnostic dimension, so it stays out of operational capture and
+# the residual strip (wear drives turning; dia is the cut consequence).
+CONF_DIMS = DIMS + ("wsmDia",)
 HORIZONS = (30, 90, 180)
 ALPHA = 0.20  # 80% conformal interval
 SEED = 42
@@ -351,14 +356,16 @@ def main() -> None:
         SERV / f"model_{dim}_{H}d.joblib") for H in HORIZONS} for dim in DIMS}}
 
     summary = {
-        "task": "phase 5 layer 2 trajectory-product analysis (flange/root/tread)",
+        "task": "phase 5 layer 2 trajectory-product analysis (flange/root/tread + dia conformal)",
         "contract": "wheel_profile_lifecycle_contract_v1",
         "target_mode": "delta",
         "alpha": ALPHA,
         "note": ("Delta forecasts regress tgt-anchor; level = anchor + delta. Absolute "
                  "and delta metrics shown side by side. Residual = realised - predicted "
                  "CHANGE. Noise floor from central same-timestamp non-turn repeated "
-                 "readings (sigma_single = std/sqrt(2))."),
+                 "readings (sigma_single = std/sqrt(2)). Conformal widths are calibrated "
+                 "for the wear dims AND wsmDia so the dia band / conservative "
+                 "days-to-condemning can be reported."),
     }
 
     # ---- 1. delta metrics side by side ----
@@ -411,9 +418,9 @@ def main() -> None:
             }
     summary["2_residuals"] = resid_out
 
-    # ---- 3. conformal intervals ----
+    # ---- 3. conformal intervals (wear dims + dia) ----
     conf_out = {}
-    for dim in DIMS:
+    for dim in CONF_DIMS:
         conf_out[dim] = {}
         for H in HORIZONS:
             conf_out[dim][f"{H}d"] = conformal_scores(dim, H, df, tgt_arr, is_train, train_cutoff)

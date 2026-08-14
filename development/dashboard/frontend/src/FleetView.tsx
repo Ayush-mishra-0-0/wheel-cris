@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { api } from "./api";
 import type { FleetOverview, RiskRow } from "./types";
 import { EmptyState, ErrorState, SkeletonTable, StaleBanner } from "./States";
@@ -17,6 +17,13 @@ const LIMITING_DIMS = ["", "wsmDia", "wsmFlange", "wsmRoot", "wsmThread"] as con
 const MAX_STALENESS_DAYS = 365;
 
 type SortKey = "pturn_90d" | "pturn_60d" | "pturn_30d" | "days_to_condemning_dia" | "staleness_days" | "mean_wsmFlange" | "mean_wsmRoot" | "mean_wsmThread";
+
+const PRESETS: { key: string; label: string; sort_by: SortKey; desc: boolean; note: string }[] = [
+  { key: "pturn", label: "P(turn)", sort_by: "pturn_90d", desc: true, note: "maintenance behaviour — shed turning likelihood, not an engineering limit" },
+  { key: "wear", label: "Wear (flange)", sort_by: "mean_wsmFlange", desc: true, note: "current wear level — closest to an engineering signal" },
+  { key: "condemning", label: "Condemning (dia)", sort_by: "days_to_condemning_dia", desc: false, note: "days to the 1016 mm dia hard stop — ascending = most urgent" },
+  { key: "staleness", label: "Recency", sort_by: "staleness_days", desc: false, note: "oldest measurements first — data quality, not risk" },
+];
 
 function PturnCell({ v }: { v: number | null | undefined }) {
   return (
@@ -42,6 +49,9 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
   const [sortBy, setSortBy] = useState<SortKey>("pturn_90d");
   const [descending, setDescending] = useState(true);
   const [reload, setReload] = useState(0);
+  const [preset, setPreset] = useState("pturn");
+  const [focusedIdx, setFocusedIdx] = useState(0);
+  const tbodyRef = useRef<HTMLTableSectionElement>(null);
 
   useEffect(() => {
     api
@@ -68,6 +78,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
       .then((r) => {
         setRows(r.items);
         setTotal(r.total);
+        setFocusedIdx(0);
       })
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
@@ -79,6 +90,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
   );
 
   function toggleSort(key: SortKey) {
+    setPreset("");
     if (sortBy === key) {
       setDescending(!descending);
     } else {
@@ -87,7 +99,59 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
     }
   }
 
+  function applyPreset(key: string) {
+    const p = PRESETS.find((x) => x.key === key);
+    if (!p) return;
+    setPreset(key);
+    setSortBy(p.sort_by);
+    setDescending(p.desc);
+  }
+
   const nPages = Math.max(1, Math.ceil(total / pageSize));
+
+  function focusRow(i: number) {
+    const tr = tbodyRef.current?.querySelector<HTMLTableRowElement>(`tr[data-i='${i}']`);
+    tr?.focus();
+  }
+
+  function moveFocus(d: number) {
+    const next = Math.max(0, Math.min(rows.length - 1, focusedIdx + d));
+    setFocusedIdx(next);
+    focusRow(next);
+  }
+
+  function onRowKey(e: KeyboardEvent<HTMLTableRowElement>, i: number) {
+    if (e.key === "ArrowDown") { e.preventDefault(); moveFocus(1); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); moveFocus(-1); }
+    else if (e.key === "Enter" && rows[i]) {
+      e.preventDefault();
+      onSelect(rows[i].wheelset_equipment_id, rows[i].loco_number ?? undefined);
+    }
+  }
+
+  function exportCsv() {
+    const header = ["wheelset_equipment_id", "loco_number", "shed_any", "limiting_dim",
+      "mean_wsmDia", "mean_wsmFlange", "mean_wsmRoot", "mean_wsmThread",
+      "pturn_30d", "pturn_60d", "pturn_90d", "days_to_condemning_dia", "staleness_days", "latest_measurement"];
+    const lines = [header.join(",")];
+    for (const r of rows) {
+      lines.push(header.map((h) => {
+        const v = (r as unknown as Record<string, unknown>)[h];
+        if (v == null) return "";
+        const s = String(v);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      }).join(","));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `fleet_risk_${preset || "sorted"}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }
+
 
   return (
     <div className="fleet">
@@ -191,6 +255,17 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
           <span className="muted small" title={`wheelsets measured within ${MAX_STALENESS_DAYS}d — measurement recency, not proven fit`}>
             {total.toLocaleString()} wheelsets · measured ≤{MAX_STALENESS_DAYS}d
           </span>
+          <select
+            value={preset}
+            onChange={(e) => applyPreset(e.target.value)}
+            aria-label="Sort preset"
+            title="P(turn) is maintenance behaviour — not an engineering limit. Wear and condemning are engineering signals."
+          >
+            {PRESETS.map((p) => (
+              <option key={p.key} value={p.key} title={p.note}>{p.label}</option>
+            ))}
+          </select>
+          <button className="btn" onClick={exportCsv}>Export CSV</button>
           <select value={shed} onChange={(e) => { setShed(e.target.value); setPage(1); }}>
             <option value="">Shed: all</option>
             {sheds.slice(0, 40).map((s) => (
@@ -227,7 +302,11 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
             <table className="risk-table">
               <thead>
                 <tr>
-                  <th onClick={() => toggleSort("pturn_90d")} className="sortable">
+                  <th
+                    onClick={() => toggleSort("pturn_90d")}
+                    className="sortable"
+                    aria-sort={sortBy === "pturn_90d" ? (descending ? "descending" : "ascending") : "none"}
+                  >
                     P(turn) 90d {sortBy === "pturn_90d" ? (descending ? "↓" : "↑") : ""}
                   </th>
                   <th className={sortBy === "pturn_60d" ? "sorted" : ""}>
@@ -239,30 +318,34 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                   <th>Loco</th>
                   <th>Wheelset</th>
                   <th>Shed</th>
-                  <th onClick={() => toggleSort("mean_wsmFlange")} className="sortable">
+                  <th onClick={() => toggleSort("mean_wsmFlange")} className="sortable" aria-sort={sortBy === "mean_wsmFlange" ? (descending ? "descending" : "ascending") : "none"}>
                     Flange {sortBy === "mean_wsmFlange" ? (descending ? "↓" : "↑") : ""}
                   </th>
-                  <th onClick={() => toggleSort("mean_wsmRoot")} className="sortable">
+                  <th onClick={() => toggleSort("mean_wsmRoot")} className="sortable" aria-sort={sortBy === "mean_wsmRoot" ? (descending ? "descending" : "ascending") : "none"}>
                     Root {sortBy === "mean_wsmRoot" ? (descending ? "↓" : "↑") : ""}
                   </th>
-                  <th onClick={() => toggleSort("mean_wsmThread")} className="sortable">
+                  <th onClick={() => toggleSort("mean_wsmThread")} className="sortable" aria-sort={sortBy === "mean_wsmThread" ? (descending ? "descending" : "ascending") : "none"}>
                     Thread {sortBy === "mean_wsmThread" ? (descending ? "↓" : "↑") : ""}
                   </th>
                   <th>Limiting</th>
-                  <th onClick={() => toggleSort("days_to_condemning_dia")} className="sortable">
+                  <th onClick={() => toggleSort("days_to_condemning_dia")} className="sortable" aria-sort={sortBy === "days_to_condemning_dia" ? (descending ? "descending" : "ascending") : "none"}>
                     Condemning {sortBy === "days_to_condemning_dia" ? (descending ? "↓" : "↑") : ""}
                   </th>
-                  <th onClick={() => toggleSort("staleness_days")} className="sortable">
+                  <th onClick={() => toggleSort("staleness_days")} className="sortable" aria-sort={sortBy === "staleness_days" ? (descending ? "descending" : "ascending") : "none"}>
                     Staleness {sortBy === "staleness_days" ? (descending ? "↓" : "↑") : ""}
                   </th>
                 </tr>
               </thead>
-              <tbody>
-                {rows.map((r) => (
+              <tbody ref={tbodyRef}>
+                {rows.map((r, i) => (
                   <tr
                     key={r.wheelset_equipment_id}
-                    className="clickable"
+                    data-i={i}
+                    tabIndex={i === focusedIdx ? 0 : -1}
+                    aria-selected={i === focusedIdx}
+                    className={`clickable ${i === focusedIdx ? "focused" : ""}`}
                     onClick={() => onSelect(r.wheelset_equipment_id, r.loco_number ?? undefined)}
+                    onKeyDown={(e) => onRowKey(e, i)}
                   >
                     <td className="risk-cell">
                       <PturnCell v={r.pturn_90d} />

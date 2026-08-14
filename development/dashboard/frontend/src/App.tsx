@@ -4,9 +4,9 @@ import type { Capabilities, FleetBacktest, OperationalCapture, SearchHit } from 
 import { CaptureTable, FleetTable } from "./BacktestView";
 import { FleetView } from "./FleetView";
 import { LocoView } from "./LocoView";
-import { ErrorState, EmptyState, SkeletonBlock } from "./States";
+import { ErrorState, SkeletonBlock } from "./States";
 
-type Page = "fleet" | "search" | "validation" | "loco";
+type Page = "fleet" | "validation" | "loco";
 
 export function App() {
   const [page, setPage] = useState<Page>("fleet");
@@ -19,6 +19,21 @@ export function App() {
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [showHits, setShowHits] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
+
+  // hash deep links: #/loco/39186 → loco view (share/reload-safe)
+  useEffect(() => {
+    function applyHash() {
+      const m = window.location.hash.match(/^#\/loco\/([^/]+)/);
+      if (m) {
+        setPage("loco");
+        setLoco(decodeURIComponent(m[1]));
+        setError(null);
+      }
+    }
+    applyHash();
+    window.addEventListener("hashchange", applyHash);
+    return () => window.removeEventListener("hashchange", applyHash);
+  }, []);
 
   useEffect(() => {
     api
@@ -47,11 +62,17 @@ export function App() {
     setLoco(num);
     setError(null);
     setShowHits(false);
+    if (window.location.hash !== `#/loco/${encodeURIComponent(num)}`) {
+      window.history.replaceState(null, "", `#/loco/${encodeURIComponent(num)}`);
+    }
   }
 
   function go(page: Page) {
     setPage(page);
     setError(null);
+    if (page !== "loco") {
+      window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    }
   }
 
   return (
@@ -102,9 +123,8 @@ export function App() {
               Fleet
             </button>
             <button
-              className={page === "search" ? "nav-item active" : "nav-item"}
+              className={showHits && q.trim() ? "nav-item active" : "nav-item"}
               onClick={() => {
-                go("search");
                 setShowHits(true);
                 searchRef.current?.focus();
               }}
@@ -138,31 +158,6 @@ export function App() {
                 }
               }}
             />
-          )}
-
-          {page === "search" && (
-            <div className="search-page">
-              <h2>Search</h2>
-              <p className="muted">Type a loco number, shed or loco type in the top bar.</p>
-              {!q.trim() ? (
-                <EmptyState title="Type to search" hint="Start typing a loco number, shed or loco type in the top search bar." />
-              ) : hits.length === 0 ? (
-                <EmptyState title={`No matches for “${q}”`} hint="Try a different loco number, shed code or loco type." />
-              ) : (
-                <ul className="search-results">
-                  {hits.map((h, i) => (
-                    <li key={i}>
-                      <button className="search-result" onClick={() => h.loco_number && openLoco(h.loco_number)}>
-                        <b>{h.loco_number}</b>
-                        <span className="muted">
-                          {h.shed} · {h.loco_type} · {h.n_wheelsets} wheelsets
-                        </span>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           )}
 
           {page === "validation" && (

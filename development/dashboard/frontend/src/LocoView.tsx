@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import type { Capabilities, LocoWheelsetTable, WheelsetDetail } from "./types";
 import { WearTimeline } from "./WearTimeline";
@@ -29,6 +29,7 @@ export function LocoView({
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
+  const [scope, setScope] = useState<"recent" | "all">("recent");
 
   useEffect(() => {
     setLoading(true);
@@ -40,8 +41,12 @@ export function LocoView({
       .locoWheelsets(loco)
       .then((t) => {
         setTable(t);
+        setScope("recent");
         if (t.wheelsets.length > 0) {
           setSelected(t.wheelsets[0].wheelset_equipment_id);
+        } else if ((t.wheelsets_all ?? []).length > 0) {
+          setScope("all");
+          setSelected(t.wheelsets_all![0].wheelset_equipment_id);
         }
       })
       .catch((e) => setErr((e as Error).message))
@@ -56,6 +61,14 @@ export function LocoView({
       .then(setDetail)
       .catch((e) => setErr((e as Error).message));
   }, [selected]);
+
+  const rows = useMemo(() => {
+    if (scope === "recent" || !table?.wheelsets_all) return table?.wheelsets ?? [];
+    const all = table.wheelsets_all;
+    return [...all.filter((w) => w.is_recently_measured), ...all.filter((w) => !w.is_recently_measured)];
+  }, [table, scope]);
+
+  const allCount = table?.wheelsets_all?.length ?? table?.wheelsets.length ?? 0;
 
   return (
     <div className="loco-page">
@@ -102,22 +115,28 @@ export function LocoView({
         </div>
       )}
 
-      {table && table.wheelsets.length === 0 && (
-        <EmptyState title={`No wheelsets for loco ${loco}`} hint="Check the loco number — it may be inactive or have no recent measurements." />
+      {table && rows.length === 0 && (
+        <EmptyState
+          title={`No wheelsets for loco ${loco}`}
+          hint="Check the loco number — it may be inactive or have no measurements."
+        />
       )}
 
-      {table && table.wheelsets.length > 0 && (
+      {table && rows.length > 0 && (
         <section className="loco-table-wrap">
           <div className="loco-table-bar">
             <div>
-              <h3>Wheelsets ({table.wheelsets.length})</h3>
-              {table.n_wheelsets_historical !== undefined && table.n_wheelsets_historical > 0 && (
-                <p className="muted small">
-                  Showing {table.wheelsets.length} recently measured (≤{table.recency_threshold_days}d);
-                  {table.n_wheelsets_historical} older records hidden. Recent measurement is a
-                  recency signal, not a confirmed equipment fit.
-                </p>
-              )}
+              <h3>
+                Wheelsets ({rows.length}
+                {table.n_wheelsets_historical !== undefined && table.n_wheelsets_historical > 0 && scope === "recent"
+                  ? ` of ${table.n_wheelsets_historical + rows.length} on record`
+                  : ""})
+              </h3>
+              <p className="muted small">
+                {scope === "recent"
+                  ? `Showing recently measured (≤${table.recency_threshold_days}d) — a recency signal, not a confirmed equipment fit.`
+                  : "All wheelsets ever measured on this loco; recent first, historical greyed."}
+              </p>
             </div>
             <div>
               {table.snapshot_sourced && (
@@ -125,6 +144,25 @@ export function LocoView({
               )}
               <button className="nav-item back" onClick={onBack}>← Back to fleet</button>
             </div>
+          </div>
+          <div className="loco-table-bar">
+            <button
+              className={scope === "recent" ? "btn btn-primary" : "btn"}
+              onClick={() => setScope("recent")}
+            >
+              Recent ({table.wheelsets.length})
+            </button>
+            <button
+              className={scope === "all" ? "btn btn-primary" : "btn"}
+              onClick={() => setScope("all")}
+            >
+              All history ({allCount})
+            </button>
+            {table.n_expected_axles != null && table.wheelsets.length < table.n_expected_axles && (
+              <span className="chip chip-reduced" title="Some axles have no recent measurement — under-counted, not necessarily missing wheels.">
+                recent {table.wheelsets.length} of {table.n_expected_axles} axles measured
+              </span>
+            )}
           </div>
           <div className="table-wrap">
             <table className="risk-table">
@@ -143,14 +181,14 @@ export function LocoView({
                     <th>Fc flange 90d</th>
                     <th>Fc tread 90d</th>
                     <th>Turns</th>
-                    <th>Staleness</th>
+                    <th>Measured</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {table.wheelsets.map((w) => (
+                  {rows.map((w) => (
                     <tr
                       key={w.wheelset_equipment_id}
-                      className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""}`}
+                      className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""} ${scope === "all" && !w.is_recently_measured ? "historical" : ""}`}
                       onClick={() => setSelected(w.wheelset_equipment_id)}
                     >
                       <td className="mono">#{w.wheelset_equipment_id}</td>
@@ -170,7 +208,7 @@ export function LocoView({
                       <td>{fmt(w.fc_wsmFlange_90d)}</td>
                       <td>{fmt(w.fc_wsmThread_90d)}</td>
                       <td>{w.n_turns}</td>
-                      <td>{fmt(w.days_since_turning, 0)} d</td>
+                      <td title={w.latest_measurement ?? undefined}>{w.staleness_days != null ? `${fmt(w.staleness_days, 0)} d ago` : "—"}</td>
                     </tr>
                   ))}
                 </tbody>

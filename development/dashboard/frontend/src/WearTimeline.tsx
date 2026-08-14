@@ -3,11 +3,11 @@ import type { MeasurementPoint } from "./types";
 import { EChart, type EChartsOption } from "./EChart";
 
 const WEAR = [
-  { key: "wsmFlange", label: "flange", color: "#e74c3c", get: (m: MeasurementPoint) => m.mean_wsmFlange },
-  { key: "wsmThread", label: "tread", color: "#27ae60", get: (m: MeasurementPoint) => m.mean_wsmThread },
-  { key: "wsmRoot", label: "root", color: "#8e44ad", get: (m: MeasurementPoint) => m.mean_wsmRoot },
+  { key: "wsmFlange", label: "flange", color: "#c4523a", get: (m: MeasurementPoint) => m.mean_wsmFlange },
+  { key: "wsmThread", label: "tread", color: "#3d7a54", get: (m: MeasurementPoint) => m.mean_wsmThread },
+  { key: "wsmRoot", label: "root", color: "#7a6a9e", get: (m: MeasurementPoint) => m.mean_wsmRoot },
 ];
-const DIA_COLOR = "#1f77b4";
+const DIA_COLOR = "#4a7a9e";
 
 export function WearTimeline({ measurements }: { measurements: MeasurementPoint[] }) {
   const option = useMemo<EChartsOption>(() => {
@@ -62,7 +62,7 @@ export function WearTimeline({ measurements }: { measurements: MeasurementPoint[
         bottom: 0,
         itemWidth: 14,
         itemHeight: 8,
-        textStyle: { fontSize: 11, color: "#78716c" },
+        textStyle: { fontSize: 11, color: "#6d7066" },
       },
       tooltip: {
         trigger: "axis",
@@ -70,7 +70,7 @@ export function WearTimeline({ measurements }: { measurements: MeasurementPoint[
       },
       xAxis: {
         type: "time",
-        axisLabel: { fontSize: 10, color: "#a8a29e" },
+        axisLabel: { fontSize: 10, color: "#9a9d92" },
         splitLine: { show: false },
       },
       yAxis: [
@@ -78,9 +78,9 @@ export function WearTimeline({ measurements }: { measurements: MeasurementPoint[
           type: "value",
           name: "wear (mm)",
           scale: true,
-          nameTextStyle: { fontSize: 10, color: "#a8a29e" },
-          axisLabel: { fontSize: 10, color: "#a8a29e" },
-          splitLine: { lineStyle: { color: "#f5f5f4" } },
+          nameTextStyle: { fontSize: 10, color: "#9a9d92" },
+          axisLabel: { fontSize: 10, color: "#9a9d92" },
+          splitLine: { lineStyle: { color: "#e6e7df" } },
         },
         {
           type: "value",

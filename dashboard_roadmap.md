@@ -138,8 +138,10 @@ Tier 2 (decision-aligned ranking and remaining life):
       the 1016 mm condemning limit from the 30/90/180 Δ forecasts; exposed as per-dim `time_to_limit`
       + `time_to_limit_summary` on the trajectory and replay contracts and a days-to-condemning chip
       in the trajectory panel + fleet backtest replay. Subgroup flags ride on the same path (amber
-      treatment when the driving dim is flagged). **Remaining:** dia conformal band (interval edges
-      null until calibration); flange/root/tread action limits still pending engineering approval.
+      treatment when the driving dim is flagged). **DONE:** dia conformal band calibrated (30/90d
+      coverage 80/81%, 180d 73% — wide band, conservative earliest-crossing; `CONF_DIMS` adds wsmDia
+      to the split-conformal path). **Remaining:** flange/root/tread action limits still pending
+      engineering approval (one-page ask drafted in `domain_ask_wear_limits.md`).
 - [x] **Subgroup stability**: error + coverage by shed / profile class / wheel position / age cohort /
       current wear quantile. Collapse on any large subgroup blocks uniform display. **DONE as an
       analysis + serving/UI policy (no model change):** `subgroup_stability.py` flags 111 collapse

@@ -9,12 +9,12 @@ import { ErrorState, SkeletonBlock } from "./States";
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
 const DERIVED_DIMS = ["wsmDia"];
 const COLORS: Record<string, string> = {
-  wsmFlange: "#e74c3c",
-  wsmRoot: "#8e44ad",
-  wsmThread: "#27ae60",
-  wsmDia: "#1f77b4",
+  wsmFlange: "#c4523a",
+  wsmRoot: "#7a6a9e",
+  wsmThread: "#3d7a54",
+  wsmDia: "#4a7a9e",
 };
-const BAND_COLOR = "rgba(37, 99, 235, 0.10)";
+const BAND_COLOR = "rgba(247, 165, 1, 0.12)";
 
 function fmt(v: unknown, d = 2): string {
   const n = typeof v === "number" ? v : Number(v);
@@ -181,7 +181,7 @@ function TrajectoryChart({
   data: TrajectoryDim;
   turns: TurnMarker[];
 }) {
-  const color = COLORS[data.dim] ?? "#2563eb";
+  const color = COLORS[data.dim] ?? "#7a6a9e";
   const primary = PRIMARY_DIMS.includes(data.dim);
   const subFlags = data.forecasts.flatMap((f) => f.subgroup_flags);
   const reducedConfidence = subFlags.length > 0;
@@ -239,10 +239,10 @@ function TrajectoryChart({
         label: {
           formatter: () => "anchor",
           position: "insideEndTop",
-          color: "#4f46e5",
+          color: "#23251d",
           fontSize: 9,
         },
-        lineStyle: { color: "#4f46e5", width: 1.4, type: "solid" },
+        lineStyle: { color: "#f7a501", width: 1.6, type: "solid" },
       });
     }
     const turnScatter: [string, number][] = [];
@@ -376,7 +376,7 @@ function TrajectoryChart({
         text: data.dim,
         left: 0,
         top: 0,
-        textStyle: { fontSize: 13, color: "#1c1917", fontWeight: 600 },
+        textStyle: { fontSize: 13, color: "#23251d", fontWeight: 600 },
       },
       tooltip: {
         trigger: "axis",
@@ -387,19 +387,19 @@ function TrajectoryChart({
         bottom: 0,
         itemWidth: 14,
         itemHeight: 8,
-        textStyle: { fontSize: 10, color: "#78716c" },
+        textStyle: { fontSize: 10, color: "#6d7066" },
         data: ["forecast (anchor + Δ)", "realised"],
       },
       xAxis: {
         type: "time",
-        axisLabel: { fontSize: 10, color: "#a8a29e" },
+        axisLabel: { fontSize: 10, color: "#9a9d92" },
         splitLine: { show: false },
       },
       yAxis: {
         type: "value",
         scale: true,
-        axisLabel: { fontSize: 10, color: "#a8a29e" },
-        splitLine: { lineStyle: { color: "#f5f5f4" } },
+        axisLabel: { fontSize: 10, color: "#9a9d92" },
+        splitLine: { lineStyle: { color: "#e6e7df" } },
       },
       dataZoom: [{ type: "inside" }, { type: "slider", height: 12, bottom: 18 }],
       series,
@@ -482,7 +482,7 @@ function TrajectoryFootnote({ data }: { data: TrajectoryContract }) {
       dia hard stop (the only approved limit); the band uses the conformal
       interval edges. Flange/root/tread action thresholds are not yet approved.
       Amber dashed vertical lines mark confirmed turning events (reset steps);
-      the indigo line is the anchor (observed → forecast split). Amber
+      the yellow line is the anchor (observed → forecast split). Amber
       "reduced confidence" marks a wheelset that belongs to a collapsed
       subgroup (shed / wear band) for that dimension — the point forecast is
       shown but not decision-grade there.

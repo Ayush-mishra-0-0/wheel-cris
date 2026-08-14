@@ -132,11 +132,13 @@ class LocoWheelsetTable(BaseModel):
     n_wheelsets: int = 0
     n_wheelsets_current: int = 0
     n_wheelsets_historical: int = 0
+    n_expected_axles: int | None = None
     recency_threshold_days: int = 90
     n_segments: int = 0
     n_turns: int = 0
     snapshot_sourced: bool = False
     wheelsets: list[LocoWheelsetRow] = Field(default_factory=list)
+    wheelsets_all: list[LocoWheelsetRow] = Field(default_factory=list)
 
 
 class WheelsetDetail(BaseModel):
@@ -251,6 +253,7 @@ class TimeToLimit(BaseModel):
     limit_mm: float
     direction: str
     label: str
+    limit_status: str = "pending"
     current_mm: float | None = None
     predicted_at: dict[int, float | None] = Field(default_factory=dict)
     interval_lo: dict[int, float | None] = Field(default_factory=dict)
@@ -327,6 +330,7 @@ class TrajectoryContract(BaseModel):
 class Capabilities(BaseModel):
     p0_2_dia_fix: bool = False
     degradation_serving: dict = Field(default_factory=dict)
+    limits: dict[str, dict] = Field(default_factory=dict)
     validation: dict = Field(default_factory=dict)
 
 
