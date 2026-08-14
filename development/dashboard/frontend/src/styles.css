@@ -349,6 +349,18 @@ th { color: var(--muted); font-weight: 500; font-size: 12px; text-transform: upp
 .risk-cell { font-variant-numeric: tabular-nums; }
 .risk-high { color: #b91c1c; font-weight: 700; }
 .risk-low { color: inherit; }
+th.sorted { color: var(--accent); }
+.link {
+  border: none;
+  background: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-size: 13px;
+  padding: 0;
+}
+.shed-summary { margin-top: 14px; }
+.shed-summary h4 { margin: 0 0 8px; font-size: 12px; color: var(--muted); text-transform: uppercase; }
+.shed-table { max-width: 480px; }
 .pager { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
 .pager button {
   padding: 6px 12px;

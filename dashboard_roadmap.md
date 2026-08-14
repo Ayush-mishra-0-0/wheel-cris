@@ -237,12 +237,12 @@ The actual daily tool for engineers. (Work here transfers directly to SLAM.)
 
 ### P2.2 — Fleet view (primary)
 
-- [ ] **Risk-ranked wheelset table** (the main "what do I inspect today" view):
+- [x] **Risk-ranked wheelset table** (the main "what do I inspect today" view):
   - columns: loco, wheelset, shed, current profile state, limiting dimension, P(turn) 30/60/90d, wear state / limit proximity, staleness
   - filters: shed, loco type, limiting dimension, risk level
   - sortable by P(turn), wear rate, limit proximity
   - row click → wheelset detail (drill-down)
-- [ ] Fleet-health summary above the table:
+- [x] Fleet-health summary above the table:
   - fleet size / wheelsets monitored / data staleness
   - flange/root/thread distributions vs condemning limits
   - turning-risk distribution (share of wheelsets above P(turn) thresholds)

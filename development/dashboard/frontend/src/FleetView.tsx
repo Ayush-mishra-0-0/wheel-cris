@@ -13,7 +13,15 @@ function pct(v: number | null | undefined): string {
 const RISK_LEVELS = ["", "pturn", "condemning", "wear"] as const;
 const LIMITING_DIMS = ["", "wsmDia", "wsmFlange", "wsmRoot", "wsmThread"] as const;
 
-type SortKey = "pturn_90d" | "pturn_60d" | "days_to_condemning_dia" | "staleness_days" | "mean_wsmFlange";
+type SortKey = "pturn_90d" | "pturn_60d" | "pturn_30d" | "days_to_condemning_dia" | "staleness_days" | "mean_wsmFlange" | "mean_wsmRoot" | "mean_wsmThread";
+
+function PturnCell({ v }: { v: number | null | undefined }) {
+  return (
+    <span className={v != null && v >= 0.01 ? "risk-high" : "risk-low"}>
+      {pct(v)}
+    </span>
+  );
+}
 
 export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) => void }) {
   const [overview, setOverview] = useState<FleetOverview | null>(null);
@@ -127,6 +135,43 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
               return w ? `${d} ${fmt(w.q50)}/${fmt(w.q90)}/${fmt(w.q99)}` : d;
             }).join("  ·  ")}
           </p>
+
+          {(overview.top_sheds ?? []).length > 0 && (
+            <div className="shed-summary">
+              <h4>Shed-level summary (top 10 by wheelsets)</h4>
+              <div className="table-wrap">
+                <table className="risk-table shed-table">
+                  <thead>
+                    <tr>
+                      <th>Shed</th>
+                      <th>Wheelsets</th>
+                      <th>Share</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {overview.top_sheds.map((s, i) => (
+                      <tr key={i}>
+                        <td>
+                          <button
+                            className="link"
+                            onClick={() => { setShed(s.shed_any ?? ""); setPage(1); }}
+                          >
+                            {s.shed_any ?? "—"}
+                          </button>
+                        </td>
+                        <td>{s.n_wheelsets.toLocaleString()}</td>
+                        <td>
+                          {overview.n_wheelsets
+                            ? ((s.n_wheelsets / overview.n_wheelsets) * 100).toFixed(1) + "%"
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </section>
       )}
 
@@ -170,13 +215,24 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                   <th onClick={() => toggleSort("pturn_90d")} className="sortable">
                     P(turn) 90d {sortBy === "pturn_90d" ? (descending ? "↓" : "↑") : ""}
                   </th>
+                  <th className={sortBy === "pturn_60d" ? "sorted" : ""}>
+                    P(turn) 60d
+                  </th>
+                  <th className={sortBy === "pturn_30d" ? "sorted" : ""}>
+                    P(turn) 30d
+                  </th>
                   <th>Loco</th>
                   <th>Wheelset</th>
                   <th>Shed</th>
                   <th onClick={() => toggleSort("mean_wsmFlange")} className="sortable">
                     Flange {sortBy === "mean_wsmFlange" ? (descending ? "↓" : "↑") : ""}
                   </th>
-                  <th>Root / Thread</th>
+                  <th onClick={() => toggleSort("mean_wsmRoot")} className="sortable">
+                    Root {sortBy === "mean_wsmRoot" ? (descending ? "↓" : "↑") : ""}
+                  </th>
+                  <th onClick={() => toggleSort("mean_wsmThread")} className="sortable">
+                    Thread {sortBy === "mean_wsmThread" ? (descending ? "↓" : "↑") : ""}
+                  </th>
                   <th>Limiting</th>
                   <th onClick={() => toggleSort("days_to_condemning_dia")} className="sortable">
                     Condemning {sortBy === "days_to_condemning_dia" ? (descending ? "↓" : "↑") : ""}
@@ -194,15 +250,20 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     onClick={() => onSelect(r.wheelset_equipment_id, r.loco_number ?? undefined)}
                   >
                     <td className="risk-cell">
-                      <span className={r.pturn_90d != null && r.pturn_90d >= 0.01 ? "risk-high" : "risk-low"}>
-                        {pct(r.pturn_90d)}
-                      </span>
+                      <PturnCell v={r.pturn_90d} />
+                    </td>
+                    <td className="risk-cell">
+                      <PturnCell v={r.pturn_60d} />
+                    </td>
+                    <td className="risk-cell">
+                      <PturnCell v={r.pturn_30d} />
                     </td>
                     <td>{r.loco_number ?? "—"}</td>
                     <td className="mono">#{r.wheelset_equipment_id}</td>
                     <td>{r.shed_any ?? "—"}</td>
                     <td>{fmt(r.mean_wsmFlange)}</td>
-                    <td className="muted">{fmt(r.mean_wsmRoot)} / {fmt(r.mean_wsmThread)}</td>
+                    <td>{fmt(r.mean_wsmRoot)}</td>
+                    <td>{fmt(r.mean_wsmThread)}</td>
                     <td>{r.limiting_dim ?? "—"}</td>
                     <td>{fmt(r.days_to_condemning_dia, 0)} d</td>
                     <td>{fmt(r.staleness_days, 0)} d</td>
