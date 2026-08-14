@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import * as echarts from "echarts";
 import { api } from "./api";
-import type { TrajectoryContract, TrajectoryDim } from "./types";
+import type { TrajectoryContract, TrajectoryDim, TurnMarker } from "./types";
 
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
 const DERIVED_DIMS = ["wsmDia"];
@@ -17,6 +17,13 @@ function fmt(v: unknown, d = 2): string {
   const n = typeof v === "number" ? v : Number(v);
   return !isFinite(n) ? "—" : n.toFixed(d);
 }
+
+const PRE_VAL: Record<string, (t: TurnMarker) => number | null> = {
+  wsmFlange: (t) => t.pre_wsmFlange,
+  wsmRoot: (t) => t.pre_wsmRoot,
+  wsmThread: (t) => t.pre_wsmThread,
+  wsmDia: (t) => t.pre_wsmDia,
+};
 
 export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
   const [data, setData] = useState<TrajectoryContract | null>(null);
@@ -100,7 +107,7 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
             {dimOrder.map((dim) => {
               const d = data.dims.find((x) => x.dim === dim);
               return d ? (
-                <TrajectoryChart key={dim} data={d} />
+                <TrajectoryChart key={dim} data={d} turns={data.turns} />
               ) : null;
             })}
           </div>
@@ -111,7 +118,13 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
   );
 }
 
-function TrajectoryChart({ data }: { data: TrajectoryDim }) {
+function TrajectoryChart({
+  data,
+  turns,
+}: {
+  data: TrajectoryDim;
+  turns: TurnMarker[];
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const color = COLORS[data.dim] ?? "#2563eb";
   const primary = PRIMARY_DIMS.includes(data.dim);
@@ -161,6 +174,55 @@ function TrajectoryChart({ data }: { data: TrajectoryDim }) {
     const fcX2 = fcX.slice(); // forecast x positions (post-anchor)
     const highData: [string, number | null][] = fcX2.map((x, i) => [x, highY[i]]);
     const lowData: [string, number | null][] = fcX2.map((x, i) => [x, lowY[i]]);
+
+    // lifecycle step markers: vertical reset lines at each confirmed turn
+    const markLines: echarts.MarkLineComponentOption["data"] = [];
+    // invisible scatter carrying the turn tooltip (markLine items can't carry one)
+    const turnInfo: { ts: string; no: number; pre: number | null; post: number | null;
+      dia_cut: number | null; days: number | null }[] = [];
+    // anchor divider — visual separation between observed (solid) and forecast (dashed)
+    if (anchorX != null) {
+      markLines.push({
+        xAxis: anchorX,
+        label: {
+          formatter: () => "anchor",
+          position: "insideEndTop",
+          color: "#4f46e5",
+          fontSize: 9,
+        },
+        lineStyle: { color: "#4f46e5", width: 1.4, type: "solid" },
+      });
+    }
+    const turnScatter: [string, number][] = [];
+    for (const t of turns) {
+      const ts = t.post_ts ?? t.pre_ts;
+      if (!ts) continue;
+      const preVal = PRE_VAL[data.dim]?.(t);
+      const postVal = data.dim === "wsmDia"
+        ? t.post_wsmDia
+        : data.dim === "wsmFlange"
+          ? t.post_wsmFlange
+          : data.dim === "wsmRoot"
+            ? t.post_wsmRoot
+            : t.post_wsmThread;
+      markLines.push({
+        xAxis: ts,
+        label: {
+          formatter: () => `turn ${t.turn_no}`,
+          position: "insideStartTop",
+          color: "#b45309",
+          fontSize: 9,
+        },
+        lineStyle: { color: "#d97706", width: 1.2, type: "dashed" },
+      });
+      // place an invisible point at a chart-visible y so axis-trigger tooltip fires
+      const y = postVal ?? preVal ?? (data.observed.length ? data.observed[data.observed.length - 1].value : 0);
+      if (y != null && Number.isFinite(y)) {
+        turnScatter.push([ts, y]);
+        turnInfo.push({ ts, no: t.turn_no, pre: preVal, post: postVal,
+          dia_cut: t.dia_cut, days: t.days_between });
+      }
+    }
 
     const series: echarts.SeriesOption[] = [
       {
@@ -212,6 +274,7 @@ function TrajectoryChart({ data }: { data: TrajectoryDim }) {
         itemStyle: reducedConfidence ? { color: "#d97706" } : { color },
         connectNulls: true,
         z: 3,
+        markLine: { silent: true, data: markLines },
         tooltip: { valueFormatter: (v) => `${fmt(v as number)} mm` },
       },
     ];
@@ -226,6 +289,31 @@ function TrajectoryChart({ data }: { data: TrajectoryDim }) {
         itemStyle: { color: "#111827", borderColor: "#fff", borderWidth: 1 },
         z: 4,
         tooltip: { valueFormatter: (v) => `${fmt(v as number)} mm` },
+      });
+    }
+
+    if (turnScatter.length) {
+      series.push({
+        name: "turn",
+        type: "scatter",
+        data: turnScatter,
+        symbol: "none",
+        silent: false,
+        z: 5,
+        tooltip: {
+          trigger: "item",
+          formatter: (p) => {
+            const info = turnInfo[p.dataIndex];
+            if (!info) return "";
+            return (
+              `<b>Turn ${info.no}</b> · ${info.ts.slice(0, 10)}` +
+              `<br/>pre ${data.dim} = ${info.pre != null ? fmt(info.pre, 3) : "—"} mm` +
+              `<br/>post ${data.dim} = ${info.post != null ? fmt(info.post, 3) : "—"} mm` +
+              (info.dia_cut != null ? `<br/>dia cut = ${fmt(info.dia_cut, 1)} mm` : "") +
+              (info.days != null ? `<br/>days between = ${fmt(info.days, 0)}` : "")
+            );
+          },
+        },
       });
     }
 
@@ -348,7 +436,9 @@ function TrajectoryFootnote({ data }: { data: TrajectoryContract }) {
       "Days to condemning" is the first piecewise-linear crossing of the 1016 mm
       dia hard stop (the only approved limit); the band uses the conformal
       interval edges. Flange/root/tread action thresholds are not yet approved.
-      Amber "reduced confidence" marks a wheelset that belongs to a collapsed
+      Amber dashed vertical lines mark confirmed turning events (reset steps);
+      the indigo line is the anchor (observed → forecast split). Amber
+      "reduced confidence" marks a wheelset that belongs to a collapsed
       subgroup (shed / wear band) for that dimension — the point forecast is
       shown but not decision-grade there.
     </p>

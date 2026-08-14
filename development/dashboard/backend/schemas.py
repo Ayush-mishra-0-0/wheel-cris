@@ -80,6 +80,7 @@ class TurnEvent(BaseModel):
     post_wsmFlange: float | None = None
     segment_index: int | None = None
     delta_wsmFlangeThickness: float | None = None
+    dia_cut: float | None = None
 
 
 class TurnProbability(BaseModel):
@@ -87,6 +88,8 @@ class TurnProbability(BaseModel):
     probability: float | None = None
     turn_rate_train: float | None = None
     n_train: int | None = None
+    roc_auc: float | None = None
+    turn_rate_test: float | None = None
     pointer: str = ("P(turn) = estimated turning probability based on "
                     "historical maintenance behaviour - not a mandatory "
                     "turning recommendation")

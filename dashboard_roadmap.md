@@ -256,13 +256,13 @@ The actual daily tool for engineers. (Work here transfers directly to SLAM.)
 
 ### P2.4 — Wheelset detail
 
-- [ ] Interactive lifecycle step plot (see P3.3).
-- [ ] Flange/root/tread forecasts with **intervals** + implausibility flags + model-version footnote (replace the plain table).
-- [ ] Turning probability cards (retain, add interval/uncertainty context).
-- [ ] Confirmed turn table (retain; add `dia_cut`).
-- [ ] **Observed vs predicted distinction** clearly surfaced (anchor divider, dashed forecast).
-- [ ] Engineering warnings / implausibility flags rendered visibly (not buried in tables).
-- [ ] Validation/Backtest page retained, with fleet-level backtest metrics surfaced (`/backtest/fleet`).
+- [x] Interactive lifecycle step plot (ECharts TrajectoryPanel: turn/reset markers as amber dashed vertical lines with pre/post per dim + `dia_cut` + days-between in tooltip; anchor divider in indigo separates observed vs forecast).
+- [x] Flange/root/tread forecasts with **intervals** + implausibility flags + model-version footnote (conformal band + reduced-confidence flags + model footnote in TrajectoryPanel; engineering warnings banner in detail view).
+- [x] Turning probability cards (retain, add uncertainty context: fleet-backtest ROC-AUC per horizon surfaced on each card).
+- [x] Confirmed turn table (retain; add `dia_cut` from `cut_dia`).
+- [x] **Observed vs predicted distinction** clearly surfaced (anchor divider, dashed forecast).
+- [x] Engineering warnings / implausibility flags rendered visibly (not buried in tables).
+- [x] Validation/Backtest page retained, with fleet-level backtest metrics surfaced (`/backtest/fleet` via FleetValidation).
 
 ### P2.5 — UX states
 

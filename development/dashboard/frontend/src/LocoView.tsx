@@ -5,7 +5,6 @@ import { WearTimeline } from "./WearTimeline";
 import AllWheelPlots from "./AllWheelPlots";
 import { BacktestView } from "./BacktestView";
 import { TrajectoryPanel } from "./TrajectoryPanel";
-
 function fmt(v: number | null | undefined, d = 2): string {
   return v == null || !isFinite(v) ? "—" : v.toFixed(d);
 }
@@ -180,6 +179,16 @@ export function LocoView({
 
 function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabilities | null }) {
   const diaFix = caps?.p0_2_dia_fix ?? false;
+
+  // engineering warnings surfaced from forecast flags + subgroup flags
+  const warnings: string[] = [];
+  const subgroupGroups = new Set<string>();
+  for (const f of detail.forecasts) {
+    if (f.implausibility_flag) warnings.push(`${f.dim} @ ${f.horizon}d: ${f.implausibility_flag}`);
+    for (const s of f.subgroup_flags ?? []) subgroupGroups.add(`${f.dim} ${s.group}`);
+  }
+  const reducedConfidence = subgroupGroups.size > 0;
+
   return (
     <div className="wheelset-view">
       <h2>
@@ -199,6 +208,23 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
         </div>
       )}
 
+      {warnings.length > 0 && (
+        <div className="warn warn-engineering">
+          <strong>Engineering warnings</strong>
+          <ul>
+            {warnings.map((w, i) => (
+              <li key={i}>{w}</li>
+            ))}
+            {reducedConfidence && (
+              <li>
+                Reduced-confidence subgroup: {Array.from(subgroupGroups).join(", ")} — point
+                forecasts shown, not decision-grade.
+              </li>
+            )}
+          </ul>
+        </div>
+      )}
+
       {diaFix && (
         <section className="forecast">
           <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
@@ -214,12 +240,16 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
                 <span className="pturn-h">{p.horizon}d</span>
                 <span className="pturn-p">{((p.probability ?? 0) * 100).toFixed(1)}%</span>
                 <span className="pturn-base">fleet rate {((p.turn_rate_train ?? 0) * 100).toFixed(1)}%</span>
+                {p.roc_auc != null && (
+                  <span className="pturn-rel">backtest ROC-AUC {(p.roc_auc * 100).toFixed(1)}%</span>
+                )}
               </div>
             ))}
           </div>
           <p className="muted small">
             Estimated turning probability from historical maintenance behaviour – not a mandatory
-            turning recommendation.
+            turning recommendation. ROC-AUC is the fleet-backtest discrimination of the P(turn)
+            model at that horizon (uncertainty context).
           </p>
         </section>
       )}
@@ -243,6 +273,7 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
                 <th>dia Δ</th>
                 <th>pre dia</th>
                 <th>post dia</th>
+                <th>dia cut</th>
               </tr>
             </thead>
             <tbody>
@@ -252,6 +283,7 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
                   <td>{t.delta_wsmDia ?? "—"}</td>
                   <td>{t.pre_wsmDia ?? "—"}</td>
                   <td>{t.post_wsmDia ?? "—"}</td>
+                  <td>{t.dia_cut ?? "—"}</td>
                 </tr>
               ))}
             </tbody>

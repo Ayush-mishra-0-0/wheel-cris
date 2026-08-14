@@ -23,6 +23,7 @@ PTURN_DIR = ROOT / "models" / "phase5" / "serving" / "turn_probability"
 SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 TURNS = ROOT / "model_datasets" / "v5" / "lifecycle_turns.parquet"
 TRAJ_ARTEFACT = ROOT / "models" / "experiments" / "v5" / "trajectory_product_analysis.json"
+FLEET_BACKTEST = ROOT / "models" / "experiments" / "v5" / "fleet_backtest.json"
 
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
@@ -66,6 +67,25 @@ def pturn_models() -> dict:
     rate = {m["horizon"]: m["turn_rate_train"] for m in manifest["models"]}
     return {"models": models, "enc": enc, "num_feats": feats["num_feats"],
             "cat_feats": feats["cat_feats"], "turn_rate_train": rate}
+
+
+@lru_cache(maxsize=1)
+def pturn_reliability() -> dict:
+    """Fleet-backtest ROC-AUC per P(turn) horizon (C1 XGB), for uncertainty context."""
+    if not FLEET_BACKTEST.exists():
+        return {}
+    try:
+        data = json.loads(FLEET_BACKTEST.read_text())
+        horizons = data.get("turn_probability", {}).get("horizons", {})
+        out = {}
+        for h, block in horizons.items():
+            models = block.get("models", {})
+            if "C1_xgb" in models:
+                out[int(h)] = {"roc_auc": models["C1_xgb"].get("roc_auc"),
+                               "turn_rate_test": models["C1_xgb"].get("turn_rate_test")}
+        return out
+    except (KeyError, TypeError, ValueError):
+        return {}
 
 
 def _artifact_version() -> str:
@@ -229,13 +249,17 @@ def predict_pturn(wheelset_id: int, anchor=None) -> dict:
     if fr is None:
         return {"wheelset_equipment_id": wheelset_id, "anchor": anchor, "probabilities": []}
     svc = pturn_models()
+    rel = pturn_reliability()
     X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
     out = []
     for h in svc["models"]:
         m = svc["models"][h]
         p = float(m.predict_proba(X)[0, 1])
+        r = rel.get(int(h), {})
         out.append({"horizon": h, "probability": round(p, 4),
-                    "turn_rate_train": svc["turn_rate_train"].get(h)})
+                    "turn_rate_train": svc["turn_rate_train"].get(h),
+                    "roc_auc": r.get("roc_auc"),
+                    "turn_rate_test": r.get("turn_rate_test")})
     return {"wheelset_equipment_id": wheelset_id, "anchor": anchor,
             "probabilities": out}
 
@@ -767,6 +791,7 @@ def wheelset_history(wheelset_id: int) -> dict:
             "segment_index": _f(r.get("segment_index")),
             "delta_wsmFlangeThickness": round(_f(r.get("delta_wsmFlangeThickness")), 4)
             if pd.notna(r.get("delta_wsmFlangeThickness")) else None,
+            "dia_cut": _f(r.get("cut_dia")),
         })
     return {"wheelset_equipment_id": wheelset_id, "measurements": out_m, "turns": out_t}
 

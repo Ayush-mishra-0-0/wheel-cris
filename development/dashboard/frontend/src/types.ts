@@ -83,6 +83,8 @@ export interface TurnProbability {
   probability: number | null;
   turn_rate_train: number | null;
   pointer: string;
+  roc_auc?: number | null;
+  turn_rate_test?: number | null;
 }
 
 export interface MeasurementPoint {
@@ -108,6 +110,7 @@ export interface TurnEvent {
   delta_wsmDia: number | null;
   pre_wsmFlange: number | null;
   post_wsmFlange: number | null;
+  dia_cut?: number | null;
 }
 
 export interface WheelsetDetail {
