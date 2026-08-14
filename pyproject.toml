@@ -53,6 +53,7 @@ dependencies = [
 
 [project.scripts]
 wheel-dashboard = "dashboard.backend._cli:serve"
+wheel-snapshot = "dashboard.backend.build_fleet_snapshot:main"
 
 [tool.setuptools]
 # `dashboard` is the only importable application package in this repo, rooted

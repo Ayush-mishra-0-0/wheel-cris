@@ -177,16 +177,21 @@ Build the clean backend interface the current UI and the future SLAM frontend wi
 
 ### P1.1 — Fleet snapshot dataset
 
-- [ ] Builder script (under `ml/models/phase5/` or `development/dashboard/backend/`) that materialises a
+- [x] Builder script (under `ml/models/phase5/` or `development/dashboard/backend/`) that materialises a
       **fleet snapshot parquet**: one row per wheelset with latest state —
-  - [ ] loco number/id, shed, loco type
-  - [ ] latest profile state (flange/root/thread/dia), days & distance since turning
-  - [ ] per-wheelset degradation forecasts (30/90/180d) + conformal interval widths
-  - [ ] P(turn) 30/60/90d
-  - [ ] **limiting dimension** (dimension closest to its condemning limit, or highest wear rate)
-  - [ ] **risk signals kept separate**: P(turn) AND wear state AND limit proximity (never collapsed into one number)
-  - [ ] provenance: feature-store/version stamps so the UI can show staleness
-- [ ] Rebuild command documented (and later wired into CI as a scheduled job — see future_work.md).
+  - [x] loco number/id, shed, loco type
+  - [x] latest profile state (flange/root/thread/dia), days & distance since turning
+  - [x] per-wheelset degradation forecasts (30/90/180d) + conformal interval widths
+  - [x] P(turn) 30/60/90d
+  - [x] **limiting dimension** (dimension closest to its condemning limit, or highest wear rate)
+  - [x] **risk signals kept separate**: P(turn) AND wear state AND limit proximity (never collapsed into one number)
+  - [x] provenance: feature-store/version stamps so the UI can show staleness
+      → `development/dashboard/backend/build_fleet_snapshot.py` →
+      `ml/model_datasets/v5/fleet_snapshot.parquet` (19,167 rows) + `.manifest.json`
+      (model_version, train_cutoff, source sha256, rebuild command). `wheel-snapshot` console script.
+- [x] Rebuild command documented (and later wired into CI as a scheduled job — see future_work.md).
+      → rebuild: `ayush\Scripts\python -m dashboard.backend.build_fleet_snapshot` (recorded in the
+      manifest and roadmap; CI scheduling deferred in future_work.md).
 
 ### P1.2 — Versioned, typed API (the contract of record)
 
