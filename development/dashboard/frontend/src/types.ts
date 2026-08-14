@@ -27,6 +27,30 @@ export interface LocomotiveSummary {
   wheelsets: WheelsetHeader[];
 }
 
+export interface LocoWheelsetRow extends WheelsetHeader {
+  limiting_dim: string | null;
+  limiting_reason: string | null;
+  days_to_condemning_dia: number | null;
+  pturn_30d: number | null;
+  pturn_60d: number | null;
+  pturn_90d: number | null;
+  fc_wsmRoot_90d: number | null;
+  fc_wsmFlange_90d: number | null;
+  fc_wsmThread_90d: number | null;
+}
+
+export interface LocoWheelsetTable {
+  loco_number: string;
+  locomotive_id: number | null;
+  home_shed: string | null;
+  loco_type: string | null;
+  n_wheelsets: number;
+  n_segments: number;
+  n_turns: number;
+  snapshot_sourced: boolean;
+  wheelsets: LocoWheelsetRow[];
+}
+
 export interface SubgroupFlag {
   group: string;
   level: string;

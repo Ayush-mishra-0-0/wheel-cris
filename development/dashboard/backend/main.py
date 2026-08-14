@@ -48,8 +48,8 @@ app.include_router(v1_router)
 from fastapi import HTTPException, Query  # noqa: E402
 
 from .schemas import (  # noqa: E402
-    Capabilities, FleetBacktest, FleetOverview, LocomotiveSummary, OperationalCapture,
-    TrajectoryContract, WheelsetDetail, WheelsetReplay,
+    Capabilities, FleetBacktest, FleetOverview, LocomotiveSummary, LocoWheelsetTable,
+    OperationalCapture, TrajectoryContract, WheelsetDetail, WheelsetReplay,
 )
 from .api_v1 import (  # noqa: E402
     config as _config,
@@ -60,6 +60,7 @@ from .api_v1 import (  # noqa: E402
     fleet_search as _fleet_search,
     loco as _loco,
     loco_plots as _loco_plots,
+    loco_wheelset_table as _loco_wheelset_table,
     shed_overview as _shed_overview,
     wheelset_backtest as _wheelset_backtest,
     wheelset_lifecycle as _wheelset_lifecycle,
@@ -76,6 +77,11 @@ def config_legacy():
 @app.get("/loco/{loco_number}", response_model=LocomotiveSummary)
 def loco_alias(loco_number: str):
     return _loco(loco_number)
+
+
+@app.get("/loco/{loco_number}/wheelsets", response_model=LocoWheelsetTable)
+def loco_wheelset_table_alias(loco_number: str):
+    return _loco_wheelset_table(loco_number)
 
 
 @app.get("/wheelset/{ws}/overview", response_model=WheelsetDetail)

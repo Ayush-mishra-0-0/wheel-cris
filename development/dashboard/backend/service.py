@@ -685,6 +685,52 @@ def loco_summary(loco_number: str) -> dict:
     }
 
 
+def loco_wheelset_table(loco_number: str) -> dict:
+    """Enhanced loco wheelset table (P2.3): current state + forecasts + P(turn)
+    + limiting dimension per wheelset.
+
+    The snapshot (one row per wheelset, current state) carries the degradation
+    forecast, P(turn) and limiting dimension; we merge it back onto the live
+    wheelset list so the table shows both identity and model output.
+    """
+    base = loco_summary(loco_number)
+    if not base["wheelsets"]:
+        return base
+    snap = _snapshot_df()
+    snap_loco = None
+    if snap is not None and "loco_number" in snap.columns:
+        snap_loco = snap[snap["loco_number"].astype(str).eq(str(loco_number))]
+
+    rows = []
+    for w in base["wheelsets"]:
+        ws = w["wheelset_equipment_id"]
+        row = dict(w)
+        if snap_loco is not None:
+            m = snap_loco[snap_loco["wheelset_equipment_id"] == ws]
+            if not m.empty:
+                r = m.iloc[0]
+                row["limiting_dim"] = r["limiting_dim"] if pd.notna(r.get("limiting_dim")) else None
+                row["limiting_reason"] = str(r["limiting_reason"]) if pd.notna(r.get("limiting_reason")) else None
+                row["days_to_condemning_dia"] = _f(r.get("days_to_condemning_dia"))
+                for h in (30, 60, 90):
+                    row[f"pturn_{h}d"] = _f(r.get(f"pturn_{h}d"))
+                for dim in WEAR_DIMS:
+                    row[f"fc_{dim}_90d"] = _f(r.get(f"fc_{dim}_90d_pred"))
+        rows.append(row)
+
+    return {
+        "loco_number": base["loco_number"],
+        "locomotive_id": base["locomotive_id"],
+        "home_shed": base["home_shed"],
+        "loco_type": base["loco_type"],
+        "n_wheelsets": len(rows),
+        "n_segments": base["n_segments"],
+        "n_turns": base["n_turns"],
+        "wheelsets": rows,
+        "snapshot_sourced": snap_loco is not None,
+    }
+
+
 def wheelset_history(wheelset_id: int) -> dict:
     wes = load_wes()
     w = wes[wes["wheelset_equipment_id"] == wheelset_id].sort_values("measurement_timestamp")

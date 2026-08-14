@@ -5,6 +5,7 @@ import type {
   FleetRiskResponse,
   FleetSearchResponse,
   LocomotiveSummary,
+  LocoWheelsetTable,
   OperationalCapture,
   ShedOverview,
   TrajectoryContract,
@@ -32,6 +33,8 @@ async function get<T>(path: string, params?: Record<string, string | number | bo
 
 export const api = {
   loco: (num: string) => get<LocomotiveSummary>(`/loco/${encodeURIComponent(num)}`),
+  locoWheelsets: (num: string) =>
+    get<LocoWheelsetTable>(`/loco/${encodeURIComponent(num)}/wheelsets`),
   wheelsetOverview: (id: number) =>
     get<WheelsetDetail>(`/wheelset/${id}/overview`),
   wheelsetBacktest: (id: number, asof: string) =>

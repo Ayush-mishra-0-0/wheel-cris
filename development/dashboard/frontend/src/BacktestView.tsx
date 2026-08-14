@@ -300,7 +300,7 @@ function DegradationDeltaTable({ fleet }: { fleet: FleetBacktest }) {
   );
 }
 
-function CaptureTable({ capture }: { capture: OperationalCapture }) {
+export function CaptureTable({ capture }: { capture: OperationalCapture }) {
   const pctLabel = (k: string) => k.replace("capture_", "").replace("%", "%");
   return (
     <div className="capture">
@@ -362,7 +362,7 @@ function CaptureTable({ capture }: { capture: OperationalCapture }) {
   );
 }
 
-function FleetTable({ fleet }: { fleet: FleetBacktest }) {
+export function FleetTable({ fleet }: { fleet: FleetBacktest }) {
   const h90 = fleet.turn_probability?.horizons?.["90"]?.models;
   return (
     <div>

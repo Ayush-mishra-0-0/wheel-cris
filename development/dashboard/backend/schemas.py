@@ -103,6 +103,30 @@ class LocomotiveSummary(BaseModel):
     wheelsets: list[WheelsetHeader] = Field(default_factory=list)
 
 
+class LocoWheelsetRow(WheelsetHeader):
+    limiting_dim: str | None = None
+    limiting_reason: str | None = None
+    days_to_condemning_dia: float | None = None
+    pturn_30d: float | None = None
+    pturn_60d: float | None = None
+    pturn_90d: float | None = None
+    fc_wsmRoot_90d: float | None = None
+    fc_wsmFlange_90d: float | None = None
+    fc_wsmThread_90d: float | None = None
+
+
+class LocoWheelsetTable(BaseModel):
+    loco_number: str
+    locomotive_id: int | None = None
+    home_shed: str | None = None
+    loco_type: str | None = None
+    n_wheelsets: int = 0
+    n_segments: int = 0
+    n_turns: int = 0
+    snapshot_sourced: bool = False
+    wheelsets: list[LocoWheelsetRow] = Field(default_factory=list)
+
+
 class WheelsetDetail(BaseModel):
     wheelset_equipment_id: int
     loco_number: str | None = None

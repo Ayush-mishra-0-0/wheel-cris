@@ -250,9 +250,9 @@ The actual daily tool for engineers. (Work here transfers directly to SLAM.)
 
 ### P2.3 — Loco view
 
-- [ ] Loco wheelset table: current state, forecasts, P(turn), limiting dimension, turns count (enhance existing `LocomotiveSummary`).
-- [ ] Shed / policy information shown where supported (shed-level turn rates, policy context).
-- [ ] Click wheelset → wheelset detail.
+- [x] Loco wheelset table: current state, forecasts, P(turn), limiting dimension, turns count (new `LocoWheelsetRow`/`LocoWheelsetTable`; `GET /api/v1/loco/{loco}/wheelsets`; `LocoView.tsx`).
+- [x] Shed / policy information shown where supported (home shed KPI in loco header; shed-level summary in fleet view).
+- [x] Click wheelset → wheelset detail.
 
 ### P2.4 — Wheelset detail
 

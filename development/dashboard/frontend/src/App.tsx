@@ -1,22 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
-import type { Capabilities, LocomotiveSummary, SearchHit, WheelsetDetail } from "./types";
-import { WearTimeline } from "./WearTimeline";
-import AllWheelPlots from "./AllWheelPlots";
-import { BacktestView } from "./BacktestView";
-import { TrajectoryPanel } from "./TrajectoryPanel";
+import type { Capabilities, FleetBacktest, OperationalCapture, SearchHit } from "./types";
+import { CaptureTable, FleetTable } from "./BacktestView";
 import { FleetView } from "./FleetView";
+import { LocoView } from "./LocoView";
 
 type Page = "fleet" | "search" | "validation" | "loco";
 
 export function App() {
   const [page, setPage] = useState<Page>("fleet");
-  const [summary, setSummary] = useState<LocomotiveSummary | null>(null);
-  const [detail, setDetail] = useState<WheelsetDetail | null>(null);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [loco, setLoco] = useState<string>("37597");
   const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [view, setView] = useState<"overview" | "backtest">("overview");
   const [caps, setCaps] = useState<Capabilities | null>(null);
 
   // global search (type-ahead)
@@ -49,33 +43,10 @@ export function App() {
 
   async function openLoco(num: string) {
     setPage("loco");
+    setLoco(num);
     setError(null);
-    setDetail(null);
-    setSelected(null);
-    setLoading(true);
     setShowHits(false);
-    try {
-      const s = await api.loco(num);
-      setSummary(s);
-      if (s.wheelsets.length > 0) {
-        setSelected(s.wheelsets[0].wheelset_equipment_id);
-      }
-    } catch (e) {
-      setSummary(null);
-      setError((e as Error).message);
-    } finally {
-      setLoading(false);
-    }
   }
-
-  useEffect(() => {
-    if (selected == null) return;
-    setDetail(null);
-    api
-      .wheelsetOverview(selected)
-      .then(setDetail)
-      .catch((e) => setError((e as Error).message));
-  }, [selected]);
 
   function go(page: Page) {
     setPage(page);
@@ -146,7 +117,7 @@ export function App() {
               Validation / Backtest
             </button>
           </nav>
-          {page === "loco" && summary && (
+          {page === "loco" && (
             <div className="sidebar-sub">
               <button className="nav-item back" onClick={() => go("fleet")}>
                 ← Back to fleet
@@ -160,12 +131,9 @@ export function App() {
 
           {page === "fleet" && (
             <FleetView
-              onSelect={(ws, locoNumber) => {
+              onSelect={(_ws, locoNumber) => {
                 if (locoNumber) {
                   openLoco(locoNumber);
-                } else {
-                  setPage("loco");
-                  setSelected(ws);
                 }
               }}
             />
@@ -197,97 +165,14 @@ export function App() {
               <h2>Validation / Backtest</h2>
               <p className="muted small">
                 Fleet-level metrics from <code>/backtest/fleet</code>. For wheelset-level replay,
-                open a loco and use the wheelset tabs.
+                open a loco from Fleet or Search and use the wheelset tabs.
               </p>
-              {selected != null ? (
-                <BacktestView wheelsetId={selected} caps={caps} />
-              ) : (
-                <div className="warn">
-                  No wheelset selected. Open a loco from Fleet or Search to run a replay backtest.
-                </div>
-              )}
+              <FleetValidation />
             </div>
           )}
 
-          {page === "loco" && loading && <p className="muted">Loading loco…</p>}
-
-          {page === "loco" && !loading && summary && (
-            <div className="loco-page">
-              <div className="loco-header">
-                <div className="kpi">
-                  <span className="kpi-label">Loco</span>
-                  <span className="kpi-value">{summary.loco_number}</span>
-                </div>
-                <div className="kpi">
-                  <span className="kpi-label">Type</span>
-                  <span className="kpi-value">{summary.loco_type ?? "—"}</span>
-                </div>
-                <div className="kpi">
-                  <span className="kpi-label">Wheelsets</span>
-                  <span className="kpi-value">{summary.n_wheelsets}</span>
-                </div>
-                <div className="kpi">
-                  <span className="kpi-label">Segments</span>
-                  <span className="kpi-value">{summary.n_segments}</span>
-                </div>
-                <div className="kpi">
-                  <span className="kpi-label">Confirm turns</span>
-                  <span className="kpi-value">{summary.n_turns}</span>
-                </div>
-              </div>
-
-              <div className="layout">
-                <aside className="ws-list">
-                  <h3>Wheelsets ({summary.wheelsets.length})</h3>
-                  {summary.wheelsets.map((w) => (
-                    <button
-                      key={w.wheelset_equipment_id}
-                      className={`ws-item ${w.wheelset_equipment_id === selected ? "active" : ""}`}
-                      onClick={() => setSelected(w.wheelset_equipment_id)}
-                    >
-                      <span className="ws-id">#{w.wheelset_equipment_id}</span>
-                      <span className="ws-sub">
-                        dia {w.latest_mean_wsmDia?.toFixed(2)}
-                        {" · "}
-                        flg {w.latest_mean_wsmFlange?.toFixed(3)}
-                        {" · "}
-                        {w.n_turns} turns
-                      </span>
-                    </button>
-                  ))}
-                </aside>
-
-                <main className="detail">
-                  {view === "overview" ? (
-                    detail ? (
-                      <WheelsetView detail={detail} caps={caps} />
-                    ) : (
-                      <p className="hint">Select a wheelset to view details…</p>
-                    )
-                  ) : selected ? (
-                    <BacktestView wheelsetId={selected} caps={caps} />
-                  ) : (
-                    <p className="hint">Select a wheelset to run a backtest…</p>
-                  )}
-                  {selected != null && (
-                    <div className="tabs">
-                      <button
-                        className={view === "overview" ? "tab active" : "tab"}
-                        onClick={() => setView("overview")}
-                      >
-                        Overview
-                      </button>
-                      <button
-                        className={view === "backtest" ? "tab active" : "tab"}
-                        onClick={() => setView("backtest")}
-                      >
-                        Validation / Backtest
-                      </button>
-                    </div>
-                  )}
-                </main>
-              </div>
-            </div>
+          {page === "loco" && (
+            <LocoView loco={loco} caps={caps} onBack={() => go("fleet")} />
           )}
         </main>
       </div>
@@ -295,87 +180,29 @@ export function App() {
   );
 }
 
-function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabilities | null }) {
-  const diaFix = caps?.p0_2_dia_fix ?? false;
+function FleetValidation() {
+  const [fleet, setFleet] = useState<FleetBacktest | null>(null);
+  const [capture, setCapture] = useState<OperationalCapture | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+
+  useEffect(() => {
+    api
+      .fleetBacktest()
+      .then(setFleet)
+      .catch((e) => setErr((e as Error).message));
+    api
+      .fleetCapture()
+      .then(setCapture)
+      .catch(() => {}); // capture@k is optional enrichment, not a hard dependency
+  }, []);
+
+  if (err) return <div className="warn">{err}</div>;
+  if (!fleet) return <p className="hint">Loading fleet backtest…</p>;
+
   return (
-    <div className="wheelset-view">
-      <h2>
-        Wheelset #{detail.wheelset_equipment_id}
-        {detail.loco_number ? ` · ${detail.loco_number}` : ""}
-      </h2>
-      {detail.latest_measurement && (
-        <p className="muted">Latest measurement {detail.latest_measurement.slice(0, 10)}</p>
-      )}
-
-      {!caps && <p className="muted small">…checking serving capabilities</p>}
-      {caps && !diaFix && (
-        <div className="warn">
-          <strong>Forecasts hidden (safe mode).</strong> The P0.2 diameter fix is not deployed:
-          serving models are not in delta mode, so degradation forecasts are not renderable as
-          engineering outputs. History and turn records below are unaffected.
-        </div>
-      )}
-
-      {diaFix && (
-        <section className="forecast">
-          <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
-        </section>
-      )}
-
-      {diaFix && (
-        <section className="pturn">
-          <h3>Turning probability (P<sub>turn</sub>)</h3>
-          <div className="pturn-cards">
-            {detail.turn_probabilities.map((p) => (
-              <div className="pturn-card" key={p.horizon}>
-                <span className="pturn-h">{p.horizon}d</span>
-                <span className="pturn-p">{((p.probability ?? 0) * 100).toFixed(1)}%</span>
-                <span className="pturn-base">fleet rate {((p.turn_rate_train ?? 0) * 100).toFixed(1)}%</span>
-              </div>
-            ))}
-          </div>
-          <p className="muted small">
-            Estimated turning probability from historical maintenance behaviour – not a mandatory
-            turning recommendation.
-          </p>
-        </section>
-      )}
-
-      <section className="history">
-        <h3>
-          Profile evolution{" "}
-          <span className="muted">({detail.measurements.length} measurements)</span>
-        </h3>
-        <WearTimeline measurements={detail.measurements} />
-      </section>
-
-      {detail.loco_number && <AllWheelPlots loco={detail.loco_number} />}
-
-      {detail.turns.length > 0 && (
-        <section className="turns">
-          <h3>Confirmed turning events ({detail.turns.length})</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>post date</th>
-                <th>dia Δ</th>
-                <th>pre dia</th>
-                <th>post dia</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.turns.map((t, i) => (
-                <tr key={i}>
-                  <td>{t.post_ts.slice(0, 10)}</td>
-                  <td>{t.delta_wsmDia ?? "—"}</td>
-                  <td>{t.pre_wsmDia ?? "—"}</td>
-                  <td>{t.post_wsmDia ?? "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      )}
+    <div className="backtest">
+      <FleetTable fleet={fleet} />
+      {capture && <CaptureTable capture={capture} />}
     </div>
   );
 }

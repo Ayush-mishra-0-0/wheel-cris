@@ -15,7 +15,7 @@ from pathlib import Path
 
 from .schemas import (
     Capabilities, FleetBacktest, FleetOverview, FleetRiskResponse, FleetSearchResponse,
-    LocomotiveSummary, OperationalCapture, ShedOverview,
+    LocomotiveSummary, LocoWheelsetTable, OperationalCapture, ShedOverview,
     TrajectoryContract, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
@@ -100,6 +100,18 @@ def loco(loco_number: str) -> LocomotiveSummary:
         raise HTTPException(status_code=404,
                             detail=f"no wheelsets found for loco {loco_number}")
     return LocomotiveSummary(**data)
+
+
+@router.get("/loco/{loco_number}/wheelsets", response_model=LocoWheelsetTable, tags=["loco"])
+def loco_wheelset_table(loco_number: str) -> LocoWheelsetTable:
+    """Enhanced loco wheelset table (P2.3): current state + 90d forecasts +
+    P(turn) + limiting dimension per wheelset (snapshot-backed when available).
+    """
+    data = service.loco_wheelset_table(loco_number)
+    if not data["wheelsets"]:
+        raise HTTPException(status_code=404,
+                            detail=f"no wheelsets found for loco {loco_number}")
+    return LocoWheelsetTable(**data)
 
 
 @router.get("/wheelset/{ws}/overview", response_model=WheelsetDetail, tags=["wheelset"])
