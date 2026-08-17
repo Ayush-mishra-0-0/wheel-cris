@@ -40,7 +40,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from models.phase5.build_lifecycle_segments import (  # noqa: E402
-    GATES, SIDE_FIELDS, compute_boundaries, side_mean,
+    GATES, SIDE_FIELDS, compute_boundaries, reset_aware_window_base, side_mean,
 )
 
 WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
@@ -51,6 +51,7 @@ OUT = ROOT / "model_datasets" / "v5"
 HORIZONS = (30, 90, 180)
 TARGET_DIMS = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 K_DAYS = 3
+RATE_DIMS = (("wsmRoot", (30, 90)), ("wsmDia", (30, 90)))
 
 # v3f point-in-time feature columns retained (same list as v4 build_risk_benchmark)
 FEATURE_COLUMNS = [
@@ -164,6 +165,7 @@ def main() -> None:
         for W in HORIZONS:
             chg[(dim, W)] = np.full(n, np.nan)
             rt[(dim, W)] = np.full(n, np.nan)
+    rtr = {dim: {W: np.full(n, np.nan) for W in wins} for dim, wins in RATE_DIMS}
     DAY = np.timedelta64(1, "D")
 
     for e in np.unique(a_eq):
@@ -189,26 +191,39 @@ def main() -> None:
         nxt = np.searchsorted(tg, tg[p] + np.timedelta64(K_DAYS, "D"), side="right")
         has_event = (b < en - s) & (b < nxt)
         transient[idx] = has_event
-        # point-in-time trailing-window flange/thread wear slopes
+        # point-in-time trailing-window flange/thread wear slopes (reset-aware:
+        # clamp window to segment start so turn/replacement restores never
+        # corrupt the rate; mirror of features.py _segment_base)
         for dim in SLOPE_DIMS:
             vv = v[dim]
             for W in HORIZONS:
                 lo = np.searchsorted(tg, tg[p] - W * DAY, side="left")
-                base = lo.copy()
-                span_days = (tg[p] - tg[lo]) / DAY
-                use_first = lo >= p
-                span_days[use_first] = ((tg[p] - tg[0]) / DAY)[use_first]
-                base[use_first] = 0
-                ok_s = (~use_first) & (p > 0)
-                ok_f = use_first & (p > 0)
+                seg_start = np.searchsorted(sg, sg[p], side="left")
+                base = np.maximum(lo, seg_start)
+                base = np.where(base >= p, np.where(seg_start < p, seg_start, p), base)
+                span_days = (tg[p] - tg[base]) / DAY
+                ok = (base < p) & (p > 0)
                 chg_vec = np.full(len(p), np.nan)
-                chg_vec[ok_s] = vv[p[ok_s]] - vv[base[ok_s]]
-                chg_vec[ok_f] = vv[p[ok_f]] - vv[base[ok_f]]
-                span = span_days.copy()
-                span[~(ok_s | ok_f)] = np.nan
+                chg_vec[ok] = vv[p[ok]] - vv[base[ok]]
+                span = np.where(ok, span_days, np.nan)
                 chg[(dim, W)][idx] = chg_vec
                 rt[(dim, W)][idx] = np.where(np.isfinite(span) & (span > 0),
                                              chg_vec / span, np.nan)
+        # root/dia trailing per-day rates (same reset-aware window; overrides
+        # the V3F-frozen values so train/serve stay in distribution)
+        for dim, wins in RATE_DIMS:
+            vv = v[dim]
+            for W in wins:
+                lo = np.searchsorted(tg, tg[p] - W * DAY, side="left")
+                seg_start = np.searchsorted(sg, sg[p], side="left")
+                base = np.maximum(lo, seg_start)
+                base = np.where(base >= p, np.where(seg_start < p, seg_start, p), base)
+                span = (tg[p] - tg[base]) / DAY
+                ok = (base < p) & (p > 0)
+                rate = np.full(len(p), np.nan)
+                rate[ok] = np.where(span[ok] > 1e-9,
+                                    (vv[p[ok]] - vv[base[ok]]) / np.maximum(span[ok], 1e-9), np.nan)
+                rtr[dim][W][idx] = rate
 
     for dim in TARGET_DIMS:
         for H in HORIZONS:
@@ -220,6 +235,16 @@ def main() -> None:
         for W in HORIZONS:
             anc[f"ph5_{dim}_change_last_{W}d"] = chg[(dim, W)]
             anc[f"ph5_{dim}_rate_per_day_{W}d"] = rt[(dim, W)]
+    # root/dia rates: overwrite the V3F-frozen FEATURE_COLUMNS values with the
+    # reset-aware recomputation (same window clamp as features.py RATE_DIMS).
+    for dim, wins in RATE_DIMS:
+        for W in wins:
+            anc[f"{dim}_rate_per_day_{W}d"] = rtr[dim][W]
+    # post-turn age fill: a boundary row (turn/replacement) is 0 days since
+    # turning in reality; the V3F-frozen column is NaN there. Mirror features.py.
+    if "turn_event" in anc and "replacement" in anc:
+        boundary = anc["turn_event"].fillna(False) | anc["replacement"].fillna(False)
+        anc.loc[boundary, "days_since_turning"] = 0.0
 
     # eligibility = not transient AND (all-dim targets as applicable); keep rows
     # with at least one eligible horizon for a usable regression target per dim.

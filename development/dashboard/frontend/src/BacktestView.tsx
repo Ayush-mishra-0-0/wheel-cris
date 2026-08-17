@@ -61,6 +61,20 @@ export function BacktestView({ wheelsetId, caps }: { wheelsetId: number; caps: C
               compared to actual future observations.
             </p>
 
+            {replay.turn_reset?.restore_claimed && (
+              <div className="banner banner-restored">
+                <strong>
+                  Anchor at lifecycle {replay.turn_reset.boundary_kind ?? "boundary"}:
+                </strong>{" "}
+                replay compares against the restored (post-{replay.turn_reset.boundary_kind}) segment,
+                not the pre-{replay.turn_reset.boundary_kind} state.
+                {replay.turn_reset.boundary_kind === "turn" &&
+                  replay.turn_reset.cut_dia_mm != null && (
+                    <> Diameter cut ≈ {replay.turn_reset.cut_dia_mm.toFixed(2)} mm.</>
+                  )}
+              </div>
+            )}
+
             {replay.time_to_limit_summary && (
               <div className="ttl-summary">
                 <span className="chip">
@@ -207,6 +221,7 @@ function ReplayDegradationTable({ replay }: { replay: WheelsetReplay }) {
           {sorted.map(({ f }) => {
             const ttl = replay.time_to_limit[f.dim];
             const reduced = f.subgroup_flags.length > 0;
+            const adapted = f.wheel_adaptation?.applied && f.wheel_adaptation?.bias_mm != null;
             const cls = [
               f.implausibility_flag ? "flag-row" : "",
               reduced ? "subgroup-row" : "",
@@ -240,6 +255,14 @@ function ReplayDegradationTable({ replay }: { replay: WheelsetReplay }) {
                 </td>
                 <td>
                   {f.implausibility_flag ?? ""}
+                  {adapted && (
+                    <span
+                      className="flag flag-adapted"
+                      title={`${f.horizon} d: adjusted +${f.wheel_adaptation!.bias_mm!.toFixed(3)} mm (prior n=${f.wheel_adaptation!.prior_n})`}
+                    >
+                      adjusted
+                    </span>
+                  )}
                   {reduced && (
                     <span
                       className="flag flag-reduced"

@@ -35,7 +35,7 @@ SLOPE_DIMS = ("wsmFlange", "wsmThread")
 RATE_DIMS = (("wsmRoot", (30, 90)), ("wsmDia", (30, 90)))
 
 from models.phase5.build_lifecycle_segments import (  # noqa: E402
-    SIDE_FIELDS, compute_boundaries, side_mean,
+    SIDE_FIELDS, compute_boundaries, reset_aware_window_base, side_mean,
 )
 
 
@@ -82,6 +82,8 @@ def extract_features(wheelset_id: int, anchor: pd.Timestamp,
         return None
     p = int(pos[0])
     r = w.iloc[p]
+    seg_arr = w["seg_id"].to_numpy(dtype="int64")
+    boundary = bool(r.get("turn_event", False)) or bool(r.get("replacement", False))
 
     out: dict = {
         "wheelset_equipment_id": int(wheelset_id),
@@ -92,25 +94,29 @@ def extract_features(wheelset_id: int, anchor: pd.Timestamp,
     for f in SIDE_FIELDS:
         out[f"mean_{f}"] = _to_float(r[f"mean_{f}"])
 
-    # flange/thread trailing per-day slopes (substrate SLOPE_DIMS loop)
+    # flange/thread trailing per-day slopes (substrate SLOPE_DIMS loop).
+    # Reset-aware: the trailing window is clamped to the anchor's segment start
+    # so a turn/replacement inside the window (restore) can never corrupt the
+    # rate; a fresh boundary anchor has no in-segment history -> NaN.
     for dim in SLOPE_DIMS:
         vv = w[f"mean_{dim}"].to_numpy(dtype=float)
         for Wd in HORIZONS:
-            lo = int(np.searchsorted(t_arr, t_arr[p] - Wd * DAY, side="left"))
-            span = (t_arr[p] - t_arr[lo]) / DAY
-            use_first = lo >= p
-            base, span_use = (lo, span) if not use_first else (0, (t_arr[p] - t_arr[0]) / DAY)
-            chg = vv[p] - vv[base]
-            out[f"ph5_{dim}_rate_per_day_{Wd}d"] = _to_float(chg / span_use) if np.isfinite(span_use) and span_use > 0 else np.nan
+            base = _segment_base(t_arr, seg_arr, p, Wd)
+            span_use = (t_arr[p] - t_arr[base]) / DAY
+            if base < p and np.isfinite(span_use) and span_use > 0 \
+                    and np.isfinite(vv[p]) and np.isfinite(vv[base]):
+                out[f"ph5_{dim}_rate_per_day_{Wd}d"] = _to_float((vv[p] - vv[base]) / span_use)
+            else:
+                out[f"ph5_{dim}_rate_per_day_{Wd}d"] = np.nan
 
-    # root/dia trailing per-day rates at 30/90
+    # root/dia trailing per-day rates at 30/90 (reset-aware, same window clamp)
     for dim, windows in RATE_DIMS:
         st = w[f"mean_{dim}"].to_numpy(dtype=float)
         for Wd in windows:
-            lo = int(np.searchsorted(t_arr, t_arr[p] - Wd * DAY, side="left"))
-            if lo < p and np.isfinite(st[p]) and np.isfinite(st[lo]):
-                span = (t_arr[p] - t_arr[lo]) / DAY
-                out[f"{dim}_rate_per_day_{Wd}d"] = _to_float((st[p] - st[lo]) / span) if span > 1e-9 else np.nan
+            base = _segment_base(t_arr, seg_arr, p, Wd)
+            span = (t_arr[p] - t_arr[base]) / DAY
+            if base < p and np.isfinite(st[p]) and np.isfinite(st[base]) and span > 1e-9:
+                out[f"{dim}_rate_per_day_{Wd}d"] = _to_float((st[p] - st[base]) / span)
             else:
                 out[f"{dim}_rate_per_day_{Wd}d"] = np.nan
 
@@ -135,7 +141,7 @@ def extract_features(wheelset_id: int, anchor: pd.Timestamp,
             out[f"km_{Wd}d_available"] = False
             out[f"inspection_count_{Wd}d"] = 0.0
 
-    out["days_since_turning"] = _to_float(r["days_since_turning"])
+    out["days_since_turning"] = 0.0 if boundary else _to_float(r["days_since_turning"])
     out["wheel_age_days_proxy"] = _to_float(r["wheel_age_days_proxy"])
     out["rtis_reporting_coverage_pct"] = _to_float(r["rtis_reporting_coverage_pct"])
     out["distance_since_turning_km"] = _to_float(r["distance_since_turning_km"])
@@ -177,3 +183,17 @@ def _to_float(v) -> float:
     if v is None or pd.isna(v):
         return np.nan
     return float(v)
+
+
+def _segment_base(t_arr: np.ndarray, seg_arr: np.ndarray, p: int, Wd: int) -> int:
+    """Reset-aware trailing-window base index for one anchor.
+
+    clamps the raw window base to the anchor's segment start so a
+    turn/replacement restore inside the window never enters the rate span.
+    """
+    seg_start = int(np.searchsorted(seg_arr, seg_arr[p], side="left"))
+    lo = int(np.searchsorted(t_arr, t_arr[p] - Wd * DAY, side="left"))
+    base = max(lo, seg_start)
+    if base >= p:
+        base = seg_start if seg_start < p else p
+    return base

@@ -24,6 +24,7 @@ SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 TURNS = ROOT / "model_datasets" / "v5" / "lifecycle_turns.parquet"
 TRAJ_ARTEFACT = ROOT / "models" / "experiments" / "v5" / "trajectory_product_analysis.json"
 FLEET_BACKTEST = ROOT / "models" / "experiments" / "v5" / "fleet_backtest.json"
+ADAPT_ARTEFACT = ROOT / "model_datasets" / "v5" / "wheelset_adaptation.parquet"
 
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
@@ -31,6 +32,29 @@ WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
 WEAR_BETTER_TOL = 0.05      # mm threshold below current to flag "wear improves"
 DIA_INC_TOL = 0.001         # mm; predicted diameter above current
 DAY = np.timedelta64(1, "D")
+
+# ---------------------------------------------------------------------------
+# Second-stage wheelset adaptation (empirical-Bayes residual shrinkage).
+# At an anchor with prior_n >= 2 same-segment residuals, the population
+# forecast is shifted by bias_shrunk = mean(residual) * n/(n+K). Only rows
+# before the anchor in the SAME segment are used (built by
+# build_wheelset_adaptation.py); turn/replacement boundaries have no
+# same-segment history and are never adapted.
+# ---------------------------------------------------------------------------
+ADAPT_K = 3.0
+ADAPT_MAX_PRIOR = 5
+ADAPT_MIN_N = 2
+
+# ---------------------------------------------------------------------------
+# Deterministic TURN/RESET operator (Lever 1) - maintenance policy, NOT ML.
+# A restored state is only claimed when the anchor's own lifecycle row is a
+# post-turn/replacement boundary (same event rule as build_lifecycle_segments:
+# dia cut >= TURN_CUT_MIN with a flange-or-root restore, or a replacement).
+# This lets the renderer CONTINUE THE PLOT from the restored level instead of
+# extrapolating the reset as continuous wear.
+# ---------------------------------------------------------------------------
+TURN_CUT_MIN = 1.0
+WEAR_RESTORE_MM = 0.2
 
 # ---------------------------------------------------------------------------
 # Engineering limit register (MAINTENANCE POLICY, not ML).
@@ -110,6 +134,64 @@ def pturn_models() -> dict:
     rate = {m["horizon"]: m["turn_rate_train"] for m in manifest["models"]}
     return {"models": models, "enc": enc, "num_feats": feats["num_feats"],
             "cat_feats": feats["cat_feats"], "turn_rate_train": rate}
+
+
+@lru_cache(maxsize=1)
+def wheelset_adaptation() -> dict | None:
+    """Load the wheelset-adaptation stream (second-stage residual shrinkage).
+
+    Returns {wheelset_equipment_id: {
+        "ts": np.ndarray (ns int64, sorted),
+        "rows": list[dict] aligned to ts, each {(dim, h): {
+            "prior_n": int, "bias": float | None, "boundary": bool}}}.
+    bias is the empirical-Bayes shrunk residual offset computed only from prior
+    same-segment rows; None when prior_n < ADAPT_MIN_N. Lookup is AS-OF: the
+    latest substrate row at or before the anchor (its bias already reflects all
+    observed outcomes known at that point).
+    """
+    if not ADAPT_ARTEFACT.exists():
+        return None
+    a = pd.read_parquet(ADAPT_ARTEFACT)
+    ts_ns = a["measurement_timestamp"].to_numpy(dtype="datetime64[ns]").astype("int64")
+    out: dict[int, dict] = {}
+    for idx, row in a.iterrows():
+        ws = int(row["wheelset_equipment_id"])
+        entry = out.setdefault(ws, {"ts": [], "rows": []})
+        entry["ts"].append(int(ts_ns[idx]))
+        d = {}
+        for dim in DIMM:
+            for h in HORIZONS:
+                tag = f"{dim}_{h}d"
+                n = int(row[f"n_{tag}"])
+                b = row[f"bias_{tag}"]
+                d[(dim, h)] = {
+                    "prior_n": n,
+                    "bias": float(b) if n >= ADAPT_MIN_N and np.isfinite(b) else None,
+                    "boundary": bool(row["is_boundary"]),
+                }
+        entry["rows"].append(d)
+    for entry in out.values():
+        entry["ts"] = np.asarray(entry["ts"], dtype="int64")
+    return out
+
+
+def wheel_adaptation_at(ws: int, anchor: pd.Timestamp) -> dict | None:
+    """As-of lookup of the adaptation stream for one anchor.
+
+    Returns the {(dim, h): ...} block of the latest substrate row at or before
+    the anchor, or None if the wheelset is absent / the stream is unavailable.
+    """
+    ad = wheelset_adaptation()
+    if not ad:
+        return None
+    entry = ad.get(int(ws))
+    if not entry:
+        return None
+    t_ns = int(pd.Timestamp(anchor).value)
+    pos = int(np.searchsorted(entry["ts"], t_ns, side="right")) - 1
+    if pos < 0:
+        return None
+    return entry["rows"][pos]
 
 
 @lru_cache(maxsize=1)
@@ -496,6 +578,63 @@ def _physics_flags(dim: str, current: float | None, predicted: float | None) -> 
     if dim in WEAR_DIMS and predicted < current - WEAR_BETTER_TOL:
         return ["wear_better_than_current"]
     return []
+    if dim == "wsmDia" and predicted > current + DIA_INC_TOL:
+        return ["increasing_diameter"]
+    if dim in WEAR_DIMS and predicted < current - WEAR_BETTER_TOL:
+        return ["wear_better_than_current"]
+    return []
+
+
+def turn_reset_policy(w: pd.DataFrame, p: int,
+                      turns: pd.DataFrame | None = None,
+                      t_arr: np.ndarray | None = None) -> dict:
+    """Deterministic TURN/RESET operator (Lever 1) at one anchor row.
+
+    Rule-based restored-state detection (maintenance policy, NOT ML). A wheelset
+    is in a RESTORED state when its own measurement row is a lifecycle boundary:
+
+      - turn:        turning_record AND dia cut in [TURN_CUT_MIN, 25] mm AND
+                     flange-or-root restored >= WEAR_RESTORE_MM (the same event
+                     rule build_lifecycle_segments uses); the row is the
+                     POST-TURN (fresh) measurement.
+      - replacement: wsmProvDate change / wheel-age reset / confirmed dia
+                     up-jump (the segment reconstructor's replacement rule).
+
+    In a restored state the wear path must CONTINUE FROM the restored level, not
+    extrapolate the reset as continuous wear. This policy never invents facts:
+    `restored_state` is true only when the anchor's own row is a boundary.
+
+    Returns a dict with:
+      condition       = "restored" | "no_reset"
+      boundary_kind   = "turn" | "replacement" | None
+      cut_dia_mm      = pre - post mean diameter (only meaningful for a turn)
+      restore         = {dim: post-turn level} per WEAR dim + wsmDia
+      restore_claimed = true iff the anchor row is a boundary
+    """
+    r = w.iloc[p]
+    seg_id_col = w["seg_id"].to_numpy(dtype="int64")
+    is_turn = bool(r.get("turn_event", False))
+    is_repl = bool(r.get("replacement", False))
+    boundary_kind = "turn" if is_turn else ("replacement" if is_repl else None)
+
+    cut = None
+    restore = {}
+    if boundary_kind == "turn":
+        prev_dia = r.get("prev_wsmDia")
+        cur_dia = r.get("mean_wsmDia")
+        if np.isfinite(prev_dia) and np.isfinite(cur_dia):
+            cut = round(float(prev_dia - cur_dia), 3)
+    for dim in ("wsmDia", "wsmFlange", "wsmRoot", "wsmThread"):
+        v = r.get(f"mean_{dim}")
+        restore[dim] = round(float(v), 4) if v is not None and np.isfinite(v) else None
+
+    return {
+        "condition": "restored" if boundary_kind else "no_reset",
+        "boundary_kind": boundary_kind,
+        "cut_dia_mm": cut,
+        "restore": restore,
+        "restore_claimed": boundary_kind is not None,
+    }
 
 
 def _turn_markers(wheelset_id: int, asof: pd.Timestamp) -> list[dict]:
@@ -572,15 +711,25 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     svc = degradation_models()
     meta = degradation_meta()
     cov = feature_coverage(fr, svc["num_feats"]) if fr is not None else None
+    adapt = wheel_adaptation_at(wheelset_id, pd.Timestamp(anchor))
     deg = {}
     if fr is not None:
         X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
         for dim in DIMM:
             cur = fr.get(f"mean_{dim}")
-            deg[dim] = {"current": cur, "delta": {}, "predicted": {}}
+            deg[dim] = {"current": cur, "delta": {}, "predicted": {}, "adaptation": {}}
             for h in HORIZONS:
                 delta = float(svc["models"][(dim, h)].predict(X)[0])
                 predicted = cur + delta if np.isfinite(delta) and cur is not None and np.isfinite(cur) else None
+                adj = adapt.get((dim, h)) if adapt else None
+                if adj and adj["prior_n"] >= ADAPT_MIN_N and adj["bias"] is not None and not adj["boundary"]:
+                    predicted = predicted + adj["bias"] if predicted is not None else predicted
+                    deg[dim]["adaptation"][h] = {
+                        "prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
+                else:
+                    deg[dim]["adaptation"][h] = {
+                        "prior_n": adj["prior_n"] if adj else 0,
+                        "bias_mm": adj["bias"] if adj else None, "applied": False}
                 deg[dim]["delta"][h] = delta
                 deg[dim]["predicted"][h] = predicted
 
@@ -619,6 +768,8 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                 "model_version": meta.get("model_version"),
                 "train_cutoff": meta.get("train_cutoff"),
                 "feature_coverage": cov,
+                "wheel_adaptation": deg[dim]["adaptation"].get(h, {
+                    "prior_n": 0, "bias_mm": None, "applied": False}),
                 "subgroup_flags": subgroup_flags(fr, dim, h) if fr is not None else [],
             })
             flags.update(_physics_flags(dim, cur, pred))
@@ -707,6 +858,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         "feature_coverage": cov,
         "dims": dims,
         "turns": _turn_markers(wheelset_id, pd.Timestamp(anchor)),
+        "turn_reset": turn_reset_policy(w, p),
         "delta_metrics": _delta_metrics_slim(),
         "time_to_limit_summary": summary,
         "note": ("Lifecycle chart contract (lifecycle_chart_v1): forecast = "

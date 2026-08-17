@@ -1,0 +1,101 @@
+{
+  "dim": "wsmRoot",
+  "horizon_d": 90,
+  "note": "recent-history B variants (point-in-time)",
+  "A_population": [
+    {
+      "bucket": "all",
+      "n": 41879,
+      "mae": 0.6582,
+      "rmse": 0.849
+    },
+    {
+      "bucket": "n>=1",
+      "n": 39066,
+      "mae": 0.6642,
+      "rmse": 0.857
+    },
+    {
+      "bucket": "n>=2",
+      "n": 36622,
+      "mae": 0.6675,
+      "rmse": 0.8584
+    },
+    {
+      "bucket": "n>=3",
+      "n": 34369,
+      "mae": 0.6697,
+      "rmse": 0.8605
+    },
+    {
+      "bucket": "n>=5",
+      "n": 30255,
+      "mae": 0.6727,
+      "rmse": 0.8667
+    }
+  ],
+  "B_recent_same_seg": [
+    {
+      "bucket": "all",
+      "n": 41879,
+      "mae": NaN,
+      "rmse": NaN
+    },
+    {
+      "bucket": "n>=1",
+      "n": 39066,
+      "mae": 0.5835,
+      "rmse": 0.7774
+    },
+    {
+      "bucket": "n>=2",
+      "n": 36622,
+      "mae": 0.5846,
+      "rmse": 0.7768
+    },
+    {
+      "bucket": "n>=3",
+      "n": 34369,
+      "mae": 0.5855,
+      "rmse": 0.7776
+    },
+    {
+      "bucket": "n>=5",
+      "n": 30255,
+      "mae": 0.5872,
+      "rmse": 0.7808
+    }
+  ],
+  "B_1year": [
+    {
+      "bucket": "all",
+      "n": 41879,
+      "mae": NaN,
+      "rmse": NaN
+    },
+    {
+      "bucket": "n>=1",
+      "n": 39665,
+      "mae": 0.6218,
+      "rmse": 0.8107
+    },
+    {
+      "bucket": "n>=2",
+      "n": 37415,
+      "mae": 0.6232,
+      "rmse": 0.8126
+    },
+    {
+      "bucket": "n>=3",
+      "n": 35227,
+      "mae": 0.6229,
+      "rmse": 0.8089
+    },
+    {
+      "bucket": "n>=5",
+      "n": 30954,
+      "mae": 0.6264,
+      "rmse": 0.8131
+    }
+  ]
+}

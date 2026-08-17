@@ -14,7 +14,7 @@ const COLORS: Record<string, string> = {
   wsmThread: "#3d7a54",
   wsmDia: "#4a7a9e",
 };
-const BAND_COLOR = "rgba(247, 165, 1, 0.12)";
+const BAND_COLOR = "rgba(245, 166, 35, 0.14)";
 
 function fmt(v: unknown, d = 2): string {
   const n = typeof v === "number" ? v : Number(v);
@@ -193,6 +193,22 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
               <span className="muted small">{data.time_to_limit_summary.note}</span>
             </div>
           )}
+          {data.turn_reset && data.turn_reset.restore_claimed && (
+            <div className="banner banner-restored">
+              <strong>
+                Anchor at lifecycle {data.turn_reset.boundary_kind ?? "boundary"}:
+              </strong>{" "}
+              the wear path continues from the restored (post-{data.turn_reset.boundary_kind}) level,
+              not from the pre-{data.turn_reset.boundary_kind} state.
+              {data.turn_reset.boundary_kind === "turn" &&
+                data.turn_reset.cut_dia_mm != null && (
+                  <> Diameter cut ≈ {data.turn_reset.cut_dia_mm.toFixed(2)} mm.</>
+                )}{" "}
+              <span className="muted small">
+                Forecast = restored level + Δ, so the reset is not extrapolated as continuous wear.
+              </span>
+            </div>
+          )}
           <div className="trajectory-grid">
             {dimOrder.map((dim) => {
               const d = data.dims.find((x) => x.dim === dim);
@@ -288,10 +304,10 @@ function TrajectoryChart({
         label: {
           formatter: () => "anchor",
           position: "insideEndTop",
-          color: "#23251d",
+          color: "#82838c",
           fontSize: 9,
         },
-        lineStyle: { color: "#f7a501", width: 1.6, type: "solid" },
+        lineStyle: { color: "#f5a623", width: 1.6, type: "solid" },
       });
     }
     const turnScatter: [string, number][] = [];
@@ -311,10 +327,10 @@ function TrajectoryChart({
         label: {
           formatter: () => `turn ${t.turn_no}`,
           position: "insideStartTop",
-          color: "#b45309",
+          color: "#9a6700",
           fontSize: 9,
         },
-        lineStyle: { color: "#d97706", width: 1.2, type: "dashed" },
+        lineStyle: { color: "#d9a13b", width: 1.2, type: "dashed" },
       });
       // place an invisible point at a chart-visible y so axis-trigger tooltip fires
       const y = postVal ?? preVal ?? (data.observed.length ? data.observed[data.observed.length - 1].value : 0);
@@ -371,9 +387,9 @@ function TrajectoryChart({
         symbol: reducedConfidence ? "diamond" : "circle",
         symbolSize: reducedConfidence ? 7 : 5,
         lineStyle: reducedConfidence
-          ? { color: "#d97706", width: 1.8, type: "dotted" }
+          ? { color: "#d9a13b", width: 1.8, type: "dotted" }
           : { color, width: 1.8, type: "dashed" },
-        itemStyle: reducedConfidence ? { color: "#d97706" } : { color },
+        itemStyle: reducedConfidence ? { color: "#d9a13b" } : { color },
         connectNulls: true,
         z: 3,
         markLine: { silent: true, data: markLines },
@@ -388,7 +404,7 @@ function TrajectoryChart({
         data: resX.map((x, i) => [x, resY[i]]),
         symbol: "triangle",
         symbolSize: 9,
-        itemStyle: { color: "#111827", borderColor: "#fff", borderWidth: 1 },
+        itemStyle: { color: "#14151a", borderColor: "#fff", borderWidth: 1 },
         z: 4,
         tooltip: { valueFormatter: (v) => `${fmt(v as number)} mm` },
       });
@@ -426,7 +442,7 @@ function TrajectoryChart({
         text: data.dim,
         left: 0,
         top: 0,
-        textStyle: { fontSize: 13, color: "#23251d", fontWeight: 600 },
+        textStyle: { fontSize: 13, color: "#14151a", fontWeight: 600 },
       },
       tooltip: {
         trigger: "axis",
@@ -437,19 +453,19 @@ function TrajectoryChart({
         bottom: 0,
         itemWidth: 14,
         itemHeight: 8,
-        textStyle: { fontSize: 10, color: "#6d7066" },
+        textStyle: { fontSize: 10, color: "#82838c" },
         data: data.forecasts.length ? ["forecast (anchor + Δ)", "realised"] : ["realised"],
       },
       xAxis: {
         type: "time",
-        axisLabel: { fontSize: 10, color: "#9a9d92" },
+        axisLabel: { fontSize: 10, color: "#a7a8b0" },
         splitLine: { show: false },
       },
       yAxis: {
         type: "value",
         scale: true,
-        axisLabel: { fontSize: 10, color: "#9a9d92" },
-        splitLine: { lineStyle: { color: "#e6e7df" } },
+        axisLabel: { fontSize: 10, color: "#a7a8b0" },
+        splitLine: { lineStyle: { color: "#f0f0e9" } },
       },
       dataZoom: [{ type: "inside" }, { type: "slider", height: 12, bottom: 18 }],
       series,
@@ -460,6 +476,9 @@ function TrajectoryChart({
   const nf = data.noise_floor_mm;
   const flagGroups = Array.from(new Set(subFlags.map((s) => s.group))).join(", ");
   const ttl = data.time_to_limit;
+  const adapted = data.forecasts.filter(
+    (f) => f.wheel_adaptation?.applied && f.wheel_adaptation?.bias_mm != null,
+  );
 
   return (
     <div className="trajectory-card">
@@ -479,6 +498,19 @@ function TrajectoryChart({
               .join("\n")}
           >
             ⚠ reduced confidence — {flagGroups}
+          </span>
+        )}
+        {adapted.length > 0 && (
+          <span
+            className="flag flag-adapted"
+            title={adapted
+              .map(
+                (f) =>
+                  `${f.horizon} d: +${fmt(f.wheel_adaptation!.bias_mm!, 3)} mm (prior n=${f.wheel_adaptation!.prior_n})`,
+              )
+              .join("\n")}
+          >
+            adjusted for this wheel&apos;s recent behaviour
           </span>
         )}
         {ttl && (
@@ -535,7 +567,12 @@ function TrajectoryFootnote({ data }: { data: TrajectoryContract }) {
       the yellow line is the anchor (observed → forecast split). Amber
       "reduced confidence" marks a wheelset that belongs to a collapsed
       subgroup (shed / wear band) for that dimension — the point forecast is
-      shown but not decision-grade there.
+      shown but not decision-grade there. A "restored" banner marks an anchor
+      that is itself a lifecycle boundary: the forecast continues from the
+      post-turn/post-replacement level rather than extrapolating the reset as
+      continuous wear. "Adjusted" forecasts are shifted by the wheelset&apos;s
+      recent same-segment bias (prior measurements of this wheel) before the
+      80% band is drawn.
     </p>
   );
 }

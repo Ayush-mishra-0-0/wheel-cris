@@ -153,6 +153,12 @@ class WheelsetDetail(BaseModel):
     measurements: list[MeasurementPoint] = Field(default_factory=list)
 
 
+class WheelAdaptation(BaseModel):
+    prior_n: int = 0
+    bias_mm: float | None = None
+    applied: bool = False
+
+
 class ReplayForecast(BaseModel):
     dim: str
     horizon: int
@@ -167,6 +173,7 @@ class ReplayForecast(BaseModel):
     train_cutoff: str | None = None
     feature_coverage: float | None = None
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
+    wheel_adaptation: WheelAdaptation = WheelAdaptation()
     mae: float | None = None
 
 
@@ -179,6 +186,14 @@ class ReplayPTurn(BaseModel):
     actual_n_events: int | None = None
 
 
+class TurnReset(BaseModel):
+    condition: str = "no_reset"
+    boundary_kind: str | None = None
+    cut_dia_mm: float | None = None
+    restore: dict[str, float | None] = Field(default_factory=dict)
+    restore_claimed: bool = False
+
+
 class WheelsetReplay(BaseModel):
     wheelset_equipment_id: int
     anchor: dt.datetime | None = None
@@ -188,6 +203,7 @@ class WheelsetReplay(BaseModel):
     turn_probability: list[ReplayPTurn] = Field(default_factory=list)
     time_to_limit_summary: TimeToLimitSummary | None = None
     time_to_limit: dict[str, TimeToLimit] = Field(default_factory=dict)
+    turn_reset: TurnReset = TurnReset()
     note: str | None = None
 
 
@@ -236,6 +252,7 @@ class TrajectoryForecast(BaseModel):
     model_version: str | None = None
     train_cutoff: str | None = None
     feature_coverage: float | None = None
+    wheel_adaptation: WheelAdaptation = WheelAdaptation()
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
 
 
@@ -323,6 +340,7 @@ class TrajectoryContract(BaseModel):
     feature_coverage: float | None = None
     dims: list[TrajectoryDim] = Field(default_factory=list)
     turns: list[TurnMarker] = Field(default_factory=list)
+    turn_reset: TurnReset = TurnReset()
     delta_metrics: dict = Field(default_factory=dict)
     time_to_limit_summary: TimeToLimitSummary | None = None
     note: str | None = None

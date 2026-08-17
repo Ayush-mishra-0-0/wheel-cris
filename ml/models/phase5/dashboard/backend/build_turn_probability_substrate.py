@@ -106,17 +106,18 @@ def per_wheelset_features(wes_w: pd.DataFrame) -> pd.DataFrame:
 
     states = {f: w[f"mean_{f}"].to_numpy(dtype=float) for f in SIDE_FIELDS}
 
-    # slope windows are NOT clamped to segment start (extract_features use_first
-    # fallback: window reaching before first measurement falls back to it)
+    # slope windows are NOT clamped to segment start in the OLD frozen v3f;
+    # here they are reset-aware (clamped to segment start) to mirror the
+    # serving features.py _segment_base so P(turn) stays in distribution.
+    seg_start = np.searchsorted(seg_id, seg_id, side="left")
     for dim in SLOPE_DIMS:
         st = states[dim]
         for Wd in HORIZONS:
             lo_sl = np.searchsorted(t_arr, t_arr - np.timedelta64(Wd, "D"), side="left")
-            use_first = lo_sl >= N
-            base = np.where(use_first, 0, lo_sl)
-            span = np.where(use_first, (t_arr[N] - t_arr[0]) / DAY,
-                            (t_arr[N] - t_arr[np.maximum(lo_sl, 0)]) / DAY)
-            chg = st[N] - st[base]
+            base = np.maximum(lo_sl, seg_start)
+            base = np.where(base >= N, np.where(seg_start < N, seg_start, N), base)
+            span = np.where(base < N, (t_arr[N] - t_arr[np.maximum(base, 0)]) / DAY, np.nan)
+            chg = np.where(base < N, st[N] - st[np.maximum(base, 0)], np.nan)
             rd = np.where((np.isfinite(span)) & (span > 0), chg / np.maximum(span, 1e-12), np.nan)
             out[f"ph5_{dim}_rate_per_day_{Wd}d"] = rd
 
@@ -135,10 +136,12 @@ def per_wheelset_features(wes_w: pd.DataFrame) -> pd.DataFrame:
         st = states[dim]
         for Wd in windows:
             lo_idx = np.searchsorted(t_arr, t_arr - np.timedelta64(Wd, "D"), side="left")
-            has = lo_idx < N
-            span = np.where(has, (t_arr[N] - t_arr[np.maximum(lo_idx, 0)]) / DAY, np.nan)
+            base = np.maximum(lo_idx, seg_start)
+            base = np.where(base >= N, np.where(seg_start < N, seg_start, N), base)
+            has = base < N
+            span = np.where(has, (t_arr[N] - t_arr[np.maximum(base, 0)]) / DAY, np.nan)
             out[f"{dim}_rate_per_day_{Wd}d"] = np.where(
-                has & (span > 1e-9), (st[N] - st[np.maximum(lo_idx, 0)]) / np.maximum(span, 1e-9), np.nan)
+                has & (span > 1e-9), (st[N] - st[np.maximum(base, 0)]) / np.maximum(span, 1e-9), np.nan)
 
     seg_start_days = np.where(seg_start_arr == t_arr[0], (t_arr[N] - t_arr[0]) / DAY,
                               (t_arr[N] - seg_start_arr) / DAY)
@@ -159,6 +162,11 @@ def per_wheelset_features(wes_w: pd.DataFrame) -> pd.DataFrame:
 
     df = pd.DataFrame(out)
     df["anchor_ts"] = pd.to_datetime(df["_ts"])
+    # post-turn age fill: boundary rows (turn/replacement) are 0 days since
+    # turning in reality but NaN in WES; mirror serving features.py.
+    if "turn_event" in w and "replacement" in w:
+        boundary = w["turn_event"].to_numpy() | w["replacement"].to_numpy()
+        df.loc[boundary, "days_since_turning"] = 0.0
     return df.drop(columns=["_ts"])
 
 

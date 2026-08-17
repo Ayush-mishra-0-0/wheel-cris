@@ -143,6 +143,12 @@ export interface ModelMeta {
   model_version?: string | null;
 }
 
+export interface WheelAdaptation {
+  prior_n: number;
+  bias_mm: number | null;
+  applied: boolean;
+}
+
 export interface ReplayForecast {
   dim: string;
   horizon: number;
@@ -156,6 +162,7 @@ export interface ReplayForecast {
   train_cutoff: string | null;
   feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
+  wheel_adaptation: WheelAdaptation;
   mae: number | null;
 }
 
@@ -177,6 +184,7 @@ export interface WheelsetReplay {
   turn_probability: ReplayPTurn[];
   time_to_limit_summary: TimeToLimitSummary | null;
   time_to_limit: Record<string, TimeToLimit>;
+  turn_reset: TurnReset;
   note: string | null;
 }
 
@@ -232,6 +240,7 @@ export interface TrajectoryForecast {
   train_cutoff: string | null;
   feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
+  wheel_adaptation: WheelAdaptation;
 }
 
 export interface TrajectoryRealised {
@@ -305,6 +314,14 @@ export interface TurnMarker {
   post_wsmThread: number | null;
 }
 
+export interface TurnReset {
+  condition: string;
+  boundary_kind: string | null;
+  cut_dia_mm: number | null;
+  restore: Record<string, number | null>;
+  restore_claimed: boolean;
+}
+
 export interface TrajectoryContract {
   wheelset_equipment_id: number;
   loco_number: string | null;
@@ -316,6 +333,7 @@ export interface TrajectoryContract {
   feature_coverage: number | null;
   dims: TrajectoryDim[];
   turns: TurnMarker[];
+  turn_reset: TurnReset;
   delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
   time_to_limit_summary: TimeToLimitSummary | null;
   note: string | null;

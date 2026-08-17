@@ -142,6 +142,7 @@ def build_snapshot() -> pd.DataFrame:
 
         # degradation forecasts per dim x horizon (predicted level + delta + band)
         pred_by_dim: dict[str, dict[int, float | None]] = {}
+        adapt = service.wheel_adaptation_at(int(ws_id), anchor)
         for dim in DEG_DIMS:
             current = fr.get(f"mean_{dim}")
             row[f"mean_{dim}"] = _f(current)
@@ -149,12 +150,22 @@ def build_snapshot() -> pd.DataFrame:
             for h in HORIZONS:
                 delta = float(svc["models"][(dim, h)].predict(X)[0])
                 pred = current + delta if np.isfinite(delta) and current is not None and np.isfinite(current) else None
+                adj = adapt.get((dim, h)) if adapt else None
+                adapt_info = {"prior_n": adj["prior_n"] if adj else 0,
+                              "bias_mm": adj["bias"] if adj else None,
+                              "applied": False}
+                if adj and adj["prior_n"] >= service.ADAPT_MIN_N and adj["bias"] is not None and not adj["boundary"]:
+                    pred = pred + adj["bias"] if pred is not None else pred
+                    adapt_info = {"prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
                 pred_by_dim[dim][h] = pred
                 width = service._conformal_width_mm(dim, h)
                 row[f"fc_{dim}_{h}d_pred"] = _f(pred)
                 row[f"fc_{dim}_{h}d_delta"] = _f(delta) if np.isfinite(delta) else None
                 row[f"fc_{dim}_{h}d_low"] = _f(pred - width) if pred is not None and width is not None else None
                 row[f"fc_{dim}_{h}d_high"] = _f(pred + width) if pred is not None and width is not None else None
+                row[f"fc_{dim}_{h}d_adapt_prior_n"] = adapt_info["prior_n"]
+                row[f"fc_{dim}_{h}d_adapt_bias"] = adapt_info["bias_mm"]
+                row[f"fc_{dim}_{h}d_adapt_applied"] = adapt_info["applied"]
 
         # P(turn) - separate signal, never merged into wear risk
         Xp = service._feature_vector(fr, psvc["num_feats"], psvc["cat_feats"], psvc["enc"])

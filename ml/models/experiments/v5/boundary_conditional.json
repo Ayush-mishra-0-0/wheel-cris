@@ -1,0 +1,158 @@
+{
+  "task": "boundary-conditional residual (turn/replacement vs steady)",
+  "target_mode": "delta (level = anchor + delta)",
+  "results": {
+    "wsmRoot": {
+      "30d": {
+        "all": {
+          "n": 29139,
+          "mae": 0.5971,
+          "rmse": 0.7872
+        },
+        "steady": {
+          "n": 28700,
+          "mae": 0.5999,
+          "rmse": 0.7903
+        },
+        "boundary": {
+          "n": 439,
+          "mae": 0.4135,
+          "rmse": 0.5429
+        },
+        "boundary_pct": 1.51
+      },
+      "90d": {
+        "all": {
+          "n": 41879,
+          "mae": 0.6582,
+          "rmse": 0.849
+        },
+        "steady": {
+          "n": 41239,
+          "mae": 0.6608,
+          "rmse": 0.852
+        },
+        "boundary": {
+          "n": 640,
+          "mae": 0.4959,
+          "rmse": 0.6285
+        },
+        "boundary_pct": 1.53
+      }
+    },
+    "wsmFlange": {
+      "30d": {
+        "all": {
+          "n": 29145,
+          "mae": 0.2207,
+          "rmse": 0.2874
+        },
+        "steady": {
+          "n": 28706,
+          "mae": 0.2213,
+          "rmse": 0.2882
+        },
+        "boundary": {
+          "n": 439,
+          "mae": 0.1787,
+          "rmse": 0.2319
+        },
+        "boundary_pct": 1.51
+      },
+      "90d": {
+        "all": {
+          "n": 41885,
+          "mae": 0.2364,
+          "rmse": 0.3031
+        },
+        "steady": {
+          "n": 41245,
+          "mae": 0.237,
+          "rmse": 0.3037
+        },
+        "boundary": {
+          "n": 640,
+          "mae": 0.2005,
+          "rmse": 0.2602
+        },
+        "boundary_pct": 1.53
+      }
+    },
+    "wsmThread": {
+      "30d": {
+        "all": {
+          "n": 29145,
+          "mae": 0.5694,
+          "rmse": 0.8038
+        },
+        "steady": {
+          "n": 28706,
+          "mae": 0.5737,
+          "rmse": 0.808
+        },
+        "boundary": {
+          "n": 439,
+          "mae": 0.2899,
+          "rmse": 0.4504
+        },
+        "boundary_pct": 1.51
+      },
+      "90d": {
+        "all": {
+          "n": 41885,
+          "mae": 0.6467,
+          "rmse": 0.8617
+        },
+        "steady": {
+          "n": 41245,
+          "mae": 0.6511,
+          "rmse": 0.865
+        },
+        "boundary": {
+          "n": 640,
+          "mae": 0.3621,
+          "rmse": 0.605
+        },
+        "boundary_pct": 1.53
+      }
+    },
+    "wsmDia": {
+      "30d": {
+        "all": {
+          "n": 29145,
+          "mae": 2.1272,
+          "rmse": 3.6214
+        },
+        "steady": {
+          "n": 28706,
+          "mae": 2.1093,
+          "rmse": 3.5718
+        },
+        "boundary": {
+          "n": 439,
+          "mae": 3.2969,
+          "rmse": 6.0371
+        },
+        "boundary_pct": 1.51
+      },
+      "90d": {
+        "all": {
+          "n": 41885,
+          "mae": 2.8027,
+          "rmse": 4.3971
+        },
+        "steady": {
+          "n": 41245,
+          "mae": 2.7688,
+          "rmse": 4.3051
+        },
+        "boundary": {
+          "n": 640,
+          "mae": 4.9877,
+          "rmse": 8.4212
+        },
+        "boundary_pct": 1.53
+      }
+    }
+  }
+}

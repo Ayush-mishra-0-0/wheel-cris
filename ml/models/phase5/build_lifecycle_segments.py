@@ -70,6 +70,26 @@ REPLACEMENT_DIA_JUMP_MM = 20.0
 REPLACEMENT_CONFIRM_SUSTAIN_TOL_MM = 10.0
 
 
+def reset_aware_window_base(t_arr, seg_arr, p, window_days, DAY=np.timedelta64(1, "D")):
+    """Reset-aware trailing-window base index per anchor position p.
+
+    A trailing-window wear rate is only meaningful when every measurement in
+    the window belongs to the SAME lifecycle segment: a turn/replacement inside
+    the window mixes pre-turn (worn) and post-turn (restored) levels, so the
+    rate looks DECREASING right after a reset (root's documented fast-wear
+    corruption). This helper clamps the window base to the anchor's segment
+    start:
+
+        base = max(searchsorted(t, t[p] - window_days), segment_start[p])
+
+    A base >= p means the anchor IS the segment's first (fresh) row -> no
+    within-segment history, so the caller must emit NaN for the rate.
+    """
+    lo = np.searchsorted(t_arr, t_arr[p] - np.timedelta64(window_days, "D"), side="left")
+    seg_start = np.searchsorted(seg_arr, seg_arr[p], side="left")
+    return np.maximum(lo, seg_start)
+
+
 def side_mean(df: pd.DataFrame, field: str) -> pd.Series:
     lo, hi = GATES[field]
     f1 = df[f"{field}1"].to_numpy(dtype=float)

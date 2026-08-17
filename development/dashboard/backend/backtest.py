@@ -127,6 +127,7 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
     deg_meta = service.degradation_meta()
     cov = service.feature_coverage(fr, deg_svc["num_feats"])
     Xdeg = service._feature_vector(fr, deg_svc["num_feats"], deg_svc["cat_feats"], deg_svc["enc"])
+    adapt = service.wheel_adaptation_at(wheelset_id, anchor_ts)
     forecasts = []
     for dim in DIMM:
         for h in HORIZONS:
@@ -139,6 +140,13 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
             pred = None
             if np.isfinite(delta) and current is not None and np.isfinite(current):
                 pred = current + delta
+            adj = adapt.get((dim, h)) if adapt else None
+            adapt_info = {"prior_n": adj["prior_n"] if adj else 0,
+                          "bias_mm": adj["bias"] if adj else None,
+                          "applied": False}
+            if adj and adj["prior_n"] >= service.ADAPT_MIN_N and adj["bias"] is not None and not adj["boundary"]:
+                pred = pred + adj["bias"] if pred is not None else pred
+                adapt_info = {"prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
             flag = None
             if pred is not None and current is not None and np.isfinite(current):
                 if dim == "wsmDia" and pred > current + DIA_INC_TOL:
@@ -157,6 +165,7 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
                 "model_version": deg_meta.get("model_version"),
                 "train_cutoff": deg_meta.get("train_cutoff"),
                 "feature_coverage": cov,
+                "wheel_adaptation": adapt_info,
                 "mae": round(abs(pred - actual), 4) if pred is not None and actual is not None and np.isfinite(actual) else None,
             })
 
@@ -203,6 +212,7 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
         "turn_probability": pturn,
         "time_to_limit_summary": ttl_summary,
         "time_to_limit": ttl_by_dim,
+        "turn_reset": service.turn_reset_policy(w, p),
         "note": ("Strict point-in-time: features use only information at "
                  "anchor; predictions compared against actual future within-segment "
                  "observations / confirmed turns. Implausibility flags are reported, "

@@ -6,7 +6,7 @@
   "source_v3f": "model_datasets\\v3f\\change_space_benchmark.parquet",
   "source_segments": "model_datasets\\v5\\lifecycle_segments_shed.parquet",
   "output": "model_datasets\\v5\\degradation_benchmark.parquet",
-  "sha256": "eaf9d11e38f80008a9f9d423a2adc5d59108007749b1c2432ec6dc2d596a1ef3",
+  "sha256": "e6f619d23f48a59fad874955faf44f328e08ba11ab954e2640c4ab89bed4ee68",
   "rows": 239684,
   "rows_train": 191747,
   "rows_test": 47937,
