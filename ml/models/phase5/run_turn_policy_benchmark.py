@@ -112,9 +112,6 @@ def main() -> None:
             out[m] = shed_lookup.iloc[i]
         return out
 
-    te_df = df.loc[~is_train]
-    te_shed = te_df["shed_any"].astype(str).replace({"nan": "NA", "None": "NA"})
-
     for col, label in POST_DIMS.items():
         y = df[col].to_numpy(dtype=float)
         yok = np.isfinite(y)
@@ -122,6 +119,8 @@ def main() -> None:
         Xtr_full, Xte_full = X[is_train & yok], X[~is_train & yok]
         if len(yte) < 10:
             continue
+        te_shed = df.loc[~is_train & yok, "shed_any"].astype(str).replace(
+            {"nan": "NA", "None": "NA"})
         res = {"model_metrics": {}}
         # B0: global train median of post-turn state (or of cut)
         g = float(np.nanmedian(ytr))

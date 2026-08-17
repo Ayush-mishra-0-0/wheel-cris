@@ -34,70 +34,70 @@
    "ph5_wsmThread_rate_per_day_90d",
    "wheel_age_days_proxy"
   ],
-  "fr_cov": 0.3235,
+  "fr_cov": 0.2353,
   "current": {
-   "wsmRoot": 0.0,
-   "wsmFlange": 0.0,
-   "wsmThread": 0.0,
+   "wsmRoot": NaN,
+   "wsmFlange": NaN,
+   "wsmThread": NaN,
    "wsmDia": 1091.0
   },
   "forecasts": {
    "wsmRoot": {
-    "30": 0.5585,
-    "90": 0.8388,
-    "180": 1.6786
+    "30": null,
+    "90": null,
+    "180": null
    },
    "wsmFlange": {
-    "30": 0.2522,
-    "90": 0.2311,
-    "180": 0.7978
+    "30": null,
+    "90": null,
+    "180": null
    },
    "wsmThread": {
-    "30": 0.206,
-    "90": 0.1317,
-    "180": 0.708
+    "30": null,
+    "90": null,
+    "180": null
    },
    "wsmDia": {
-    "30": 1089.4002,
-    "90": 1078.1001,
-    "180": 1087.4722
+    "30": 1078.2178,
+    "90": 1074.0532,
+    "180": 1078.7589
    }
   },
   "pred_at": {
-   "wsmRoot": 0.2979,
-   "wsmFlange": 0.1345,
-   "wsmThread": 0.1099,
-   "wsmDia": 1090.1466
+   "wsmRoot": NaN,
+   "wsmFlange": NaN,
+   "wsmThread": NaN,
+   "wsmDia": 1084.1816
   },
   "actual": {
-   "wsmRoot": 0.4,
-   "wsmFlange": 0.25,
-   "wsmThread": 0.0,
+   "wsmRoot": 0.8,
+   "wsmFlange": 0.5,
+   "wsmThread": NaN,
    "wsmDia": 1086.0
   },
   "residual": {
-   "wsmRoot": 0.1021,
-   "wsmFlange": 0.1155,
-   "wsmThread": -0.1099,
-   "wsmDia": -4.1466
+   "wsmRoot": NaN,
+   "wsmFlange": NaN,
+   "wsmThread": NaN,
+   "wsmDia": 1.8184
   },
   "path_mae": {
-   "wsmRoot": 0.0542,
-   "wsmFlange": 0.0613,
-   "wsmThread": 0.0584,
-   "wsmDia": 2.2025
+   "wsmRoot": null,
+   "wsmFlange": null,
+   "wsmThread": null,
+   "wsmDia": 0.9658
   },
   "pturn": {
-   "30": 0.0012495326809585094,
-   "60": 0.007920690812170506,
-   "90": 0.019133174791932106
+   "30": 2.4885483071557246e-05,
+   "60": 0.0002351042057853192,
+   "90": 0.0004289975913707167
   },
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "turn_interval": false,
   "kind": "no_turn",
   "risk_bucket": "wsmRoot",
-  "pturn_90d": 0.2411,
+  "pturn_90d": 0.0003,
   "days_to_condemning_dia": null
  },
  {
@@ -135,7 +135,7 @@
    "ph5_wsmThread_rate_per_day_90d",
    "wheel_age_days_proxy"
   ],
-  "fr_cov": 1.0,
+  "fr_cov": 0.9412,
   "current": {
    "wsmRoot": 1.3,
    "wsmFlange": 0.30000000000000004,
@@ -144,31 +144,31 @@
   },
   "forecasts": {
    "wsmRoot": {
-    "30": 1.3159,
-    "90": 1.8406,
-    "180": 1.5275
+    "30": 1.4758,
+    "90": 2.2256,
+    "180": 2.4097
    },
    "wsmFlange": {
-    "30": 0.394,
-    "90": 0.3906,
-    "180": 0.5074
+    "30": 0.3935,
+    "90": 0.6226,
+    "180": 0.8403
    },
    "wsmThread": {
-    "30": 3.2504,
-    "90": 2.2235,
-    "180": 3.0456
+    "30": 3.3154,
+    "90": 2.5912,
+    "180": 2.4675
    },
    "wsmDia": {
-    "30": 1054.8388,
-    "90": 1049.0135,
-    "180": 1047.7321
+    "30": 1054.3154,
+    "90": 1053.0178,
+    "180": 1050.7791
    }
   },
   "pred_at": {
-   "wsmRoot": 1.3154,
-   "wsmFlange": 0.3909,
-   "wsmThread": 3.2454,
-   "wsmDia": 1054.8025
+   "wsmRoot": 1.4699,
+   "wsmFlange": 0.3904,
+   "wsmThread": 3.3082,
+   "wsmDia": 1054.2966
   },
   "actual": {
    "wsmRoot": 1.75,
@@ -177,28 +177,28 @@
    "wsmDia": 1053.75
   },
   "residual": {
-   "wsmRoot": 0.4346,
-   "wsmFlange": -0.0409,
-   "wsmThread": -0.1454,
-   "wsmDia": -1.0525
+   "wsmRoot": 0.2801,
+   "wsmFlange": -0.0404,
+   "wsmThread": -0.2082,
+   "wsmDia": -0.5466
   },
   "path_mae": {
-   "wsmRoot": 0.2248,
-   "wsmFlange": 0.0211,
-   "wsmThread": 0.0752,
-   "wsmDia": 0.5444
+   "wsmRoot": 0.1449,
+   "wsmFlange": 0.0209,
+   "wsmThread": 0.1077,
+   "wsmDia": 0.2827
   },
   "pturn": {
-   "30": 0.0008211960666812956,
-   "60": 0.0003784430446103215,
-   "90": 0.00014167818881105632
+   "30": 0.013442013412714005,
+   "60": 0.006502433679997921,
+   "90": 0.013028844259679317
   },
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "turn_interval": false,
   "kind": "no_turn",
   "risk_bucket": "wsmRoot",
-  "pturn_90d": 0.0001,
+  "pturn_90d": 0.0049,
   "days_to_condemning_dia": null
  },
  {
@@ -236,70 +236,70 @@
    "ph5_wsmThread_rate_per_day_90d",
    "wheel_age_days_proxy"
   ],
-  "fr_cov": 0.9118,
+  "fr_cov": 0.7941,
   "current": {
    "wsmRoot": 0.275,
-   "wsmFlange": 0.25,
-   "wsmThread": 0.0,
+   "wsmFlange": 0.5,
+   "wsmThread": NaN,
    "wsmDia": 1088.775
   },
   "forecasts": {
    "wsmRoot": {
-    "30": 0.7206,
-    "90": 0.9868,
-    "180": 2.4927
+    "30": 0.7589,
+    "90": 0.8914,
+    "180": 2.1958
    },
    "wsmFlange": {
-    "30": 0.2795,
-    "90": 0.4918,
-    "180": 0.8528
+    "30": 0.495,
+    "90": 0.4984,
+    "180": 0.8983
    },
    "wsmThread": {
-    "30": 0.3188,
-    "90": 0.3442,
-    "180": 1.5931
+    "30": null,
+    "90": null,
+    "180": null
    },
    "wsmDia": {
-    "30": 1088.6323,
-    "90": 1088.6204,
-    "180": 1086.6942
+    "30": 1089.9469,
+    "90": 1083.8626,
+    "180": 1075.3554
    }
   },
   "pred_at": {
-   "wsmRoot": 0.7383,
-   "wsmFlange": 0.2937,
-   "wsmThread": 0.3205,
-   "wsmDia": 1088.6315
+   "wsmRoot": 0.7677,
+   "wsmFlange": 0.4952,
+   "wsmThread": NaN,
+   "wsmDia": 1089.5413
   },
   "actual": {
    "wsmRoot": 0.8,
    "wsmFlange": 0.4,
-   "wsmThread": 0.0,
+   "wsmThread": NaN,
    "wsmDia": 1088.775
   },
   "residual": {
-   "wsmRoot": 0.0617,
-   "wsmFlange": 0.1063,
-   "wsmThread": -0.3205,
-   "wsmDia": 0.1435
+   "wsmRoot": 0.0323,
+   "wsmFlange": -0.0952,
+   "wsmThread": NaN,
+   "wsmDia": -0.7663
   },
   "path_mae": {
-   "wsmRoot": 0.0134,
-   "wsmFlange": 0.0592,
-   "wsmThread": 0.183,
-   "wsmDia": 0.0819
+   "wsmRoot": 0.0113,
+   "wsmFlange": 0.0486,
+   "wsmThread": null,
+   "wsmDia": 0.6423
   },
   "pturn": {
-   "30": 2.0127477000642102e-06,
-   "60": 6.3289176068792585e-06,
-   "90": 9.224499081028625e-06
+   "30": 6.007291176501894e-06,
+   "60": 0.0003257310308981687,
+   "90": 0.0041352915577590466
   },
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "turn_interval": false,
   "kind": "no_turn",
   "risk_bucket": "wsmFlange",
-  "pturn_90d": 0.0,
+  "pturn_90d": 0.0163,
   "days_to_condemning_dia": null
  },
  {
@@ -337,40 +337,40 @@
    "ph5_wsmThread_rate_per_day_90d",
    "wheel_age_days_proxy"
   ],
-  "fr_cov": 0.6471,
+  "fr_cov": 0.6176,
   "current": {
-   "wsmRoot": 0.0,
-   "wsmFlange": 0.5,
+   "wsmRoot": NaN,
+   "wsmFlange": 1.0,
    "wsmThread": 0.5,
    "wsmDia": 1079.495
   },
   "forecasts": {
    "wsmRoot": {
-    "30": 0.3756,
-    "90": 0.7982,
-    "180": 1.105
+    "30": null,
+    "90": null,
+    "180": null
    },
    "wsmFlange": {
-    "30": 0.5909,
-    "90": 0.5037,
-    "180": 0.8821
+    "30": 0.7833,
+    "90": 0.9549,
+    "180": 1.2722
    },
    "wsmThread": {
-    "30": 0.4256,
-    "90": 0.1828,
-    "180": 0.945
+    "30": 0.9192,
+    "90": 0.9756,
+    "180": 1.316
    },
    "wsmDia": {
-    "30": 1077.3624,
-    "90": 1070.4465,
-    "180": 1058.4381
+    "30": 1077.4938,
+    "90": 1078.0903,
+    "180": 1075.8
    }
   },
   "pred_at": {
-   "wsmRoot": 0.446,
-   "wsmFlange": 0.5764,
-   "wsmThread": 0.3851,
-   "wsmDia": 1076.2097
+   "wsmRoot": NaN,
+   "wsmFlange": 0.8119,
+   "wsmThread": 0.9286,
+   "wsmDia": 1077.5932
   },
   "actual": {
    "wsmRoot": 2.35,
@@ -379,28 +379,28 @@
    "wsmDia": 1077.5
   },
   "residual": {
-   "wsmRoot": 1.904,
-   "wsmFlange": 0.6736,
-   "wsmThread": 0.3649,
-   "wsmDia": 1.2903
+   "wsmRoot": NaN,
+   "wsmFlange": 0.4381,
+   "wsmThread": -0.1786,
+   "wsmDia": -0.0932
   },
   "path_mae": {
-   "wsmRoot": 0.9552,
-   "wsmFlange": 0.3284,
-   "wsmThread": 0.1811,
-   "wsmDia": 0.4956
+   "wsmRoot": null,
+   "wsmFlange": 0.2623,
+   "wsmThread": 0.1404,
+   "wsmDia": 0.246
   },
   "pturn": {
-   "30": 0.0005940537084825337,
-   "60": 0.007821108214557171,
-   "90": 0.02278650738298893
+   "30": 0.00016962297377176583,
+   "60": 0.0020559572149068117,
+   "90": 0.31657639145851135
   },
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "turn_interval": false,
   "kind": "no_turn",
-  "risk_bucket": "wsmFlange",
-  "pturn_90d": 0.0008,
+  "risk_bucket": "wsmRoot",
+  "pturn_90d": 0.0149,
   "days_to_condemning_dia": null
  },
  {
@@ -438,30 +438,30 @@
    "ph5_wsmThread_rate_per_day_90d",
    "wheel_age_days_proxy"
   ],
-  "fr_cov": 0.6176,
+  "fr_cov": 0.5882,
   "current": {
    "wsmRoot": 1.5,
    "wsmFlange": 0.6,
-   "wsmThread": 0.0,
+   "wsmThread": NaN,
    "wsmDia": 1073.0
   },
   "pred_no_turn_at_turn": {
-   "wsmRoot": 1.4296,
-   "wsmFlange": 0.8916,
-   "wsmThread": 0.1331,
-   "wsmDia": 1061.3504
+   "wsmRoot": 1.8398,
+   "wsmFlange": 0.7038,
+   "wsmThread": NaN,
+   "wsmDia": 1060.8758
   },
   "actual_post_turn": {
    "wsmRoot": 1.1,
    "wsmFlange": 1.15,
-   "wsmThread": 0.0,
+   "wsmThread": NaN,
    "wsmDia": 1060.0
   },
   "residual": {
-   "wsmRoot": -0.3296,
-   "wsmFlange": 0.2584,
-   "wsmThread": -0.1331,
-   "wsmDia": -1.3504
+   "wsmRoot": -0.7398,
+   "wsmFlange": 0.4462,
+   "wsmThread": NaN,
+   "wsmDia": -0.8758
   },
   "restore": {
    "cut_dia": 13.0,
@@ -471,16 +471,16 @@
    "post_wsmRoot": 1.1
   },
   "pturn": {
-   "30": 0.02201143652200699,
-   "60": 0.10227986425161362,
-   "90": 0.3608038127422333
+   "30": 2.9111217372701503e-05,
+   "60": 0.00022016550065018237,
+   "90": 0.000738655508030206
   },
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "turn_interval": true,
   "kind": "turn",
-  "risk_bucket": "wsmThread",
-  "pturn_90d": 0.4573,
+  "risk_bucket": "wsmFlange",
+  "pturn_90d": 0.0037,
   "days_to_condemning_dia": null
  },
  {
@@ -518,30 +518,30 @@
    "ph5_wsmThread_rate_per_day_90d",
    "wheel_age_days_proxy"
   ],
-  "fr_cov": 0.8824,
+  "fr_cov": 0.7647,
   "current": {
    "wsmRoot": 4.0,
    "wsmFlange": 1.85,
-   "wsmThread": 0.0,
+   "wsmThread": NaN,
    "wsmDia": 1072.0
   },
   "pred_no_turn_at_turn": {
-   "wsmRoot": 2.2586,
-   "wsmFlange": 1.7267,
-   "wsmThread": 0.234,
-   "wsmDia": 1066.0587
+   "wsmRoot": 2.0949,
+   "wsmFlange": 1.5348,
+   "wsmThread": NaN,
+   "wsmDia": 1057.4154
   },
   "actual_post_turn": {
    "wsmRoot": 0.35,
    "wsmFlange": 1.0,
-   "wsmThread": 0.0,
+   "wsmThread": NaN,
    "wsmDia": 1068.0
   },
   "residual": {
-   "wsmRoot": -1.9086,
-   "wsmFlange": -0.7267,
-   "wsmThread": -0.234,
-   "wsmDia": 1.9413
+   "wsmRoot": -1.7449,
+   "wsmFlange": -0.5348,
+   "wsmThread": NaN,
+   "wsmDia": 10.5846
   },
   "restore": {
    "cut_dia": 4.0,
@@ -551,16 +551,16 @@
    "post_wsmRoot": 0.35
   },
   "pturn": {
-   "30": 0.6043605804443359,
-   "60": 0.7730449438095093,
-   "90": 0.7774763703346252
+   "30": 0.00018375320360064507,
+   "60": 0.00044144815183244646,
+   "90": 0.00046269947779364884
   },
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "turn_interval": true,
   "kind": "turn",
-  "risk_bucket": "wsmRoot",
-  "pturn_90d": 0.0016,
+  "risk_bucket": "wsmThread",
+  "pturn_90d": 0.463,
   "days_to_condemning_dia": null
  }
 ]

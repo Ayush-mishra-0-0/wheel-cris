@@ -42,18 +42,22 @@ DAY = np.timedelta64(1, "D")
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
-WEAR_BETTER_TOL = 0.05      # mm threshold below current to flag "wear improves"
-DIA_INC_TOL = 0.001         # mm; predicted diameter above current
+WEAR_BETTER_TOL = 0.25      # mm threshold below current to flag "wear improves"
+DIA_INC_TOL = 1.5           # mm; predicted diameter above current
 
 
 def _load_confirmed_turns() -> pd.DataFrame:
     t = pd.read_parquet(TURNS)
     t["post_ts"] = pd.to_datetime(t["post_ts"])
-    consistent = (
-        (t["pre_wsmDia"] > t["post_wsmDia"])
-        & (t["pre_wsmFlange"] >= t["post_wsmFlange"])
-        & (t["pre_wsmRoot"] >= t["post_wsmRoot"])
-        & (t["pre_wsmThread"] >= t["post_wsmThread"]))
+    # dia cut is strict (always observed at a confirmed turn); the wear dims
+    # only need to be consistent when the post-turn value is actually observed
+    # (NaN post = missing reading, not a restore failure - e.g. zero-as-missing
+    # placeholders) - so a missing post value no longer invalidates the turn.
+    consistent = t["pre_wsmDia"].notna() & t["post_wsmDia"].notna() \
+        & (t["pre_wsmDia"] > t["post_wsmDia"])
+    for d in ("wsmFlange", "wsmRoot", "wsmThread"):
+        consistent &= t[f"pre_{d}"].isna() | t[f"post_{d}"].isna() \
+            | (t[f"pre_{d}"] >= t[f"post_{d}"])
     return t[consistent].copy()
 
 

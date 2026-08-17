@@ -1,10 +1,10 @@
 {
   "task": "fleet snapshot (P1.1) - one row per wheelset, current state",
   "contract": "fleet_snapshot_v1",
-  "built_at_utc": "2026-08-17T09:42:48.056054+00:00",
+  "built_at_utc": "2026-08-17T11:48:21.351136+00:00",
   "n_wheelsets": 19167,
   "n_with_forecast": 19167,
-  "model_version": "c87e7270b6",
+  "model_version": "862fe6b639",
   "train_cutoff": "2025-11-24",
   "sources": [
     {
@@ -17,7 +17,7 @@
     },
     {
       "path": "model_datasets\\v5\\lifecycle_segments_shed.parquet",
-      "sha256": "e294ea939c30d74e67bbf5080d8d8209ea588282290944e5b2d2a46180f3c42b"
+      "sha256": "6a216ce7b874bd6121acf287199fced465eeb00bc71d42320f4f4e71859b824e"
     }
   ],
   "rebuild": "ayush\\Scripts\\python -m dashboard.backend.build_fleet_snapshot",

@@ -5,84 +5,84 @@
       "dim": "wsmRoot",
       "horizon": 30,
       "path": "model_wsmRoot_30d.joblib",
-      "n_train": 92461,
+      "n_train": 59676,
       "target": "delta"
     },
     {
       "dim": "wsmRoot",
       "horizon": 90,
       "path": "model_wsmRoot_90d.joblib",
-      "n_train": 128439,
+      "n_train": 89836,
       "target": "delta"
     },
     {
       "dim": "wsmRoot",
       "horizon": 180,
       "path": "model_wsmRoot_180d.joblib",
-      "n_train": 134602,
+      "n_train": 98192,
       "target": "delta"
     },
     {
       "dim": "wsmFlange",
       "horizon": 30,
       "path": "model_wsmFlange_30d.joblib",
-      "n_train": 87456,
+      "n_train": 56514,
       "target": "delta"
     },
     {
       "dim": "wsmFlange",
       "horizon": 90,
       "path": "model_wsmFlange_90d.joblib",
-      "n_train": 123167,
+      "n_train": 85684,
       "target": "delta"
     },
     {
       "dim": "wsmFlange",
       "horizon": 180,
       "path": "model_wsmFlange_180d.joblib",
-      "n_train": 129068,
+      "n_train": 93878,
       "target": "delta"
     },
     {
       "dim": "wsmThread",
       "horizon": 30,
       "path": "model_wsmThread_30d.joblib",
-      "n_train": 92455,
+      "n_train": 41737,
       "target": "delta"
     },
     {
       "dim": "wsmThread",
       "horizon": 90,
       "path": "model_wsmThread_90d.joblib",
-      "n_train": 128443,
+      "n_train": 61301,
       "target": "delta"
     },
     {
       "dim": "wsmThread",
       "horizon": 180,
       "path": "model_wsmThread_180d.joblib",
-      "n_train": 134545,
+      "n_train": 66771,
       "target": "delta"
     },
     {
       "dim": "wsmDia",
       "horizon": 30,
       "path": "model_wsmDia_30d.joblib",
-      "n_train": 92471,
+      "n_train": 64017,
       "target": "delta"
     },
     {
       "dim": "wsmDia",
       "horizon": 90,
       "path": "model_wsmDia_90d.joblib",
-      "n_train": 128439,
+      "n_train": 98468,
       "target": "delta"
     },
     {
       "dim": "wsmDia",
       "horizon": 180,
       "path": "model_wsmDia_180d.joblib",
-      "n_train": 134544,
+      "n_train": 110611,
       "target": "delta"
     }
   ]

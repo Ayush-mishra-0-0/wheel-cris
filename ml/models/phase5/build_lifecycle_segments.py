@@ -57,6 +57,11 @@ CONTEXT = ["locomotive_id", "LomNumber", "LocoType", "wheel_position_1_12",
            "axle_position_1_6", "wheel_profile_2class", "home_shed",
            "defect_zone", "defect_division"]
 TURN_CUT_MIN, TURN_CUT_MAX = 1.0, 25.0
+# When the turning-record flag is absent (~98% of rows) the physics signature
+# (dia cut + wear restore) is accepted with a slightly stricter diameter floor
+# so sub-resolution noise that happens to co-occur with a small restore is not
+# counted as a turn. Flagged rows keep the standard TURN_CUT_MIN.
+TURN_CUT_UNFLAGGED_MIN = 2.0
 WEAR_RESTORE = 0.2
 MAX_INTER_EVENT_DAYS = 180
 
@@ -100,8 +105,11 @@ def side_mean(df: pd.DataFrame, field: str) -> pd.Series:
     else:
         g1 = df[f"{field}1_quality"].eq("OBSERVED_VALID").to_numpy()
         g2 = df[f"{field}2_quality"].eq("OBSERVED_VALID").to_numpy()
-    v1 = np.where(g1 & np.isfinite(f1) & (f1 >= lo) & (f1 <= hi), f1, np.nan)
-    v2 = np.where(g2 & np.isfinite(f2) & (f2 >= lo) & (f2 <= hi), f2, np.nan)
+    # Exact 0.0 raw readings are placeholder/missing (not real measurements):
+    # e.g. ~34% of wsmThread rows carry a literal 0.0. Exclude them per side so
+    # the mean reflects only genuinely observed values.
+    v1 = np.where(g1 & np.isfinite(f1) & (f1 >= lo) & (f1 <= hi) & (f1 != 0), f1, np.nan)
+    v2 = np.where(g2 & np.isfinite(f2) & (f2 >= lo) & (f2 <= hi) & (f2 != 0), f2, np.nan)
     nv = np.stack([v1, v2], axis=1)
     return pd.Series(np.nanmean(nv, axis=1), index=df.index)
 
@@ -185,8 +193,18 @@ def compute_boundaries(wes: pd.DataFrame) -> pd.DataFrame:
     cut = wes["prev_wsmDia"] - wes["mean_wsmDia"]
     fl_restore = wes["mean_wsmFlange"].fillna(0) <= wes["prev_wsmFlange"].fillna(0) - WEAR_RESTORE
     rt_restore = wes["mean_wsmRoot"].fillna(0) <= wes["prev_wsmRoot"].fillna(0) - WEAR_RESTORE
-    dia_cut = (cut >= TURN_CUT_MIN) & (cut <= TURN_CUT_MAX) & wes["prev_wsmDia"].notna()
-    wes["turn_event"] = wes["turn_flag"] & dia_cut & (fl_restore | rt_restore)
+    # Turning is detected from PHYSICS, not the record flag: the flag is present
+    # on only ~2% of rows (1,946/271,350) and = 0 across whole wheelsets, so a
+    # hard flag gate discards the overwhelming majority of real machining cuts
+    # and mixes pre/post-cut measurements into one segment (the root cause of
+    # `wear_better_than_current`). The machining signature is a diameter cut
+    # combined with a wear-dim restore. The flag now only CONFIRMS: when present
+    # the standard TURN_CUT_MIN applies; when absent a slightly stricter dia
+    # floor (TURN_CUT_UNFLAGGED_MIN) suppresses noise-only co-occurrences.
+    flag = wes["turn_flag"].to_numpy(dtype=bool)
+    min_cut = np.where(flag, TURN_CUT_MIN, TURN_CUT_UNFLAGGED_MIN)
+    dia_cut = (cut >= min_cut) & (cut <= TURN_CUT_MAX) & wes["prev_wsmDia"].notna()
+    wes["turn_event"] = (dia_cut & (fl_restore | rt_restore)).to_numpy()
 
     prov = pd.to_datetime(wes["wsmProvDate"])
     wes["_prov_num"] = prov.to_numpy(dtype="datetime64[us]").astype("int64")

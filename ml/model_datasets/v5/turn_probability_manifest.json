@@ -3,21 +3,21 @@
   "contract": "wheel_profile_lifecycle_contract_v1",
   "pointer": "P(turn) = historical maintenance behaviour, NOT engineering-limit risk",
   "n_anchors": 220000,
-  "n_wheelsets": 15571,
+  "n_wheelsets": 15576,
   "train_cutoff": "2024-08-12",
   "split": {
-    "train": 86470,
-    "test": 133530
+    "train": 86426,
+    "test": 133574
   },
   "turn_rate_train": {
-    "turned_30d": 0.0248,
-    "turned_60d": 0.0349,
-    "turned_90d": 0.045
+    "turned_30d": 0.0219,
+    "turned_60d": 0.0317,
+    "turned_90d": 0.0474
   },
   "turn_rate_test": {
-    "turned_30d": 0.0092,
-    "turned_60d": 0.014,
-    "turned_90d": 0.0198
+    "turned_30d": 0.0269,
+    "turned_60d": 0.0425,
+    "turned_90d": 0.0643
   },
-  "sha256": "95efd2b8d9604f8974f361ad699de8dab08d7f3e5f1ced8adea0bbd144ad38ed"
+  "sha256": "18bd0018474e3778f28fdbd13d8a4cfc535fc8c1cb913ebcb3b8a9863fc086b8"
 }

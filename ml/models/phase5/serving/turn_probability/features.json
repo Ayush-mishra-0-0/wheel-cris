@@ -43,5 +43,5 @@
     90
   ],
   "train_cutoff": "2024-08-11",
-  "n_train_rows": 86470
+  "n_train_rows": 86426
 }

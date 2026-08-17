@@ -1,19 +1,19 @@
 {
   "turns": {
-    "n": 3237,
-    "shed_slam": 0.171,
-    "station_fois": 0.0,
-    "shed_fois": 0.0,
-    "shed_any_or_home": 0.786,
-    "defect_zone": 0.751
+    "n": 46895,
+    "shed_slam": 0.25,
+    "station_fois": 0.148,
+    "shed_fois": 0.148,
+    "shed_any_or_home": 0.839,
+    "defect_zone": 0.805
   },
   "segments": {
-    "n": 44093,
-    "shed_slam": 0.193,
-    "station_fois": 0.0,
-    "shed_fois": 0.0,
-    "shed_any_or_home": 0.798,
-    "defect_zone": 0.785
+    "n": 87085,
+    "shed_slam": 0.181,
+    "station_fois": 0.221,
+    "shed_fois": 0.221,
+    "shed_any_or_home": 0.838,
+    "defect_zone": 0.795
   },
   "n_slam_locos": 2300
 }

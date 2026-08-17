@@ -33,8 +33,8 @@ SERV = ROOT / "models" / "phase5" / "serving" / "degradation"
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
-WEAR_BETTER_TOL = 0.05
-DIA_INC_TOL = 0.001
+WEAR_BETTER_TOL = 0.25      # re-derived from same-day repeatability floor (root MAD ~0.2)
+DIA_INC_TOL = 1.5           # re-derived from same-day repeatability floor (dia MAD 1.5)
 
 
 def main() -> None:

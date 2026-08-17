@@ -29,8 +29,13 @@ ADAPT_ARTEFACT = ROOT / "model_datasets" / "v5" / "wheelset_adaptation.parquet"
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
-WEAR_BETTER_TOL = 0.05      # mm threshold below current to flag "wear improves"
-DIA_INC_TOL = 0.001         # mm; predicted diameter above current
+# Implausibility flags (re-derived 2026-08-17 from the same-day measurement
+# repeatability floor: dia MAD 1.5mm, root ~0.2mm, flange ~0.11mm). Tolerances
+# sit just above the noise floor so prediction noise does not fire the flags;
+# the pre-fix values (0.05 / 0.001 mm) were below the noise floor and flagged
+# improvement/increase on nearly every wheelset.
+WEAR_BETTER_TOL = 0.25      # mm threshold below current to flag "wear improves"
+DIA_INC_TOL = 1.5           # mm; predicted diameter above current
 DAY = np.timedelta64(1, "D")
 
 # ---------------------------------------------------------------------------
