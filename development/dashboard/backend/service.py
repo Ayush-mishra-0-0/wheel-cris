@@ -960,13 +960,20 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
                limiting_dim: str | None = None, risk_level: str | None = None,
                sort_by: str = "pturn_90d", descending: bool = True,
                page: int = 1, page_size: int = 50,
-               max_staleness_days: int | None = 365) -> dict:
+               max_staleness_days: int | None = 365,
+               days_to_condemning_max: int | None = None,
+               pturn_min: float | None = None) -> dict:
     """Paginated, filterable, rankable wheelset risk table (P2.2 fleet view).
 
     `max_staleness_days` (default 365) hides wheelsets whose latest measurement
     is ancient. The risk table ranks "what to look at today"; a wheelset not
     measured in over a year is not evidence of a live fault. This is measurement
     recency, not proven equipment fit — pass max_staleness_days=None to show all.
+
+    Action-queue filters: `days_to_condemning_max` keeps wheelsets within N days
+    of the approved 1016 mm dia hard stop; `pturn_min` keeps wheelsets whose 90d
+    P(turn) is at or above a fraction (e.g. 0.05 = 5%). Both are honest cuts on
+    measurement signals, not guarantees of a turn.
     """
     df = _snapshot_df()
     if df is None:
@@ -979,6 +986,11 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
         df = df[df["loco_type"].astype(str).eq(loco_type)]
     if limiting_dim:
         df = df[df["limiting_dim"].astype(str).eq(limiting_dim)]
+    if days_to_condemning_max is not None:
+        df = df[df["days_to_condemning_dia"].notna() &
+                (df["days_to_condemning_dia"] <= days_to_condemning_max)]
+    if pturn_min is not None:
+        df = df[df["pturn_90d"].notna() & (df["pturn_90d"] >= pturn_min)]
     if risk_level:
         # risk_level: "pturn" | "condemning" | "wear" - each level is its own cut
         if risk_level == "pturn":
@@ -1009,7 +1021,9 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
             item[c] = _f(r[c])
     return {"total": total, "page": page, "page_size": page_size,
             "items": items, "columns": cols + pt_cols,
-            "max_staleness_days": max_staleness_days}
+            "max_staleness_days": max_staleness_days,
+            "days_to_condemning_max": days_to_condemning_max,
+            "pturn_min": pturn_min}
 
 
 def fleet_search(q: str) -> dict:

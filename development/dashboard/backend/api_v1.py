@@ -24,6 +24,7 @@ from .schemas import (
     TrajectoryContract, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
+from .config import ENABLE_LEGACY_PLOTS
 
 router = APIRouter(prefix="/api/v1")
 
@@ -72,12 +73,18 @@ def fleet_risk(
     page_size: int = Query(50, ge=1, le=500),
     max_staleness_days: int | None = Query(365, ge=0,
                                            description="hide wheelsets not measured within N days (measurement recency, not proven fit); null = show all"),
+    days_to_condemning_max: int | None = Query(None, ge=1,
+                                               description="action queue: keep wheelsets ≤N days from the approved 1016 mm dia hard stop"),
+    pturn_min: float | None = Query(None, ge=0, le=1,
+                                    description="action queue: keep wheelsets with 90d P(turn) ≥ this fraction (e.g. 0.05 = 5%)"),
 ) -> FleetRiskResponse:
     """Paginated, filterable, rankable wheelset risk table (P2.2 fleet view)."""
     data = service.fleet_risk(shed=shed, loco_type=loco_type, limiting_dim=limiting_dim,
                               risk_level=risk_level, sort_by=sort_by,
                               descending=descending, page=page, page_size=page_size,
-                              max_staleness_days=max_staleness_days)
+                              max_staleness_days=max_staleness_days,
+                              days_to_condemning_max=days_to_condemning_max,
+                              pturn_min=pturn_min)
     if "error" in data:
         raise HTTPException(status_code=503, detail=data["error"])
     return FleetRiskResponse(**data)
@@ -345,6 +352,19 @@ def fleet_capture():
 
 @router.get("/loco/{loco_number}/plots", tags=["loco"])
 def loco_plots(loco_number: str) -> dict:
+    """Legacy bulk lifecycle PNGs for all wheelsets on a loco.
+
+    Superseded by the per-wheelset trajectory contract and
+    `/wheelset/{id}/lifecycle/export`. Gated off by default
+    (config.ENABLE_LEGACY_PLOTS); when off, returns 410 with a pointer.
+    """
+    if not ENABLE_LEGACY_PLOTS:
+        raise HTTPException(
+            status_code=410,
+            detail=("Legacy bulk loco plots are disabled. Use the wheelset "
+                    "trajectory contract / /wheelset/{id}/lifecycle/export "
+                    "(CSV/PNG/SVG) instead. Set WHEEL_ENABLE_LEGACY_PLOTS=1 to restore."),
+        )
     """Generate lifecycle step PNGs for all wheelsets on a loco and return base64 images.
 
     This calls the Phase 5 plotting utility which writes PNGs to its report

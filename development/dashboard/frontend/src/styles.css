@@ -546,3 +546,96 @@ th.sorted { color: var(--ink); }
 .export-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .export-bar .btn { font-size: var(--fs-sm); padding: 6px 12px; }
 
+/* ---------------------------------------------------------------------------
+   Model + limit status strip (persistent, every page)
+--------------------------------------------------------------------------- */
+.model-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 6px 24px;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  font-size: var(--fs-sm);
+}
+.model-strip-item { display: inline-flex; align-items: baseline; gap: 6px; }
+.model-strip-label {
+  font-size: var(--fs-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.model-strip-divider { color: var(--line-strong); }
+.model-strip-limits { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+.limit-chip {
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: var(--fs-xs);
+  border: 1px solid var(--line);
+  background: var(--card);
+}
+.limit-approved { color: var(--success); border-color: var(--success-line); background: var(--success-bg); }
+.limit-provisional { color: var(--warning); border-color: var(--warning-line); background: var(--warning-bg); }
+.limit-pending { color: var(--muted); }
+
+/* ---------------------------------------------------------------------------
+   Action-queue note (fleet)
+--------------------------------------------------------------------------- */
+.queue-note { margin: 0 0 10px; }
+
+/* ---------------------------------------------------------------------------
+   Dim toggle (trajectory)
+--------------------------------------------------------------------------- */
+.dim-toggle { display: flex; gap: 8px; margin: 8px 0 12px; }
+.dim-toggle .btn { padding: 5px 12px; font-size: var(--fs-sm); }
+
+/* ---------------------------------------------------------------------------
+   Axle map (loco view) — "which axle is hot"
+--------------------------------------------------------------------------- */
+.axle-map {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin: 12px 0 14px;
+}
+.axle-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 118px;
+}
+.axle-label {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+  color: var(--ink);
+  text-align: left;
+  padding: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.axle-label:hover { color: var(--accent-ink); text-decoration: underline; }
+.axle-wheel {
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--card);
+  padding: 4px 8px;
+  font-size: var(--fs-sm);
+  cursor: pointer;
+  text-align: left;
+}
+.axle-wheel:hover { border-color: var(--accent); }
+.axle-wheel-ok { color: var(--text); }
+.axle-wheel-warn { background: var(--warning-bg); border-color: var(--warning-line); color: var(--warning); }
+.axle-wheel-danger { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); font-weight: 600; }
+.axle-wheel-selected { outline: 2px solid var(--accent); outline-offset: 1px; }
+.axle-box.axle-danger .axle-label { color: var(--danger); }
+

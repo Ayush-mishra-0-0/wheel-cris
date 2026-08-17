@@ -31,3 +31,9 @@ SNAPSHOT_PARQUET = Path(os.environ.get(
     "WHEEL_SNAPSHOT_PARQUET",
     str(ML_ROOT / "model_datasets" / "v5" / "fleet_snapshot.parquet"))).resolve()
 SNAPSHOT_MANIFEST = SNAPSHOT_PARQUET.with_suffix(".manifest.json")
+
+# Legacy bulk /loco/{n}/plots (matplotlib PNG/SVG per wheelset). The per-wheelset
+# /wheelset/{id}/lifecycle/export contract supersedes it and the dashboard no
+# longer calls it. Gated off by default: set WHEEL_ENABLE_LEGACY_PLOTS=1 to turn
+# it back on (it loads the full WES frame on every request).
+ENABLE_LEGACY_PLOTS = os.environ.get("WHEEL_ENABLE_LEGACY_PLOTS", "0") == "1"

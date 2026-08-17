@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
 import type { Capabilities, LocoWheelsetTable, WheelsetDetail } from "./types";
-import { WearTimeline } from "./WearTimeline";
-import AllWheelPlots from "./AllWheelPlots";
+import { AxleMap } from "./AxleMap";
 import { BacktestView } from "./BacktestView";
 import { TrajectoryPanel } from "./TrajectoryPanel";
 import { EmptyState, ErrorState, SkeletonBlock } from "./States";
@@ -16,10 +15,14 @@ function pct(v: number | null | undefined): string {
 export function LocoView({
   loco,
   caps,
+  preselectWs,
+  onWsChange,
   onBack,
 }: {
   loco: string;
   caps: Capabilities | null;
+  preselectWs?: number | null;
+  onWsChange?: (ws: number) => void;
   onBack: () => void;
 }) {
   const [table, setTable] = useState<LocoWheelsetTable | null>(null);
@@ -42,16 +45,23 @@ export function LocoView({
       .then((t) => {
         setTable(t);
         setScope("recent");
-        if (t.wheelsets.length > 0) {
-          setSelected(t.wheelsets[0].wheelset_equipment_id);
-        } else if ((t.wheelsets_all ?? []).length > 0) {
+        const candidates = t.wheelsets.length > 0
+          ? t.wheelsets
+          : (t.wheelsets_all ?? []);
+        if (candidates.length > 0) {
+          if (preselectWs != null && candidates.some((w) => w.wheelset_equipment_id === preselectWs)) {
+            setSelected(preselectWs);
+          } else {
+            setSelected(candidates[0].wheelset_equipment_id);
+          }
+        }
+        if (t.wheelsets.length === 0 && (t.wheelsets_all ?? []).length > 0) {
           setScope("all");
-          setSelected(t.wheelsets_all![0].wheelset_equipment_id);
         }
       })
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
-  }, [loco, reload]);
+  }, [loco, reload, preselectWs]);
 
   useEffect(() => {
     if (selected == null) return;
@@ -60,6 +70,12 @@ export function LocoView({
       .wheelsetOverview(selected)
       .then(setDetail)
       .catch((e) => setErr((e as Error).message));
+  }, [selected]);
+
+  // keep the URL hash in sync with the selected wheelset (?ws=) so reload/back restore it
+  useEffect(() => {
+    if (selected != null && onWsChange) onWsChange(selected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selected]);
 
   const rows = useMemo(() => {
@@ -158,12 +174,29 @@ export function LocoView({
             >
               All history ({allCount})
             </button>
-            {table.n_expected_axles != null && table.wheelsets.length < table.n_expected_axles && (
-              <span className="chip chip-reduced" title="Some axles have no recent measurement — under-counted, not necessarily missing wheels.">
-                recent {table.wheelsets.length} of {table.n_expected_axles} axles measured
+            {table.n_expected_axles != null && (
+              <span
+                className={`chip ${table.wheelsets.length < table.n_expected_axles ? "chip-reduced" : ""}`}
+                title={
+                  table.wheelsets.length < table.n_expected_axles
+                    ? "Some axles have no recent measurement — under-counted, not necessarily missing wheels."
+                    : "All expected axles have a recent measurement."
+                }
+              >
+                measured {table.wheelsets.length} of {table.n_expected_axles} expected axles
               </span>
             )}
           </div>
+          <AxleMap
+            rows={table.wheelsets_all ?? rows}
+            selected={selected}
+            onSelect={(ws) => {
+              if (scope === "recent" && !table.wheelsets.some((w) => w.wheelset_equipment_id === ws)) {
+                setScope("all");
+              }
+              setSelected(ws);
+            }}
+          />
           <div className="table-wrap">
             <table className="risk-table">
                 <thead>
@@ -290,11 +323,9 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
         </div>
       )}
 
-      {diaFix && (
-        <section className="forecast">
-          <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
-        </section>
-      )}
+      <section className="forecast">
+        <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
+      </section>
 
       {diaFix && (
         <section className="pturn">
@@ -318,15 +349,6 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
           </p>
         </section>
       )}
-
-      <section className="history">
-        <h3>
-          Profile evolution <span className="muted">({detail.measurements.length} measurements)</span>
-        </h3>
-        <WearTimeline measurements={detail.measurements} />
-      </section>
-
-      {detail.loco_number && <AllWheelPlots loco={detail.loco_number} />}
 
       {detail.turns.length > 0 && (
         <section className="turns">

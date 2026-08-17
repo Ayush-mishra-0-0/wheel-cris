@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from . import service
 from .api_v1 import router as v1_router
-from .config import CORS_ORIGINS
+from .config import CORS_ORIGINS, ENABLE_LEGACY_PLOTS
 
 app = FastAPI(
     title="Wheel Lifecycle Dashboard (Layer 5)",
@@ -116,6 +116,14 @@ def fleet_capture_alias():
 
 @app.get("/loco/{loco_number}/plots")
 def loco_plots_alias(loco_number: str):
+    if not ENABLE_LEGACY_PLOTS:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=410,
+            detail=("Legacy bulk loco plots are disabled. Use the wheelset "
+                    "trajectory contract / /wheelset/{id}/lifecycle/export "
+                    "instead. Set WHEEL_ENABLE_LEGACY_PLOTS=1 to restore."),
+        )
     return _loco_plots(loco_number)
 
 
@@ -129,10 +137,12 @@ def fleet_risk_alias(shed: str | None = None, loco_type: str | None = None,
                      limiting_dim: str | None = None, risk_level: str | None = None,
                      sort_by: str = "pturn_90d", descending: bool = True,
                      page: int = 1, page_size: int = 50,
-                     max_staleness_days: int | None = 365):
+                     max_staleness_days: int | None = 365,
+                     days_to_condemning_max: int | None = None,
+                     pturn_min: float | None = None):
     return _fleet_risk(shed, loco_type, limiting_dim, risk_level,
                        sort_by, descending, page, page_size,
-                       max_staleness_days)
+                       max_staleness_days, days_to_condemning_max, pturn_min)
 
 
 @app.get("/fleet/search", response_model=dict)

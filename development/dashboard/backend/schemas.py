@@ -266,9 +266,10 @@ class TimeToLimit(BaseModel):
 
 
 class TimeToLimitSummary(BaseModel):
-    status: str
+    status: str = "no_approved_limit"
     limiting_dim: str | None = None
     limit_mm: float | None = None
+    limit_status: str | None = None
     current_mm: float | None = None
     days_to_limit_point: float | None = None
     days_to_limit_lo: float | None = None
@@ -377,7 +378,9 @@ class FleetRiskResponse(BaseModel):
     page: int = 1
     page_size: int = 50
     max_staleness_days: int | None = None
-    items: list[RiskRow] = Field(default_factory=list)
+    days_to_condemning_max: int | None = None
+    pturn_min: float | None = None
+    items: list[dict] = Field(default_factory=list)
     columns: list[str] = Field(default_factory=list)
 
 

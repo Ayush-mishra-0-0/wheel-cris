@@ -25,6 +25,14 @@ const PRESETS: { key: string; label: string; sort_by: SortKey; desc: boolean; no
   { key: "staleness", label: "Recency", sort_by: "staleness_days", desc: false, note: "oldest measurements first — data quality, not risk" },
 ];
 
+type QueueKey = "all" | "due_30d" | "pturn_wear" | "reduced";
+const QUEUES: { key: QueueKey; label: string; note: string; disabled?: boolean }[] = [
+  { key: "all", label: "All wheelsets", note: "no action-queue filter" },
+  { key: "due_30d", label: "Due ≤30 d (condemning)", note: "wheelsets ≤30 d from the approved 1016 mm dia hard stop, soonest first" },
+  { key: "pturn_wear", label: "P(turn) ≥5% + wear", note: "high wear-limit wheelsets with 90 d P(turn) ≥5% — combined signal" },
+  { key: "reduced", label: "Reduced-confidence only", note: "needs subgroup flags in the fleet snapshot (rebuild) — not yet available", disabled: true },
+];
+
 function PturnCell({ v }: { v: number | null | undefined }) {
   return (
     <span className={v != null && v >= 0.01 ? "risk-high" : "risk-low"}>
@@ -53,6 +61,45 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
   const [focusedIdx, setFocusedIdx] = useState(0);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
 
+  // action-queue state (shareable via URL ?shed=&queue=&preset=)
+  const [queue, setQueue] = useState<QueueKey>(() => {
+    const q = new URLSearchParams(window.location.search).get("queue");
+    return q === "due_30d" || q === "pturn_wear" ? q : "all";
+  });
+  const [daysToCondMax, setDaysToCondMax] = useState<number | null>(() =>
+    new URLSearchParams(window.location.search).get("queue") === "due_30d" ? 30 : null
+  );
+  const [pturnMin, setPturnMin] = useState<number | null>(() =>
+    new URLSearchParams(window.location.search).get("queue") === "pturn_wear" ? 0.05 : null
+  );
+
+  // keep URL shareable: ?shed=&queue=&preset=&sort_by=&descending=
+  useEffect(() => {
+    const p = new URLSearchParams();
+    if (shed) p.set("shed", shed);
+    if (queue && queue !== "all") p.set("queue", queue);
+    if (preset && preset !== "pturn") p.set("preset", preset);
+    if (sortBy !== "pturn_90d") p.set("sort_by", sortBy);
+    if (!descending) p.set("descending", "false");
+    const qs = p.toString();
+    window.history.replaceState(null, "", qs ? `?${qs}` : window.location.pathname);
+  }, [shed, queue, preset, sortBy, descending]);
+
+  // shareable initial filter/sort from URL (?shed=&queue=&preset=&sort_by=&descending=)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    const shed = p.get("shed");
+    const sort = p.get("sort_by") as SortKey | null;
+    const preset = p.get("preset");
+    const descRaw = p.get("descending");
+    if (shed) setShed(shed);
+    if (preset && PRESETS.some((x) => x.key === preset)) setPreset(preset);
+    if (sort && PRESETS.concat([]).some((x) => x.sort_by === sort)) {
+      setSortBy(sort);
+      setDescending(descRaw !== "false");
+    }
+  }, []);
+
   useEffect(() => {
     api
       .fleetOverview()
@@ -74,6 +121,8 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
         page,
         page_size: pageSize,
         max_staleness_days: MAX_STALENESS_DAYS,
+        days_to_condemning_max: daysToCondMax,
+        pturn_min: pturnMin,
       })
       .then((r) => {
         setRows(r.items);
@@ -82,7 +131,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
       })
       .catch((e) => setErr((e as Error).message))
       .finally(() => setLoading(false));
-  }, [shed, locoType, limitingDim, riskLevel, sortBy, descending, page, pageSize, reload]);
+  }, [shed, locoType, limitingDim, riskLevel, sortBy, descending, page, pageSize, reload, daysToCondMax, pturnMin]);
 
   const sheds = useMemo(
     () => (overview?.top_sheds ?? []).map((s) => s.shed_any).filter(Boolean) as string[],
@@ -106,6 +155,34 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
     setSortBy(p.sort_by);
     setDescending(p.desc);
   }
+
+  function applyQueue(key: QueueKey) {
+    setQueue(key);
+    setPage(1);
+    if (key === "due_30d") {
+      setDaysToCondMax(30);
+      setPturnMin(null);
+      setRiskLevel("");
+      setSortBy("days_to_condemning_dia");
+      setDescending(false);
+    } else if (key === "pturn_wear") {
+      setDaysToCondMax(null);
+      setPturnMin(0.05);
+      setRiskLevel("wear");
+      setSortBy("pturn_90d");
+      setDescending(true);
+    } else {
+      setDaysToCondMax(null);
+      setPturnMin(null);
+    }
+  }
+
+  // selecting a raw filter manually exits the action-queue preset
+  function clearQueue() {
+    setQueue("all");
+  }
+
+  const activeQueue = QUEUES.find((x) => x.key === queue);
 
   const nPages = Math.max(1, Math.ceil(total / pageSize));
 
@@ -145,7 +222,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
     const blob = new Blob([lines.join("\n")], { type: "text/csv" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = `fleet_risk_${preset || "sorted"}.csv`;
+    a.download = `fleet_risk_${queue !== "all" ? queue + "_" : ""}${preset || "sorted"}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -228,7 +305,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                         <td>
                           <button
                             className="link"
-                            onClick={() => { setShed(s.shed_any ?? ""); setPage(1); }}
+                            onClick={() => { setShed(s.shed_any ?? ""); setPage(1); clearQueue(); }}
                           >
                             {s.shed_any ?? "—"}
                           </button>
@@ -256,6 +333,18 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
             {total.toLocaleString()} wheelsets · measured ≤{MAX_STALENESS_DAYS}d
           </span>
           <select
+            value={queue}
+            onChange={(e) => applyQueue(e.target.value as QueueKey)}
+            aria-label="Action queue"
+            title="Morning-shift action queues. Reduced-confidence needs subgroup flags in the fleet snapshot (not yet available)."
+          >
+            {QUEUES.map((q) => (
+              <option key={q.key} value={q.key} disabled={q.disabled} title={q.note}>
+                {q.label}
+              </option>
+            ))}
+          </select>
+          <select
             value={preset}
             onChange={(e) => applyPreset(e.target.value)}
             aria-label="Sort preset"
@@ -266,29 +355,35 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
             ))}
           </select>
           <button className="btn" onClick={exportCsv}>Export CSV</button>
-          <select value={shed} onChange={(e) => { setShed(e.target.value); setPage(1); }}>
+          <select value={shed} onChange={(e) => { setShed(e.target.value); setPage(1); clearQueue(); }}>
             <option value="">Shed: all</option>
             {sheds.slice(0, 40).map((s) => (
               <option key={s} value={s}>{s}</option>
             ))}
           </select>
-          <select value={locoType} onChange={(e) => { setLocoType(e.target.value); setPage(1); }}>
+          <select value={locoType} onChange={(e) => { setLocoType(e.target.value); setPage(1); clearQueue(); }}>
             <option value="">Loco type: all</option>
             {Array.from(new Set(rows.map((r) => r.loco_type).filter(Boolean))).map((t) => (
               <option key={t} value={t ?? ""}>{t}</option>
             ))}
           </select>
-          <select value={limitingDim} onChange={(e) => { setLimitingDim(e.target.value); setPage(1); }}>
+          <select value={limitingDim} onChange={(e) => { setLimitingDim(e.target.value); setPage(1); clearQueue(); }}>
             {LIMITING_DIMS.map((d) => (
               <option key={d} value={d}>{d ? `Limiting: ${d}` : "Limiting: all"}</option>
             ))}
           </select>
-          <select value={riskLevel} onChange={(e) => { setRiskLevel(e.target.value); setPage(1); }}>
+          <select value={riskLevel} onChange={(e) => { setRiskLevel(e.target.value); setPage(1); clearQueue(); }}>
             {RISK_LEVELS.map((l) => (
               <option key={l} value={l}>{l ? `Risk: ${l}` : "Risk: all"}</option>
             ))}
           </select>
         </div>
+
+        {activeQueue && activeQueue.key !== "all" && (
+          <p className="muted small queue-note">
+            <b>Action queue — {activeQueue.label}:</b> {activeQueue.note}
+          </p>
+        )}
 
         {loading ? (
           <SkeletonTable rows={8} cols={12} />

@@ -4,6 +4,7 @@ import type { Capabilities, FleetBacktest, OperationalCapture, SearchHit } from 
 import { CaptureTable, FleetTable } from "./BacktestView";
 import { FleetView } from "./FleetView";
 import { LocoView } from "./LocoView";
+import { ModelStrip } from "./ModelStrip";
 import { ErrorState, SkeletonBlock } from "./States";
 
 type Page = "fleet" | "validation" | "loco";
@@ -11,6 +12,7 @@ type Page = "fleet" | "validation" | "loco";
 export function App() {
   const [page, setPage] = useState<Page>("fleet");
   const [loco, setLoco] = useState<string>("37597");
+  const [preselectWs, setPreselectWs] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [caps, setCaps] = useState<Capabilities | null>(null);
 
@@ -20,14 +22,18 @@ export function App() {
   const [showHits, setShowHits] = useState(false);
   const searchRef = useRef<HTMLInputElement>(null);
 
-  // hash deep links: #/loco/39186 → loco view (share/reload-safe)
+  // hash deep links: #/loco/39186 or #/loco/39186?ws=123 → loco view (share/reload-safe); "" → fleet (back works)
   useEffect(() => {
     function applyHash() {
       const m = window.location.hash.match(/^#\/loco\/([^/]+)/);
       if (m) {
         setPage("loco");
         setLoco(decodeURIComponent(m[1]));
+        const ws = new URLSearchParams(window.location.hash.split("?")[1] ?? "").get("ws");
+        setPreselectWs(ws != null && /^\d+$/.test(ws) ? Number(ws) : null);
         setError(null);
+      } else {
+        setPage("fleet");
       }
     }
     applyHash();
@@ -57,13 +63,22 @@ export function App() {
     return () => clearTimeout(t);
   }, [q]);
 
-  async function openLoco(num: string) {
+  async function openLoco(num: string, ws?: number) {
     setPage("loco");
     setLoco(num);
+    setPreselectWs(ws ?? null);
     setError(null);
     setShowHits(false);
-    if (window.location.hash !== `#/loco/${encodeURIComponent(num)}`) {
-      window.history.replaceState(null, "", `#/loco/${encodeURIComponent(num)}`);
+    const target = ws != null ? `#/loco/${encodeURIComponent(num)}?ws=${ws}` : `#/loco/${encodeURIComponent(num)}`;
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", target);
+    }
+  }
+
+  function onWsChange(ws: number) {
+    const target = `#/loco/${encodeURIComponent(loco)}?ws=${ws}`;
+    if (window.location.hash !== target) {
+      window.history.replaceState(null, "", target);
     }
   }
 
@@ -116,6 +131,8 @@ export function App() {
         </div>
       </header>
 
+      <ModelStrip caps={caps} />
+
       <div className="shell">
         <aside className="sidebar">
           <nav>
@@ -152,9 +169,9 @@ export function App() {
 
           {page === "fleet" && (
             <FleetView
-              onSelect={(_ws, locoNumber) => {
+              onSelect={(ws, locoNumber) => {
                 if (locoNumber) {
-                  openLoco(locoNumber);
+                  openLoco(locoNumber, ws);
                 }
               }}
             />
@@ -172,7 +189,7 @@ export function App() {
           )}
 
           {page === "loco" && (
-            <LocoView loco={loco} caps={caps} onBack={() => go("fleet")} />
+            <LocoView loco={loco} caps={caps} preselectWs={preselectWs} onWsChange={onWsChange} onBack={() => go("fleet")} />
           )}
         </main>
       </div>

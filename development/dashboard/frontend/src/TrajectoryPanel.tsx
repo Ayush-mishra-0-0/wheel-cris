@@ -4,7 +4,7 @@ import { EChart } from "./EChart";
 import type { EChartsOption } from "./EChart";
 import { api } from "./api";
 import type { TrajectoryContract, TrajectoryDim, TurnMarker } from "./types";
-import { ErrorState, SkeletonBlock } from "./States";
+import { ErrorState, EmptyState, SkeletonBlock } from "./States";
 
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
 const DERIVED_DIMS = ["wsmDia"];
@@ -35,6 +35,7 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
   const [loading, setLoading] = useState(false);
   const [reload, setReload] = useState(0);
   const [exporting, setExporting] = useState<string | null>(null);
+  const [showDia, setShowDia] = useState(false); // primary-only default
 
   useEffect(() => {
     setLoading(true);
@@ -73,7 +74,9 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
     }
   };
 
-  const dimOrder = [...PRIMARY_DIMS, ...DERIVED_DIMS];
+  const dimOrder = showDia ? [...PRIMARY_DIMS, ...DERIVED_DIMS] : [...PRIMARY_DIMS];
+  const hasForecasts = (data?.dims ?? []).some((d) => d.forecasts.length > 0);
+  const noDims = data != null && data.dims.length === 0;
 
   return (
     <section className="trajectory">
@@ -124,11 +127,42 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
         </button>
       </div>
 
+      <div className="dim-toggle">
+        <button
+          className={!showDia ? "btn btn-primary" : "btn"}
+          onClick={() => setShowDia(false)}
+          title="flange / root / tread — the wear dims that drive turning"
+        >
+          Primary only
+        </button>
+        <button
+          className={showDia ? "btn btn-primary" : "btn"}
+          onClick={() => setShowDia(true)}
+          title="add the derived diameter diagnostic to the grid"
+        >
+          + dia
+        </button>
+      </div>
+
       {err && !loading && <ErrorState message={err} onRetry={() => setReload((r) => r + 1)} />}
       {loading && <SkeletonBlock lines={5} />}
 
-      {data && (
+      {noDims && !loading && !err && (
+        <EmptyState
+          title="No trajectory data for this wheelset"
+          hint="No observed profile history is on record for this wheelset."
+        />
+      )}
+
+      {data && !noDims && (
         <>
+          {!hasForecasts && (
+            <div className="banner banner-warn">
+              Forecasts unavailable (safe mode / no serving output) — observed history only. The
+              degradation models are not in delta mode, so 30/90/180 d forecasts are not rendered as
+              engineering outputs.
+            </div>
+          )}
           {data.time_to_limit_summary && (
             <div className="ttl-summary">
               <span className="chip">
@@ -187,6 +221,21 @@ function TrajectoryChart({
   const reducedConfidence = subFlags.length > 0;
 
   const option = useMemo<EChartsOption>(() => {
+    const ttlLocal = data.time_to_limit;
+    const limitLine = ttlLocal?.limit_mm != null
+      ? {
+          silent: true,
+          symbol: "none" as const,
+          lineStyle: { color: "#a13d34", width: 1, type: "dashed" as const },
+          label: {
+            formatter: () => `limit ${ttlLocal!.limit_mm} mm (${ttlLocal!.label ?? "approved"})`,
+            position: "insideEndTop" as const,
+            color: "#a13d34",
+            fontSize: 9,
+          },
+          data: [{ yAxis: ttlLocal!.limit_mm }],
+        }
+      : undefined;
     const obsX: string[] = [];
     const obsY: (number | null)[] = [];
     for (const o of data.observed) {
@@ -312,6 +361,7 @@ function TrajectoryChart({
         connectNulls: false,
         showSymbol: data.observed.length <= 40,
         z: 2,
+        markLine: limitLine,
         tooltip: { valueFormatter: (v) => `${fmt(v as number)} mm` },
       },
       {
@@ -388,7 +438,7 @@ function TrajectoryChart({
         itemWidth: 14,
         itemHeight: 8,
         textStyle: { fontSize: 10, color: "#6d7066" },
-        data: ["forecast (anchor + Δ)", "realised"],
+        data: data.forecasts.length ? ["forecast (anchor + Δ)", "realised"] : ["realised"],
       },
       xAxis: {
         type: "time",

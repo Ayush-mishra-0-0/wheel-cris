@@ -329,6 +329,18 @@ export interface Capabilities {
     n_train?: number | null;
     target_mode?: string | null;
   };
+  limits?: Record<
+    string,
+    {
+      limit_mm: number | null;
+      direction: string;
+      label: string;
+      unit: string;
+      status: "approved" | "provisional" | "pending" | string;
+      owner: string;
+      note: string;
+    }
+  >;
   validation?: {
     warnings?: string[];
   };
@@ -373,6 +385,8 @@ export interface FleetRiskResponse {
   page: number;
   page_size: number;
   max_staleness_days: number | null;
+  days_to_condemning_max?: number | null;
+  pturn_min?: number | null;
   items: RiskRow[];
   columns: string[];
 }

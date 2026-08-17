@@ -54,12 +54,10 @@ export const api = {
     page?: number;
     page_size?: number;
     max_staleness_days?: number | null;
+    days_to_condemning_max?: number | null;
+    pturn_min?: number | null;
   }) => get<FleetRiskResponse>(`/fleet/risk`, params),
   fleetSearch: (q: string) => get<FleetSearchResponse>(`/fleet/search`, { q }),
   shed: (shed: string) => get<ShedOverview>(`/shed/${encodeURIComponent(shed)}`),
   config: () => get<Capabilities>(`/config`),
-  locoPlots: (loco: string) =>
-    get<{ loco: string; images: Record<string, string>; svgs: Record<string, string> }>(
-      `/loco/${encodeURIComponent(loco)}/plots`
-    ),
 };
