@@ -19,6 +19,7 @@ from .subgroup_policy import subgroup_flags
 
 ROOT = ML_ROOT
 DEG_DIR = ROOT / "models" / "phase5" / "serving" / "degradation"
+RATE_DIR = ROOT / "models" / "phase5" / "serving" / "degradation_rate"
 PTURN_DIR = ROOT / "models" / "phase5" / "serving" / "turn_probability"
 SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 TURNS = ROOT / "model_datasets" / "v5" / "lifecycle_turns.parquet"
@@ -131,6 +132,95 @@ def degradation_models() -> dict:
 
 
 @lru_cache(maxsize=1)
+def degradation_rate_models() -> dict:
+    """Option-3 wear-rate head (rate + integrate). One XGB per dim predicting
+    mm/day from the DENSE adjacent same-segment pairs; 30/90/180 d values are
+    the integrated delta = decay_k * rate * horizon. Backup to the per-horizon
+    head lives in DEG_DIR and is always available if the rate dir is absent."""
+    feats = json.loads((RATE_DIR / "features.json").read_text())
+    enc = joblib.load(RATE_DIR / "encoder.joblib")
+    models = {dim: joblib.load(RATE_DIR / f"model_{dim}.joblib") for dim in DIMM}
+    return {"models": models, "enc": enc, "num_feats": feats["num_feats"],
+            "cat_feats": feats["cat_feats"]}
+
+
+@lru_cache(maxsize=1)
+def rate_champion() -> dict:
+    """Champion/backup contract for the degradation service.
+
+    Written by train_wear_rate_models.py from the frozen v5 TEST benchmark:
+    `dim_model_of_record` picks, PER DIMENSION, the head with the lower mean
+    served no-turn level-MAE across 30/90/180 d. Missing/broken artifact falls
+    back to the per-horizon head for every dim (backup requirement).
+    """
+    p = RATE_DIR / "champion.json"
+    if not p.exists():
+        return {}
+    try:
+        return json.loads(p.read_text())
+    except Exception:
+        return {}
+
+
+def model_of_record() -> dict:
+    """{dim: 'wear_rate' | 'per_horizon_xgb'} for the degradation service."""
+    champ = rate_champion()
+    choice = champ.get("dim_model_of_record", {})
+    if not isinstance(choice, dict) or not RATE_DIR.exists():
+        return {dim: "per_horizon_xgb" for dim in DIMM}
+    return {dim: (choice.get(dim, "per_horizon_xgb")
+                  if isinstance(choice.get(dim), str) else "per_horizon_xgb")
+            for dim in DIMM}
+
+
+def adapt_applies(dim: str) -> bool:
+    """Whether second-stage wheelset adaptation applies to `dim`.
+
+    The adaptation artifact (wheelset_adaptation.parquet) is built from the
+    PER-HORIZON head's residuals (build_wheelset_adaptation.py). For dims the
+    champion routes to the wear-rate head those residual biases are stale and
+    can inject non-physical decreasing wear - the rate head is already horizon-
+    calibrated, so adaptation is skipped for it (documented divergence).
+    """
+    return model_of_record().get(dim, "per_horizon_xgb") == "per_horizon_xgb"
+
+
+def _horizon_deltas(dim: str, fr: dict | None) -> dict[int, float | None]:
+    """Raw (pre-adaptation, pre-monotone) per-horizon deltas for `dim`.
+
+    Model of record per dimension (champion.json). The wear-rate head
+    integrates delta_H = decay_k(dim,H) * rate * H with the rate sign-clamped
+    to physical direction (wear >= 0, dia <= 0); the per-horizon head predicts
+    each horizon delta independently (the two can disagree - that is exactly
+    what the monotone no-turn path reconciles afterwards in serving).
+    """
+    if fr is None:
+        return {h: None for h in HORIZONS}
+    if model_of_record()[dim] == "wear_rate":
+        try:
+            svc = degradation_rate_models()
+            champ = rate_champion()
+        except Exception:
+            svc = None
+            champ = {}
+        if svc is not None:
+            X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
+            rate = float(svc["models"][dim].predict(X)[0])
+            if not np.isfinite(rate):
+                return {h: None for h in HORIZONS}
+            if dim == "wsmDia":
+                rate = min(rate, 0.0)
+            else:
+                rate = max(rate, 0.0)
+            kk = champ.get("decay_k", {})
+            return {h: (float(kk.get(f"{dim}_{h}d", 1.0)) * rate * h)
+                    for h in HORIZONS}
+    svc = degradation_models()
+    X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
+    return {h: float(svc["models"][(dim, h)].predict(X)[0]) for h in HORIZONS}
+
+
+@lru_cache(maxsize=1)
 def pturn_models() -> dict:
     feats = json.loads((PTURN_DIR / "features.json").read_text())
     enc = joblib.load(PTURN_DIR / "encoder.joblib")
@@ -222,8 +312,10 @@ def _artifact_version() -> str:
     """Deterministic serving-model version from the on-disk artifacts.
 
     A content hash of the feature schema + manifest (+ model file sizes so a
-    retrained model bumps the version). Short enough for a footnote, stable
-    across restarts, and changes whenever the artifacts change.
+    retrained model bumps the version). Includes the wear-rate head + champion
+    when present so a retrained/changed Option-3 model also bumps the version.
+    Short enough for a footnote, stable across restarts, and changes whenever
+    the artifacts change.
     """
     parts = []
     for f in ("features.json", "manifest.json"):
@@ -233,6 +325,12 @@ def _artifact_version() -> str:
         for h in HORIZONS:
             p = DEG_DIR / f"model_{dim}_{h}d.joblib"
             parts.append(str(p.stat().st_size).encode() if p.exists() else b"")
+    for f in ("features.json", "manifest.json", "champion.json"):
+        p = RATE_DIR / f
+        parts.append(p.read_bytes() if p.exists() else b"")
+    for dim in DIMM:
+        p = RATE_DIR / f"model_{dim}.joblib"
+        parts.append(str(p.stat().st_size).encode() if p.exists() else b"")
     return hashlib.sha256(b"|".join(parts)).hexdigest()[:10]
 
 
@@ -241,12 +339,24 @@ def degradation_meta() -> dict:
     feats = json.loads((DEG_DIR / "features.json").read_text())
     mf = json.loads((DEG_DIR / "manifest.json").read_text())
     targets = {m["target"] for m in mf.get("models", [])}
+    mor = model_of_record()
+    champ = rate_champion()
     return {
         "model_version": _artifact_version(),
         "train_cutoff": feats.get("train_cutoff"),
         "n_train": feats.get("n_train_rows"),
         "target_mode": "delta" if targets == {"delta"} else "level",
         "task": mf.get("task"),
+        "model_of_record": mor,
+        "model_of_record_agg": champ.get("aggregate_model_of_record",
+                                         "per_horizon_xgb"),
+        "wear_rate": {
+            "present": bool(RATE_DIR.exists()),
+            "basis": champ.get("basis"),
+            "decay_k": champ.get("decay_k"),
+            "agg_served_mae_current_mm": champ.get("agg_served_mae_current_mm"),
+            "agg_served_mae_rate_calibrated_mm": champ.get("agg_served_mae_rate_calibrated_mm"),
+        },
     }
 
 
@@ -301,6 +411,16 @@ def validate_serving() -> list[str]:
             missing = want - have
             if missing:
                 raise RuntimeError(f"[degradation] manifest missing models: {sorted(missing)}")
+    # wear-rate head: required for every dim the champion routes to it
+    for dim in model_of_record():
+        if model_of_record()[dim] == "wear_rate":
+            for f in ("features.json", "encoder.joblib", "manifest.json",
+                      "champion.json", f"model_{dim}.joblib"):
+                p = RATE_DIR / f
+                if not p.exists():
+                    raise RuntimeError(
+                        f"[degradation_rate] champion routes {dim} to wear_rate "
+                        f"but {p.relative_to(ROOT)} is missing")
     return warnings
 
 
@@ -317,6 +437,7 @@ def capabilities() -> dict:
             "train_cutoff": meta.get("train_cutoff"),
             "n_train": meta.get("n_train"),
             "target_mode": meta.get("target_mode"),
+            "model_of_record": meta.get("model_of_record"),
         },
         "limits": limits_register(),
     }
@@ -346,18 +467,16 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
     fc = []
     for dim in DIMM:
         current = fr.get(f"mean_{dim}")
+        dcur = current if current is not None and np.isfinite(current) else None
+        raw = _horizon_deltas(dim, fr)
+        mono = _no_turn_monotone(dim, raw) if dcur is not None else raw
         for h in HORIZONS:
-            m = svc["models"][(dim, h)]
-            delta = float(m.predict(X)[0])
-            # Serving models regress delta (tgt - anchor); reconstruct the
-            # level for display so the forecast is an absolute profile state.
-            value = None
-            if np.isfinite(delta) and current is not None and np.isfinite(current):
-                value = round(current + delta, 4)
+            delta = mono.get(h)
+            value = round(float(dcur + delta), 4) if dcur is not None and delta is not None else None
             width = _conformal_width_mm(dim, h)
             flags = _physics_flags(dim, current, value)
             fc.append({"horizon": h, "dim": dim, "value": value,
-                       "delta": round(delta, 4) if np.isfinite(delta) else None,
+                       "delta": round(delta, 4) if delta is not None else None,
                        "current": round(float(current), 4)
                        if current is not None and np.isfinite(current) else None,
                        "low": round(value - width, 4) if value is not None and width is not None else None,
@@ -365,6 +484,7 @@ def predict_degradation(wheelset_id: int, anchor=None) -> dict:
                        "implausibility_flag": flags[0] if flags else None,
                        "model_version": meta.get("model_version"),
                        "train_cutoff": meta.get("train_cutoff"),
+                       "model_of_record": meta.get("model_of_record", {}).get(dim),
                        "feature_coverage": cov,
                        "subgroup_flags": subgroup_flags(fr, dim, h)})
     return {"wheelset_equipment_id": wheelset_id, "anchor": anchor,
@@ -416,6 +536,53 @@ def _noise_floor_mm(dim: str) -> float | None:
         return float(a["2_noise_floor"][dim]["central_sigma_mm"])
     except (KeyError, TypeError):
         return None
+
+
+def _no_turn_monotone(dim: str, deltas: dict[int, float | None]) -> dict[int, float | None]:
+    """Physics-valid, monotone serving path: value at H 'if no turn happens'.
+
+    The horizon models (30/90/180 d) are trained independently, so together
+    they can produce an impossible path inside one segment — root/flange/thread
+    decreasing or diameter increasing. Within a segment wear only grows and
+    diameter only shrinks, so each delta is signed-clamped (>=0 for wear,
+    <=0 for dia) and the cumulative path is made monotone across horizons.
+    This constrains only the SERVING output (the no-turn claim), never the
+    training targets.
+    """
+    down = dim == "wsmDia"
+    out: dict[int, float | None] = {}
+    prev = 0.0
+    for h in sorted(deltas):
+        d = deltas.get(h)
+        if d is None or not np.isfinite(d):
+            out[h] = None
+            continue
+        if down:
+            prev = min(prev, min(d, 0.0))
+        else:
+            prev = max(prev, max(d, 0.0))
+        out[h] = prev
+    return out
+
+
+def _conformal_table() -> dict:
+    """Split-conformal band metadata per (dim, horizon) for the text readout.
+
+    `level` = nominal coverage of the band (0.80); `width_mm` = calibrated
+    half-width; `coverage` = empirical test-set coverage actually achieved, so
+    the UI can say e.g. "± 0.37 mm (80% band, empirical 83%)".
+    """
+    a = trajectory_artefact().get("3_conformal_80pct", {})
+    out = {}
+    for dim, hs in a.items():
+        out[dim] = {}
+        for h, m in hs.items():
+            out[dim][h] = {
+                "level": 0.8,
+                "width_mm": m.get("conformal_width_mm"),
+                "coverage": m.get("coverage"),
+            }
+    return out
 
 
 def _crossing_days(times: list[int], values: list[float | None],
@@ -696,7 +863,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         return {"wheelset_equipment_id": wheelset_id, "anchor": None, "asof": None,
                 "contract": "trajectory_chart_v1", "model": None, "dims": [],
                 "feature_coverage": None,
-                "delta_metrics": {}, "time_to_limit_summary": None, "note": None}
+                "delta_metrics": {}, "conformal": {}, "time_to_limit_summary": None, "note": None}
 
     anchor = asof if asof is not None else pd.Timestamp(w.iloc[-1]["measurement_timestamp"])
     t = pd.to_datetime(w["measurement_timestamp"])
@@ -708,7 +875,7 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                 "asof": pd.Timestamp(anchor),
                 "contract": "trajectory_chart_v1", "model": None, "dims": [],
                 "feature_coverage": None,
-                "delta_metrics": {}, "time_to_limit_summary": None,
+                "delta_metrics": {}, "conformal": {}, "time_to_limit_summary": None,
                 "note": "as-of is not a measurement timestamp"}
     p = int(pos[0])
 
@@ -719,15 +886,16 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     adapt = wheel_adaptation_at(wheelset_id, pd.Timestamp(anchor))
     deg = {}
     if fr is not None:
-        X = _feature_vector(fr, svc["num_feats"], svc["cat_feats"], svc["enc"])
         for dim in DIMM:
             cur = fr.get(f"mean_{dim}")
             deg[dim] = {"current": cur, "delta": {}, "predicted": {}, "adaptation": {}}
+            raw = _horizon_deltas(dim, fr)
             for h in HORIZONS:
-                delta = float(svc["models"][(dim, h)].predict(X)[0])
-                predicted = cur + delta if np.isfinite(delta) and cur is not None and np.isfinite(cur) else None
+                delta = raw.get(h)
+                predicted = cur + delta if delta is not None and cur is not None and np.isfinite(cur) else None
                 adj = adapt.get((dim, h)) if adapt else None
-                if adj and adj["prior_n"] >= ADAPT_MIN_N and adj["bias"] is not None and not adj["boundary"]:
+                if adj and adj["prior_n"] >= ADAPT_MIN_N and adj["bias"] is not None \
+                        and not adj["boundary"] and adapt_applies(dim):
                     predicted = predicted + adj["bias"] if predicted is not None else predicted
                     deg[dim]["adaptation"][h] = {
                         "prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
@@ -737,6 +905,20 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                         "bias_mm": adj["bias"] if adj else None, "applied": False}
                 deg[dim]["delta"][h] = delta
                 deg[dim]["predicted"][h] = predicted
+            # Monotone no-turn path: reconcile the three independent horizon
+            # models so the trajectory can never show wear decreasing / dia
+            # increasing inside a segment. Applied AFTER adaptation so it is
+            # the final serving path that is constrained, not the raw deltas.
+            if cur is not None and np.isfinite(cur):
+                rawd = {h: (deg[dim]["predicted"][h] - cur)
+                        if deg[dim]["predicted"][h] is not None else None
+                        for h in HORIZONS}
+                clamped = _no_turn_monotone(dim, rawd)
+                for h in HORIZONS:
+                    dd = clamped.get(h)
+                    if dd is not None:
+                        deg[dim]["predicted"][h] = round(float(cur + dd), 6)
+                        deg[dim]["delta"][h] = round(float(dd), 6)
 
     # observed history up to (and including) the anchor
     seg_id = w["seg_id"].to_numpy(dtype="int64") if "seg_id" in w else w.get("seg_id")
@@ -766,12 +948,14 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
                 "dim": dim, "horizon": h,
                 "asof_ts": pd.Timestamp(anchor) + pd.Timedelta(days=h),
                 "current": round(float(cur), 4) if cur is not None and np.isfinite(cur) else None,
-                "delta": round(float(deg[dim]["delta"][h]), 4) if dim in deg else None,
+                "delta": round(float(deg[dim]["delta"][h]), 4)
+                if dim in deg and deg[dim]["delta"].get(h) is not None else None,
                 "predicted": round(float(pred), 4) if pred is not None else None,
                 "low": round(float(low_map[h]), 4) if low_map[h] is not None else None,
                 "high": round(float(high_map[h]), 4) if high_map[h] is not None else None,
                 "model_version": meta.get("model_version"),
                 "train_cutoff": meta.get("train_cutoff"),
+                "model_of_record": meta.get("model_of_record", {}).get(dim),
                 "feature_coverage": cov,
                 "wheel_adaptation": deg[dim]["adaptation"].get(h, {
                     "prior_n": 0, "bias_mm": None, "applied": False}),
@@ -811,12 +995,14 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     # model metadata from the degradation serving manifest + features.json
     meta = None
     try:
+        dm = degradation_meta()
         meta = {
-            "task": degradation_meta().get("task"),
+            "task": dm.get("task"),
             "target_mode": "delta",
-            "train_cutoff": degradation_meta().get("train_cutoff"),
-            "n_train": degradation_meta().get("n_train"),
-            "model_version": degradation_meta().get("model_version"),
+            "train_cutoff": dm.get("train_cutoff"),
+            "n_train": dm.get("n_train"),
+            "model_version": dm.get("model_version"),
+            "model_of_record": dm.get("model_of_record"),
         }
     except Exception:
         pass
@@ -865,10 +1051,16 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         "turns": _turn_markers(wheelset_id, pd.Timestamp(anchor)),
         "turn_reset": turn_reset_policy(w, p),
         "delta_metrics": _delta_metrics_slim(),
+        "conformal": _conformal_table(),
+        "forecast_condition": "no_turn_within_horizon",
+        "monotone_enforced": True,
         "time_to_limit_summary": summary,
         "note": ("Lifecycle chart contract (lifecycle_chart_v1): forecast = "
-                 "anchor + delta; 80% split-conformal bands + noise floor from "
-                 "the trajectory artefact; physics flags reported, never "
+                 "anchor + delta, CONDITIONAL ON NO TURN within the horizon — a "
+                 "physics-valid path constrained so wear never decreases (and "
+                 "diameter never increases) across 30/90/180 d, applied after "
+                 "wheelset adaptation. 80% split-conformal bands + noise floor "
+                 "from the trajectory artefact; physics flags reported, never "
                  "clipped; turn markers carry pre/post profile state + dia "
                  "cut so renderers never read raw tables."),
     }
@@ -913,13 +1105,13 @@ def loco_summary(loco_number: str) -> dict:
     turns = pd.read_parquet(TURNS)
     turns = turns[turns["wheelset_equipment_id"].isin(target["wheelset_equipment_id"])]
     
-    latest_date = wes["measurement_timestamp"].max()
+    reference_date = pd.Timestamp.now()
     RECENCY_THRESHOLD_DAYS = 90
     
     for (ws, grp) in target.sort_values("measurement_timestamp").groupby("wheelset_equipment_id"):
         last = grp.iloc[-1]
         meas_ts = pd.Timestamp(last["measurement_timestamp"])
-        staleness_days = (pd.Timestamp(latest_date) - meas_ts).days
+        staleness_days = (reference_date - meas_ts).days
         latest_loco_agrees = str(last["LomNumber"]).strip().lower() == lom
         is_recently_measured = latest_loco_agrees and staleness_days <= RECENCY_THRESHOLD_DAYS
         # Backward-compatible alias: this is measurement recency, not a proven fit.
@@ -978,8 +1170,6 @@ def loco_wheelset_table(loco_number: str) -> dict:
     wheelset list so the table shows both identity and model output.
     """
     base = loco_summary(loco_number)
-    if not base["wheelsets"]:
-        return base
     snap = _snapshot_df()
     snap_loco = None
     if snap is not None and "loco_number" in snap.columns:
@@ -1083,9 +1273,24 @@ def _snapshot_df() -> pd.DataFrame | None:
     return pd.read_parquet(SNAPSHOT_PARQUET)
 
 
+def _with_current_staleness(df: pd.DataFrame | None) -> pd.DataFrame | None:
+    """Recalculate staleness against the wall clock (now - latest measurement).
+
+    The snapshot file records staleness at build time; for the live product the
+    honest view is "how old is this measurement relative to today", so fleet
+    endpoints recompute it from latest_measurement on every request.
+    """
+    if df is None or "latest_measurement" not in df.columns:
+        return df
+    df = df.copy()
+    ts = pd.to_datetime(df["latest_measurement"], errors="coerce")
+    df["staleness_days"] = (pd.Timestamp.now() - ts).dt.days
+    return df
+
+
 def fleet_overview() -> dict:
     """Fleet KPI summary + distributions from the P1.1 snapshot (single row/wheelset)."""
-    df = _snapshot_df()
+    df = _with_current_staleness(_snapshot_df())
     if df is None:
         return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
     pturn_cols = [c for c in df.columns if c.startswith("pturn_")]
@@ -1132,7 +1337,7 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
     P(turn) is at or above a fraction (e.g. 0.05 = 5%). Both are honest cuts on
     measurement signals, not guarantees of a turn.
     """
-    df = _snapshot_df()
+    df = _with_current_staleness(_snapshot_df())
     if df is None:
         return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
     if max_staleness_days is not None and "staleness_days" in df.columns:
@@ -1214,7 +1419,7 @@ def fleet_search(q: str) -> dict:
 
 def shed_overview(shed: str) -> dict:
     """Shed-level aggregation from the snapshot."""
-    df = _snapshot_df()
+    df = _with_current_staleness(_snapshot_df())
     if df is None:
         return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
     if "shed_any" not in df.columns:

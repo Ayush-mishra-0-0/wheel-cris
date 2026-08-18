@@ -55,6 +55,7 @@ class ForecastPoint(BaseModel):
     implausibility_flag: str | None = None
     model_version: str | None = None
     train_cutoff: str | None = None
+    model_of_record: str | None = None
     feature_coverage: float | None = None
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
     unit: str = "mm"
@@ -171,6 +172,7 @@ class ReplayForecast(BaseModel):
     implausibility_flag: str | None = None
     model_version: str | None = None
     train_cutoff: str | None = None
+    model_of_record: str | None = None
     feature_coverage: float | None = None
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
     wheel_adaptation: WheelAdaptation = WheelAdaptation()
@@ -251,6 +253,7 @@ class TrajectoryForecast(BaseModel):
     high: float | None = None
     model_version: str | None = None
     train_cutoff: str | None = None
+    model_of_record: str | None = None
     feature_coverage: float | None = None
     wheel_adaptation: WheelAdaptation = WheelAdaptation()
     subgroup_flags: list[SubgroupFlag] = Field(default_factory=list)
@@ -310,6 +313,7 @@ class TrajectoryModelMeta(BaseModel):
     train_cutoff: str | None = None
     n_train: int | None = None
     model_version: str | None = None
+    model_of_record: dict = Field(default_factory=dict)
 
 
 class TurnMarker(BaseModel):
@@ -342,6 +346,9 @@ class TrajectoryContract(BaseModel):
     turns: list[TurnMarker] = Field(default_factory=list)
     turn_reset: TurnReset = TurnReset()
     delta_metrics: dict = Field(default_factory=dict)
+    conformal: dict = Field(default_factory=dict)
+    forecast_condition: str | None = None
+    monotone_enforced: bool = False
     time_to_limit_summary: TimeToLimitSummary | None = None
     note: str | None = None
 

@@ -92,7 +92,6 @@ def build_snapshot() -> pd.DataFrame:
     svc = service.degradation_models()
     meta = service.degradation_meta()
     psvc = service.pturn_models()
-    enc = svc["enc"]
 
     def feat_row(w: pd.DataFrame):
         anchor = pd.Timestamp(w.iloc[-1]["measurement_timestamp"])
@@ -110,7 +109,6 @@ def build_snapshot() -> pd.DataFrame:
             continue
         last = w.iloc[-1]
         cov = service.feature_coverage(fr, svc["num_feats"])
-        X = service._feature_vector(fr, svc["num_feats"], svc["cat_feats"], enc)
 
         # shed attribution lives on lifecycle_segments (seg), not WES
         shed_any = "NA"
@@ -140,32 +138,50 @@ def build_snapshot() -> pd.DataFrame:
             "train_cutoff": meta.get("train_cutoff"),
         }
 
-        # degradation forecasts per dim x horizon (predicted level + delta + band)
+        # degradation forecasts per dim x horizon (predicted level + delta + band).
+        # Per-dim horizon models are reconciled into a monotone no-turn path
+        # AFTER wheelset adaptation, so the snapshot can never show wear
+        # decreasing / diameter increasing inside a segment.
         pred_by_dim: dict[str, dict[int, float | None]] = {}
         adapt = service.wheel_adaptation_at(int(ws_id), anchor)
         for dim in DEG_DIMS:
             current = fr.get(f"mean_{dim}")
             row[f"mean_{dim}"] = _f(current)
-            pred_by_dim[dim] = {}
+            levels: dict[int, float | None] = {}
+            adapts: dict[int, dict] = {}
+            raw = service._horizon_deltas(dim, fr)
             for h in HORIZONS:
-                delta = float(svc["models"][(dim, h)].predict(X)[0])
-                pred = current + delta if np.isfinite(delta) and current is not None and np.isfinite(current) else None
+                delta = raw.get(h)
+                pred = current + delta if delta is not None and current is not None and np.isfinite(current) else None
                 adj = adapt.get((dim, h)) if adapt else None
-                adapt_info = {"prior_n": adj["prior_n"] if adj else 0,
-                              "bias_mm": adj["bias"] if adj else None,
-                              "applied": False}
-                if adj and adj["prior_n"] >= service.ADAPT_MIN_N and adj["bias"] is not None and not adj["boundary"]:
+                if adj and adj["prior_n"] >= service.ADAPT_MIN_N and adj["bias"] is not None \
+                        and not adj["boundary"] and service.adapt_applies(dim):
                     pred = pred + adj["bias"] if pred is not None else pred
-                    adapt_info = {"prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
-                pred_by_dim[dim][h] = pred
+                    adapts[h] = {"prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
+                else:
+                    adapts[h] = {"prior_n": adj["prior_n"] if adj else 0,
+                                 "bias_mm": adj["bias"] if adj else None, "applied": False}
+                levels[h] = pred
+            if current is not None and np.isfinite(current):
+                rawd = {h: (levels[h] - current) if levels[h] is not None else None
+                        for h in HORIZONS}
+                clamped = service._no_turn_monotone(dim, rawd)
+                pred_by_dim[dim] = {h: (current + clamped.get(h))
+                                    if clamped.get(h) is not None else None
+                                    for h in HORIZONS}
+            else:
+                pred_by_dim[dim] = levels
+            for h in HORIZONS:
+                pred = pred_by_dim[dim][h]
                 width = service._conformal_width_mm(dim, h)
                 row[f"fc_{dim}_{h}d_pred"] = _f(pred)
-                row[f"fc_{dim}_{h}d_delta"] = _f(delta) if np.isfinite(delta) else None
+                row[f"fc_{dim}_{h}d_delta"] = _f(pred - current) if pred is not None and current is not None and np.isfinite(current) else None
                 row[f"fc_{dim}_{h}d_low"] = _f(pred - width) if pred is not None and width is not None else None
                 row[f"fc_{dim}_{h}d_high"] = _f(pred + width) if pred is not None and width is not None else None
-                row[f"fc_{dim}_{h}d_adapt_prior_n"] = adapt_info["prior_n"]
-                row[f"fc_{dim}_{h}d_adapt_bias"] = adapt_info["bias_mm"]
-                row[f"fc_{dim}_{h}d_adapt_applied"] = adapt_info["applied"]
+                row[f"fc_{dim}_{h}d_adapt_prior_n"] = adapts[h]["prior_n"]
+                row[f"fc_{dim}_{h}d_adapt_bias"] = adapts[h]["bias_mm"]
+                row[f"fc_{dim}_{h}d_adapt_applied"] = adapts[h]["applied"]
+            row[f"{dim}_model_source"] = service.model_of_record().get(dim)
 
         # P(turn) - separate signal, never merged into wear risk
         Xp = service._feature_vector(fr, psvc["num_feats"], psvc["cat_feats"], psvc["enc"])
@@ -200,7 +216,7 @@ def build_snapshot() -> pd.DataFrame:
             print(f"  {i+1}/{len(groups)} wheelsets ({time.time()-t0:.0f}s)")
 
     df = pd.DataFrame(rows)
-    df["staleness_days"] = (wes_all["measurement_timestamp"].max() - df["latest_measurement"]).dt.days
+    df["staleness_days"] = (pd.Timestamp.now() - pd.to_datetime(df["latest_measurement"])).dt.days
     print(f"built {len(df)} rows, {n_failed} wheelsets skipped (no feature row), {time.time()-t0:.0f}s")
     return df
 
@@ -221,6 +237,7 @@ def write(df: pd.DataFrame) -> None:
         "n_with_forecast": int(df["model_version"].notna().sum()),
         "model_version": str(df["model_version"].dropna().iloc[0]) if "model_version" in df and df["model_version"].notna().any() else None,
         "train_cutoff": str(df["train_cutoff"].dropna().iloc[0]) if "train_cutoff" in df and df["train_cutoff"].notna().any() else None,
+        "model_of_record": service.degradation_meta().get("model_of_record"),
         "sources": [{"path": str(p.relative_to(ML_ROOT)), "sha256": _sha(p)} for p in srcs if p.exists()],
         "rebuild": "ayush\\Scripts\\python -m dashboard.backend.build_fleet_snapshot",
         "note": ("Point-in-time export for ranking/overview. P(turn), wear state and "

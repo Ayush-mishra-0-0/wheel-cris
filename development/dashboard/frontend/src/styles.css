@@ -653,6 +653,88 @@ th.sorted { color: var(--ink); }
 }
 .trajectory-footnote { margin-top: 10px; line-height: 1.55; }
 
+.forecast-readout {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--card);
+}
+.forecast-readout .fs-label {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--muted);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.forecast-readout .fs-cond {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--info);
+  border: 1px solid var(--info-line);
+  background: var(--info-bg);
+  border-radius: var(--radius-sm);
+  padding: 0 6px;
+  cursor: help;
+}
+.forecast-readout .fs-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.forecast-readout .fs-dim {
+  width: 64px;
+  flex: none;
+  font-weight: 600;
+  font-size: var(--fs-sm);
+}
+.forecast-readout .fs-cells {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.forecast-readout .fs-cell {
+  font-size: var(--fs-sm);
+  white-space: nowrap;
+}
+.forecast-readout .fs-h {
+  color: var(--faint);
+  font-size: var(--fs-xs);
+  margin-right: 4px;
+}
+.forecast-readout .fs-range {
+  color: var(--muted);
+}
+.forecast-readout .fs-band {
+  margin-left: 5px;
+  font-size: var(--fs-xs);
+  color: var(--muted);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 0 5px;
+}
+.forecast-readout .fs-band-reduced {
+  color: var(--warning);
+  border-color: var(--warning-line);
+  background: var(--warning-bg);
+}
+.forecast-readout .fs-na {
+  color: var(--faint);
+}
+.forecast-readout .fs-note {
+  margin: 2px 0 0;
+}
+
 /* ---------------------------------------------------------------------------
    Turning probability cards
 --------------------------------------------------------------------------- */

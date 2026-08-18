@@ -1,11 +1,17 @@
 {
   "task": "fleet snapshot (P1.1) - one row per wheelset, current state",
   "contract": "fleet_snapshot_v1",
-  "built_at_utc": "2026-08-17T11:48:21.351136+00:00",
+  "built_at_utc": "2026-08-18T07:41:03.889141+00:00",
   "n_wheelsets": 19167,
   "n_with_forecast": 19167,
-  "model_version": "862fe6b639",
+  "model_version": "3404998be4",
   "train_cutoff": "2025-11-24",
+  "model_of_record": {
+    "wsmRoot": "per_horizon_xgb",
+    "wsmFlange": "wear_rate",
+    "wsmThread": "per_horizon_xgb",
+    "wsmDia": "wear_rate"
+  },
   "sources": [
     {
       "path": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",

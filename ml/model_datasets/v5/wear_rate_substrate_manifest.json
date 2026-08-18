@@ -1,0 +1,58 @@
+{
+  "task": "phase 5 layer 2 wear-rate substrate (Option 3 rate+integrate)",
+  "contract": "wheel_profile_lifecycle_contract_v1",
+  "output": "model_datasets\\v5\\wear_rate_substrate.parquet",
+  "source_bench": "model_datasets\\v5\\degradation_benchmark.parquet",
+  "source_wes": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
+  "sha256": "da0766ad597fc8cab4b05ace275f4e94bc5e9813dab4cdf0be03b8f5ffc9735a",
+  "rows": 239684,
+  "rows_train": 191747,
+  "rows_test": 47937,
+  "pairs_with_rate": 141231,
+  "pairs_rate_pct": 58.92,
+  "min_span_days": 7.0,
+  "max_span_days": 400.0,
+  "rate_clip_mm_per_day": 2.0,
+  "per_dim": {
+    "wsmRoot": {
+      "n": 126815,
+      "n_train": 97494,
+      "n_test": 29321,
+      "rate_median_mm_per_day": 0.008333,
+      "rate_mean_mm_per_day": 0.009828,
+      "rate_p1": -0.09375,
+      "rate_p99": 0.11111,
+      "share_lt_0": 0.0918
+    },
+    "wsmFlange": {
+      "n": 120221,
+      "n_train": 92846,
+      "n_test": 27375,
+      "rate_median_mm_per_day": 0.001678,
+      "rate_mean_mm_per_day": 0.002982,
+      "rate_p1": -0.04783,
+      "rate_p99": 0.05556,
+      "share_lt_0": 0.1055
+    },
+    "wsmThread": {
+      "n": 88236,
+      "n_train": 66100,
+      "n_test": 22136,
+      "rate_median_mm_per_day": 0.0,
+      "rate_mean_mm_per_day": 0.006231,
+      "rate_p1": -0.0625,
+      "rate_p99": 0.10714,
+      "share_lt_0": 0.0303
+    },
+    "wsmDia": {
+      "n": 141231,
+      "n_train": 110062,
+      "n_test": 31169,
+      "rate_median_mm_per_day": 0.0,
+      "rate_mean_mm_per_day": -0.01829,
+      "rate_p1": -0.33891,
+      "rate_p99": 0.06223,
+      "share_lt_0": 0.175
+    }
+  }
+}

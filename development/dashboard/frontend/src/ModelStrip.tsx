@@ -30,6 +30,14 @@ export function ModelStrip({ caps }: { caps: Capabilities | null }) {
   const model = modelVersion ?? svc?.model_version ?? "—";
   const cutoffLabel = cutoff ?? svc?.train_cutoff ?? "—";
   const limits = caps?.limits;
+  const mor = svc?.model_of_record as Record<string, string> | undefined;
+  const morLabel = mor
+    ? Object.entries(mor)
+        .filter(([, src]) => src === "wear_rate")
+        .map(([dim]) => dim)
+        .join("/")
+    : "";
+  const morText = morLabel ? ` rate:${morLabel}` : "";
 
   return (
     <div className="model-strip" aria-label="Model and limit status">
@@ -41,6 +49,12 @@ export function ModelStrip({ caps }: { caps: Capabilities | null }) {
         <span className="model-strip-label">train cutoff</span>
         <span className="mono">{cutoffLabel}</span>
       </span>
+      {morText && (
+        <span className="model-strip-item" title="model of record per dimension">
+          <span className="model-strip-label">model of record</span>
+          <span className="mono">{morText}</span>
+        </span>
+      )}
       <span className="model-strip-item">
         <span className="model-strip-label">snapshot</span>
         <span>{snapshotDays == null ? "—" : `${snapshotDays} d ago`}</span>

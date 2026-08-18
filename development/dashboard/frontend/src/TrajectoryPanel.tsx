@@ -3,7 +3,7 @@ import * as echarts from "echarts";
 import { EChart } from "./EChart";
 import type { EChartsOption } from "./EChart";
 import { api } from "./api";
-import type { TrajectoryContract, TrajectoryDim, TurnMarker } from "./types";
+import type { TrajectoryContract, TrajectoryDim, TrajectoryForecast, TurnMarker } from "./types";
 import { ErrorState, EmptyState, SkeletonBlock } from "./States";
 
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
@@ -209,6 +209,17 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
               </span>
             </div>
           )}
+          <ForecastReadout
+            data={data}
+            showDia={showDia}
+            reduced={new Set(
+              data.dims.flatMap((d) =>
+                d.forecasts.some((f) => (f.subgroup_flags ?? []).length > 0)
+                  ? [d.dim]
+                  : [],
+              ),
+            )}
+          />
           <div className="trajectory-grid">
             {dimOrder.map((dim) => {
               const d = data.dims.find((x) => x.dim === dim);
@@ -550,12 +561,125 @@ function TrajectoryChart({
   );
 }
 
+const DIM_LABELS: Record<string, string> = {
+  wsmFlange: "Flange",
+  wsmRoot: "Root",
+  wsmThread: "Thread",
+  wsmDia: "Dia",
+};
+const HORIZONS = [30, 90, 180] as const;
+
+function halfWidth(f: TrajectoryForecast): number | null {
+  if (f.high != null && f.low != null) return Math.abs(f.high - f.low) / 2;
+  if (f.high != null && f.predicted != null) return Math.abs(f.high - f.predicted);
+  if (f.low != null && f.predicted != null) return Math.abs(f.predicted - f.low);
+  return null;
+}
+
+function ForecastReadout({
+  data,
+  showDia,
+  reduced,
+}: {
+  data: TrajectoryContract;
+  showDia: boolean;
+  reduced: Set<string>;
+}) {
+  const dims = showDia ? data.dims : data.dims.filter((d) => d.dim !== "wsmDia");
+  const withForecasts = dims.filter((d) => d.forecasts.length > 0);
+  if (withForecasts.length === 0) return null;
+
+  return (
+    <div className="forecast-readout">
+      <span className="fs-label">
+        Expected state
+        {data.monotone_enforced && (
+          <span
+            className="fs-cond"
+            title="Path is constrained to a physically valid no-turn trajectory: wear never decreases and diameter never increases across the horizons."
+          >
+            no-turn conditional path
+          </span>
+        )}
+      </span>
+      {withForecasts.map((d) => {
+        const byH: Record<number, TrajectoryForecast> = {};
+        for (const f of d.forecasts) byH[f.horizon] = f;
+        const conf = data.conformal?.[d.dim];
+        return (
+          <div className="fs-row" key={d.dim}>
+            <span className="fs-dim" style={{ color: COLORS[d.dim] ?? "#7a6a9e" }}>
+              {DIM_LABELS[d.dim] ?? d.dim}
+            </span>
+            <span className="fs-cells">
+              {HORIZONS.map((h) => {
+                const f = byH[h];
+                if (!f || f.predicted == null) {
+                  return (
+                    <span className="fs-cell" key={h}>
+                      <span className="fs-h">{h}d</span>
+                      <span className="fs-na">—</span>
+                    </span>
+                  );
+                }
+                const hw = halfWidth(f);
+                const band = conf?.[`${h}d`];
+                const pctLevel = band?.level != null ? (band.level * 100).toFixed(0) : "80";
+                const pctActual =
+                  band?.coverage != null ? "· emp. " + (band.coverage * 100).toFixed(0) + "%" : "";
+                const reducedHere = reduced.has(d.dim);
+                return (
+                  <span className="fs-cell" key={h}>
+                    <span className="fs-h">{h}d</span>
+                    <b>{fmt(f.predicted, 3)}</b>
+                    {hw != null && <span className="fs-range"> ± {fmt(hw, 3)} mm</span>}
+                    <span
+                      className={`fs-band${reducedHere ? " fs-band-reduced" : ""}`}
+                      title={
+                        band?.coverage != null
+                          ? `Split-conformal ${pctLevel}% interval; empirical test coverage ${(
+                              band.coverage * 100
+                            ).toFixed(1)}%`
+                          : `Split-conformal ${pctLevel}% interval`
+                      }
+                    >
+                      ({pctLevel}%{pctActual}
+                      {reducedHere ? " ⚠" : ""})
+                    </span>
+                  </span>
+                );
+              })}
+            </span>
+          </div>
+        );
+      })}
+      <p className="muted small fs-note">
+        Same delta forecasts as the charts. "No-turn conditional": the path assumes no
+        turning/replacement inside the horizon, so wear can only hold or grow (diameter only
+        hold or shrink) across 30/90/180 d. The ± is the half-width of the split-conformal
+        band (nominal 80%); the number in brackets is the band level plus empirical test
+        coverage, so "small ± / high %" is trustworthy and "large ± / low %" means the
+        horizon range is wide. Diameter is a derived diagnostic, not a decision input.
+      </p>
+    </div>
+  );
+}
+
 function TrajectoryFootnote({ data }: { data: TrajectoryContract }) {
   const m = data.model;
+  const mor = m?.model_of_record;
+  const morLabel = mor
+    ? Object.entries(mor)
+        .map(([dim, src]) => `${dim}:${src === "wear_rate" ? "rate" : "Δhor"}`)
+        .join(" ")
+    : null;
   return (
     <p className="muted small trajectory-footnote">
       Forecast = anchor + Δ from serving C1 models (train cutoff{" "}
-      {m?.train_cutoff ?? "—"}, n={m?.n_train?.toLocaleString() ?? "—"}); 80%
+      {m?.train_cutoff ?? "—"}, n={m?.n_train?.toLocaleString() ?? "—"});
+      {morLabel ? <span> model of record {morLabel};</span> : null} the path is
+      no-turn conditional and monotone — wear can only hold or grow, diameter only hold or
+      shrink across 30/90/180 d — enforced after wheelset adaptation; 80%
       split-conformal bands + noise floor from the trajectory artefact;       realised
       points are actual within-segment measurements when a historical as-of is
       chosen. Physics flags (wear improving / diameter increasing) are reported,

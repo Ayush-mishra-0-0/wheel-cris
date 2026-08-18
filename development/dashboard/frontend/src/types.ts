@@ -83,6 +83,7 @@ export interface ForecastPoint {
   implausibility_flag: string | null;
   model_version: string | null;
   train_cutoff: string | null;
+  model_of_record?: string | null;
   feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
   unit: string;
@@ -141,6 +142,7 @@ export interface ModelMeta {
   train_cutoff?: string | null;
   n_train?: number | null;
   model_version?: string | null;
+  model_of_record?: Record<string, string> | null;
 }
 
 export interface WheelAdaptation {
@@ -160,6 +162,7 @@ export interface ReplayForecast {
   implausibility_flag: string | null;
   model_version: string | null;
   train_cutoff: string | null;
+  model_of_record?: string | null;
   feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
   wheel_adaptation: WheelAdaptation;
@@ -238,6 +241,7 @@ export interface TrajectoryForecast {
   high: number | null;
   model_version: string | null;
   train_cutoff: string | null;
+  model_of_record?: string | null;
   feature_coverage: number | null;
   subgroup_flags: SubgroupFlag[];
   wheel_adaptation: WheelAdaptation;
@@ -289,12 +293,19 @@ export interface TrajectoryDim {
   time_to_limit: TimeToLimit | null;
 }
 
+export interface ConformalCell {
+  level: number;
+  width_mm: number | null;
+  coverage: number | null;
+}
+
 export interface TrajectoryModelMeta {
   task: string | null;
   target_mode: string | null;
   train_cutoff: string | null;
   n_train: number | null;
   model_version: string | null;
+  model_of_record?: Record<string, string> | null;
 }
 
 export interface TurnMarker {
@@ -335,6 +346,9 @@ export interface TrajectoryContract {
   turns: TurnMarker[];
   turn_reset: TurnReset;
   delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
+  conformal: Record<string, Record<string, ConformalCell>>;
+  forecast_condition: string | null;
+  monotone_enforced: boolean;
   time_to_limit_summary: TimeToLimitSummary | null;
   note: string | null;
 }
@@ -346,6 +360,7 @@ export interface Capabilities {
     train_cutoff?: string | null;
     n_train?: number | null;
     target_mode?: string | null;
+    model_of_record?: Record<string, string> | null;
   };
   limits?: Record<
     string,

@@ -1,0 +1,31 @@
+{
+  "task": "phase 5 layer 2 wear-rate serving head (Option 3)",
+  "target": "per-day mm rate, integrated by horizon",
+  "note": "Backup to the per-horizon delta head kept in serving/degradation.",
+  "models": [
+    {
+      "dim": "wsmRoot",
+      "path": "model_wsmRoot.joblib",
+      "n_train": 89744,
+      "substrate": "wear_rate_substrate.parquet"
+    },
+    {
+      "dim": "wsmFlange",
+      "path": "model_wsmFlange.joblib",
+      "n_train": 85585,
+      "substrate": "wear_rate_substrate.parquet"
+    },
+    {
+      "dim": "wsmThread",
+      "path": "model_wsmThread.joblib",
+      "n_train": 61315,
+      "substrate": "wear_rate_substrate.parquet"
+    },
+    {
+      "dim": "wsmDia",
+      "path": "model_wsmDia.joblib",
+      "n_train": 101593,
+      "substrate": "wear_rate_substrate.parquet"
+    }
+  ]
+}

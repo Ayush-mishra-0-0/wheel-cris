@@ -130,25 +130,25 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
     deg_svc = service.degradation_models()
     deg_meta = service.degradation_meta()
     cov = service.feature_coverage(fr, deg_svc["num_feats"])
-    Xdeg = service._feature_vector(fr, deg_svc["num_feats"], deg_svc["cat_feats"], deg_svc["enc"])
     adapt = service.wheel_adaptation_at(wheelset_id, anchor_ts)
     forecasts = []
     for dim in DIMM:
         for h in HORIZONS:
-            delta = float(deg_svc["models"][(dim, h)].predict(Xdeg)[0])
+            delta = service._horizon_deltas(dim, fr).get(h)
             actual = tgt[h][dim] if tgt[h] else None
             current = fr.get(f"mean_{dim}")
             act_ts = tts[h]
             # Serving models regress delta; reconstruct the level for
             # comparison against current/actual (mirrors build_fleet_backtest).
             pred = None
-            if np.isfinite(delta) and current is not None and np.isfinite(current):
+            if delta is not None and np.isfinite(delta) and current is not None and np.isfinite(current):
                 pred = current + delta
             adj = adapt.get((dim, h)) if adapt else None
             adapt_info = {"prior_n": adj["prior_n"] if adj else 0,
                           "bias_mm": adj["bias"] if adj else None,
                           "applied": False}
-            if adj and adj["prior_n"] >= service.ADAPT_MIN_N and adj["bias"] is not None and not adj["boundary"]:
+            if adj and adj["prior_n"] >= service.ADAPT_MIN_N and adj["bias"] is not None \
+                    and not adj["boundary"] and service.adapt_applies(dim):
                 pred = pred + adj["bias"] if pred is not None else pred
                 adapt_info = {"prior_n": adj["prior_n"], "bias_mm": adj["bias"], "applied": True}
             flag = None
@@ -161,13 +161,14 @@ def wheelset_replay(wheelset_id: int, as_of: pd.Timestamp):
                 "dim": dim, "horizon": h,
                 "current": round(current, 4) if current is not None and np.isfinite(current) else None,
                 "predicted": round(pred, 4) if pred is not None else None,
-                "delta": round(delta, 4) if np.isfinite(delta) else None,
+                "delta": round(delta, 4) if delta is not None and np.isfinite(delta) else None,
                 "actual": round(actual, 4) if actual is not None and np.isfinite(actual) else None,
                 "actual_ts": str(pd.Timestamp(act_ts).date()) if act_ts is not None else None,
                 "observed_in_horizon": actual is not None and np.isfinite(actual),
                 "implausibility_flag": flag,
                 "model_version": deg_meta.get("model_version"),
                 "train_cutoff": deg_meta.get("train_cutoff"),
+                "model_of_record": deg_meta.get("model_of_record", {}).get(dim),
                 "feature_coverage": cov,
                 "wheel_adaptation": adapt_info,
                 "mae": round(abs(pred - actual), 4) if pred is not None and actual is not None and np.isfinite(actual) else None,

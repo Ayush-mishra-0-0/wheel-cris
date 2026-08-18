@@ -111,7 +111,7 @@ def shed_overview(shed: str) -> ShedOverview:
 @router.get("/loco/{loco_number}", response_model=LocomotiveSummary, tags=["loco"])
 def loco(loco_number: str) -> LocomotiveSummary:
     data = service.loco_summary(loco_number)
-    if not data["wheelsets"]:
+    if not data["wheelsets"] and not data.get("wheelsets_all"):
         raise HTTPException(status_code=404,
                             detail=f"no wheelsets found for loco {loco_number}")
     return LocomotiveSummary(**data)
@@ -123,7 +123,7 @@ def loco_wheelset_table(loco_number: str) -> LocoWheelsetTable:
     P(turn) + limiting dimension per wheelset (snapshot-backed when available).
     """
     data = service.loco_wheelset_table(loco_number)
-    if not data["wheelsets"]:
+    if not data["wheelsets"] and not data.get("wheelsets_all"):
         raise HTTPException(status_code=404,
                             detail=f"no wheelsets found for loco {loco_number}")
     return LocoWheelsetTable(**data)

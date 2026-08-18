@@ -2,7 +2,13 @@
   "task": "phase 5 layer 5 fleet-level temporal backtest",
   "contract": "wheel_profile_lifecycle_contract_v1",
   "split": "temporal point-in-time (train_cutoff preserved from substrate)",
-  "target_mode": "delta (serving models regress change; level = anchor + delta)",
+  "target_mode": "delta (serving models regress change; level = anchor + delta). Per-dim model of record follows serving/degradation_rate/champion.json ('wear_rate' integrates delta = decay_k * rate * horizon).",
+  "model_of_record": {
+    "wsmRoot": "per_horizon_xgb",
+    "wsmFlange": "wear_rate",
+    "wsmThread": "per_horizon_xgb",
+    "wsmDia": "wear_rate"
+  },
   "implausibility_note": "Implausibility flags are reported explicitly, never clipped. Model over-prediction vs actual within-segment physics is surfaced below.",
   "degradation": {
     "task": "phase 5 layer 2 degradation benchmark",
@@ -1488,19 +1494,19 @@
         "n": 23093,
         "flag": "wear_improving",
         "actual_rate": 12.44,
-        "model_rate": 4.66
+        "model_rate": 0.0
       },
       "90d": {
         "n": 34572,
         "flag": "wear_improving",
         "actual_rate": 10.33,
-        "model_rate": 2.73
+        "model_rate": 0.0
       },
       "180d": {
         "n": 39155,
         "flag": "wear_improving",
         "actual_rate": 8.93,
-        "model_rate": 1.99
+        "model_rate": 0.0
       }
     },
     "wsmThread": {
@@ -1528,19 +1534,19 @@
         "n": 24582,
         "flag": "increasing_diameter",
         "actual_rate": 2.46,
-        "model_rate": 1.42
+        "model_rate": 0.0
       },
       "90d": {
         "n": 36479,
         "flag": "increasing_diameter",
         "actual_rate": 2.53,
-        "model_rate": 0.32
+        "model_rate": 0.0
       },
       "180d": {
         "n": 41241,
         "flag": "increasing_diameter",
         "actual_rate": 2.62,
-        "model_rate": 0.55
+        "model_rate": 0.0
       }
     }
   }

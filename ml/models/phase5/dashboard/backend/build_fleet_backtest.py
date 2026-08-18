@@ -29,12 +29,25 @@ ROOT = Path(__file__).resolve().parents[4]
 EXP = ROOT / "models" / "experiments" / "v5"
 DATA = ROOT / "model_datasets" / "v5" / "degradation_benchmark.parquet"
 SERV = ROOT / "models" / "phase5" / "serving" / "degradation"
+RATE = ROOT / "models" / "phase5" / "serving" / "degradation_rate"
 
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
 WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
 WEAR_BETTER_TOL = 0.25      # re-derived from same-day repeatability floor (root MAD ~0.2)
 DIA_INC_TOL = 1.5           # re-derived from same-day repeatability floor (dia MAD 1.5)
+
+
+def delta_for(dim, h, X, Xr, models, rate_models, champ):
+    """Model-of-record delta mirroring service._horizon_deltas."""
+    choice = champ.get("dim_model_of_record", {})
+    if choice.get(dim) == "wear_rate" and rate_models and champ.get("decay_k"):
+        rate = float(rate_models[dim].predict(Xr)[0])
+        if not np.isfinite(rate):
+            return np.full(len(Xr), np.nan)
+        r = np.clip(rate, None, 0.0) if dim == "wsmDia" else np.clip(rate, 0.0, None)
+        return champ.get("decay_k", {}).get(f"{dim}_{h}d", 1.0) * r * h
+    return models[dim][h].predict(X)
 
 
 def main() -> None:
@@ -46,6 +59,22 @@ def main() -> None:
     cat = te[CAT].astype(str).replace({"nan": "NA", "None": "NA"})
     Xc = enc.transform(cat)
 
+    champ = {}
+    rate_models = {}
+    Xr = None
+    if (RATE / "champion.json").exists():
+        champ = json.loads((RATE / "champion.json").read_text())
+        rate_feats = json.loads((RATE / "features.json").read_text())
+        if RATE.exists():
+            rate_enc = joblib.load(RATE / "encoder.joblib")
+            Xr = np.hstack([te[rate_feats["num_feats"]].to_numpy(float),
+                            rate_enc.transform(te[rate_feats["cat_feats"]].astype(str)
+                                               .replace({"nan": "NA", "None": "NA"}))])
+            rate_models = {dim: joblib.load(RATE / f"model_{dim}.joblib") for dim in DIMM}
+
+    models = {dim: {h: joblib.load(SERV / f"model_{dim}_{h}d.joblib")
+                    for h in HORIZONS} for dim in DIMM}
+
     diag = {}
     for dim in DIMM:
         diag[dim] = {}
@@ -54,13 +83,11 @@ def main() -> None:
             if el.sum() == 0:
                 diag[dim][f"{H}d"] = None
                 continue
-            m = joblib.load(SERV / f"model_{dim}_{H}d.joblib")
             Xn = te.loc[el, NUM].to_numpy(float)
             X = np.hstack([Xn, Xc[el.to_numpy()]])
+            Xrate = Xr[el.to_numpy()] if Xr is not None else None
             cur = te.loc[el, f"mean_{dim}"].to_numpy(float)
-            # serving models regress delta (tgt - anchor); reconstruct level for
-            # implausibility comparison against the anchor diameter.
-            delta = m.predict(X)
+            delta = delta_for(dim, H, X, Xrate, models, rate_models, champ)
             pred = cur + delta
             tgt = te.loc[el, f"tgt_{dim}_{H}d"].to_numpy(float)
             fin = np.isfinite(pred) & np.isfinite(cur)
@@ -87,7 +114,10 @@ def main() -> None:
         "task": "phase 5 layer 5 fleet-level temporal backtest",
         "contract": "wheel_profile_lifecycle_contract_v1",
         "split": "temporal point-in-time (train_cutoff preserved from substrate)",
-        "target_mode": "delta (serving models regress change; level = anchor + delta)",
+        "target_mode": ("delta (serving models regress change; level = anchor + delta). "
+                        "Per-dim model of record follows serving/degradation_rate/champion.json "
+                        "('wear_rate' integrates delta = decay_k * rate * horizon)."),
+        "model_of_record": champ.get("dim_model_of_record", {}),
         "implausibility_note": ("Implausibility flags are reported explicitly, never clipped. "
                                 "Model over-prediction vs actual within-segment physics is surfaced below."),
         "degradation": json.loads((EXP / "degradation_benchmark.json").read_text()),
