@@ -112,12 +112,12 @@ degradation_delta = end_value - start_value
 
 | Attribute | Value |
 |-----------|-------|
-| **Physical Meaning** | Wear at the wheel-root/fillet area. **RESOLVED (2026-08-03): direct measured depth/width with measurement variance — NOT a cumulative since-turning index.** Evidence: 38.8% of root changes on 64,729 long-history equipment are decreases (420,487 up→down flips); root resets to ~0 at provision changes (73.8%) = replacement, only 7.5% at flagged turning. **RESOLVED (2026-08-08, Q8): direct defect-severity measurement; 3 mm = maximum/condemning value, lower is better.** |
+| **Physical Meaning** | Wear at the wheel-root/fillet area. **RESOLVED (2026-08-03): direct measured depth/width with measurement variance — NOT a cumulative since-turning index.** Evidence: 38.8% of root changes on 64,729 long-history equipment are decreases (420,487 up→down flips); root resets to ~0 at provision changes (73.8%) = replacement, only 7.5% at flagged turning. **RESOLVED (2026-08-08, Q8): direct defect-severity measurement; 3 mm = maximum/condemning value, lower is better.** **SUPERSEDED ON LIMIT (2026-08-19): Wrpld table = authoritative wear register → root condemning = 6.0 mm** (`configs/limit_register_v1.json`). |
 | **Expected Degradation Direction** | **Increases** with wear (root radius deepens/width grows); noisy, may decrease on re-measurement. |
 | **Observed Delta Evidence** | n=1,031,482. **Positive** (increase): 45.24%. **Negative**: 28.50%. **Zero**: 26.26%. Predominantly increasing; the negative tail is measurement variance + replacement resets, not cumulative resets. |
 | **Possible Intervention Effects** | Turning reduces root only modestly (~1.0, and in 24% of cases root *increases* at turning rows — direct-depth noise). **Replacement resets root to ~0.** |
-| **Required Engineering Confirmations** | 1. Unit is mm (confirmed 2026-08-08). 2. Condemning/limit value = **3 mm** (confirmed 2026-08-08); lower is better; root > 3 mm = beyond condemning. (Direct-vs-cumulative resolved.) |
-| **Safe Derived Calculations** | Raw delta (`end - start`) as **direct root-depth change**; treat replacement resets (provision-change) as boundaries, not wear. **Margin-to-condemning now computable:** `root_margin = 3.0 - wsmRoot` (negative = beyond condemning). |
+| **Required Engineering Confirmations** | 1. Unit is mm (confirmed 2026-08-08). 2. Condemning/limit value = **3 mm** (confirmed 2026-08-08); lower is better; root > 3 mm = beyond condemning. **SUPERSEDED 2026-08-19: Wrpld table sets root wear 0-6 mm → condemning value is now 6.0 mm** (`configs/limit_register_v1.json`). (Direct-vs-cumulative resolved.) |
+| **Safe Derived Calculations** | Raw delta (`end - start`) as **direct root-depth change**; treat replacement resets (provision-change) as boundaries, not wear. **Margin-to-condemning now computable:** `root_margin = 6.0 - wsmRoot` (negative = beyond condemning) per the approved Wrpld register. |
 | **Unsafe/Blocked Calculations** | Wear rate per distance. Any cumulative-since-turning index. |
 | **Dependencies Before Release** | `wear_rate_mm_per_day` blocked on (a) approved wear dimensions, (b) turning reset rule. |
 
@@ -127,12 +127,12 @@ degradation_delta = end_value - start_value
 
 | Attribute | Value |
 |-----------|-------|
-| **Physical Meaning** | Tread defect/hollow depth. **RESOLVED (2026-08-08, Q8): direct defect-severity measurement; 3 mm = maximum/condemning value, lower is better.** Field name `wsmThread` = "tread". |
+| **Physical Meaning** | Tread defect/hollow depth. **RESOLVED (2026-08-08, Q8): direct defect-severity measurement; 3 mm = maximum/condemning value, lower is better.** **SUPERSEDED ON LIMIT (2026-08-19): Wrpld table = authoritative wear register → tread condemning = 6.5 mm** (`configs/limit_register_v1.json`). Field name `wsmThread` = "tread". |
 | **Expected Degradation Direction** | **Increases** with wear (hollow tread deepens with wear). |
 | **Observed Delta Evidence** | n=1,031,566. **Positive**: 30.70%. **Negative**: 18.80%. **Zero**: 50.50%. High zero rate suggests many inspections don't record this or it's not always applicable. |
 | **Possible Intervention Effects** | Turning/restores tread profile → should reduce hollow measurement. |
 | **Required Engineering Confirmations** | 1. Exact physical meaning — **RESOLVED: tread defect/hollow depth (Q8)**. 2. Unit — mm (confirmed 2026-08-08). 3. Wear direction — **increases with wear (Q8)**. 4. Whether recorded for all wheel types or only specific profiles — open. |
-| **Safe Derived Calculations** | **Margin-to-condemning now computable:** `tread_margin = 3.0 - wsmThread` (negative = beyond condemning). |
+| **Safe Derived Calculations** | **Margin-to-condemning now computable:** `tread_margin = 6.5 - wsmThread` (negative = beyond condemning) per the approved Wrpld register (was 3.0 mm in Q8; superseded 2026-08-19). |
 | **Unsafe/Blocked Calculations** | Wear rate per distance; health contribution until limits cross-validated across fleet. |
 | **Dependencies Before Release** | Feature release now gated only on remaining per-type applicability confirmation (Q8). |
 

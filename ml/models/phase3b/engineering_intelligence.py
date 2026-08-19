@@ -1,8 +1,10 @@
 """Phase 3B - Engineering Intelligence: health index, estimated RUL, corrective action.
 
 Builds, from the frozen Wheel Engineering State v1.0, a per-state engineering
-intelligence output that supports maintenance prioritisation WITHOUT needing the
-(blocked) approved limit register.
+intelligence output that supports maintenance prioritisation. The Wrpld wear
+register (flange 3.0 / root 6.0 / tread 6.5 mm) is now approved; root (6.0 mm)
+and dia (1016 mm) feed this index directly, while the registered flange/tread
+fields remain SEMANTICS_BLOCKED in WES v1.0 until released.
 
 Products:
   1. Segment-level wear rates (mm/day) per active dimension, aggregated over a
@@ -10,10 +12,11 @@ Products:
      averages per-inspection noise (which the next-state model showed dominates
      short intervals).
   2. Estimated Engineering RUL (days): fleet-REALTY, rate-based projection from
-     the current measured value toward a fleet-relative threshold. Because the
-     approved condemning/limit register is BLOCKED, RUL is reported as (a) days
-     to a configurable threshold and (b) a relative priority percentile. It is
-     NOT a hygiene claim against an official limit.
+     the current measured value toward a threshold. Root and dia thresholds are
+     the APPROVED limits (Wrpld root 6.0 mm; dia 1016 mm); flange/tread remain
+     fleet-relative until their registered fields are released. RUL is still
+     reported with the reference threshold named, never as a hygiene claim
+     beyond what the register supports.
   3. Limiting dimension: which measured dimension is closest (relative to fleet)
      to its threshold given its wear rate -> drives the corrective action.
   4. Engineering Health Index: a 0-100 multi-dimension index combining proximity
@@ -38,14 +41,22 @@ DASH = ROOT / "reports" / "dashboards"
 
 DIMENSIONS = ["wsmDia", "wsmFlangeThickness", "wsmRoot", "wsmWheelGauge"]
 SIDES = ["1", "2"]
-# Fleet-relative threshold references. These are NOT official condemning limits;
-# they are transparent priors used to derive a relative priority and RUL estimate.
-# Diameter threshold taken from the documented 1016mm condemning reference in the
-# spec; others are placeholder fleet priors pending the approved limit register.
+# Threshold references used for proximity / relative RUL.
+# - wsmDia  : documented 1016 mm condemning reference (approved hard stop).
+# - wsmRoot : APPROVED wear limit from the Wrpld register
+#             (configs/limit_register_v1.json, ratified 2026-08-19): root wear
+#             0-6 mm, condemning = 6.0 mm. Supersedes the earlier 3 mm Q8 value.
+# - wsmFlangeThickness / wsmWheelGauge : fleet-relative PRIORS only - these are
+#   NOT in the Wrpld register (which governs wsmFlange wear 3.0 mm and wsmThread
+#   wear 6.5 mm). Those registered fields remain SEMANTICS_BLOCKED in WES v1.0
+#   (BLOCKED_FIELDS), so they cannot yet feed this index. When released, flange
+#   (3.0) and tread (6.5) should be added here from the register.
+# Transparent priors, never presented as official condemning limits where the
+# register does not apply.
 REFERENCE = {
     "wsmDia": (1000.0, 1016.0),          # (soft floor, hard reference) lower=worse
-    "wsmFlangeThickness": (10.0, 23.0),  # lower=worse
-    "wsmRoot": (0.0, 8.0),               # lower=worse
+    "wsmFlangeThickness": (10.0, 23.0),  # lower=worse (fleet prior, not register)
+    "wsmRoot": (0.0, 6.0),               # lower=worse; 6.0 = Wrpld approved condemning
     "wsmWheelGauge": (1357.0, 1340.0),   # gauge typically must stay within band
 }
 
@@ -209,9 +220,10 @@ def main() -> None:
         "median_health_index": float(out_tmp["health_index"].median()),
         "limiting_dimension_counts": out_tmp["limiting_dimension"].value_counts().to_dict(),
         "reference_thresholds": REFERENCE,
-        "note": "Estimated RUL is fleet-relative and rate-based; absolute condemning "
-                "limits BLOCKED pending approved limit register. Health index is "
-                "transparent rule-based (proximity + wear rate + maintenance).",
+        "note": "Estimated RUL is rate-based; root (6.0 mm, Wrpld) and dia (1016 mm) "
+                "are APPROVED limits, flange/tread reference values are fleet priors "
+                "while their registered fields stay SEMANTICS_BLOCKED in WES. Health "
+                "index is transparent rule-based (proximity + wear rate + maintenance).",
     }
     (OUTPUT / "engineering_intelligence_manifest.json").write_text(
         json.dumps(summary, indent=2) + "\n", encoding="utf-8")

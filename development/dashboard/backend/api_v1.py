@@ -21,7 +21,7 @@ from pathlib import Path
 from .schemas import (
     Capabilities, FleetBacktest, FleetOverview, FleetRiskResponse, FleetSearchResponse,
     LocomotiveSummary, LocoWheelsetTable, OperationalCapture, ShedOverview,
-    TrajectoryContract, WheelsetDetail, WheelsetReplay,
+    TrajectoryContract, WheelAttribution, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
 from .config import ENABLE_LEGACY_PLOTS
@@ -127,6 +127,23 @@ def loco_wheelset_table(loco_number: str) -> LocoWheelsetTable:
         raise HTTPException(status_code=404,
                             detail=f"no wheelsets found for loco {loco_number}")
     return LocoWheelsetTable(**data)
+
+
+@router.get("/wheelset/{ws}/attribution", response_model=WheelAttribution | None, tags=["wheelset"])
+def wheelset_attribution(ws: int, target: str = "turn") -> WheelAttribution | None:
+    """Phase 4 per-wheel attribution (likely contributors) for a scored wheelset.
+
+    target="turn" (shipping) or "root" (exploratory - sparse; see the Phase 4
+    report). Attribution is model attribution, never "cause" (contract §8).
+    Returns 204/None when the wheelset is not in the Phase 4 scored batch.
+    """
+    if target not in ("turn", "root"):
+        raise HTTPException(status_code=422, detail="target must be 'turn' or 'root'")
+    a = service.turn_attribution(ws, target=target)
+    if a is None:
+        raise HTTPException(status_code=404,
+                            detail=f"wheelset {ws} not in the phase 4 scored batch ({target})")
+    return WheelAttribution(**a)
 
 
 @router.get("/wheelset/{ws}/overview", response_model=WheelsetDetail, tags=["wheelset"])

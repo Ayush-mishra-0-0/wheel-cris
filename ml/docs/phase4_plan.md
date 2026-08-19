@@ -2,10 +2,11 @@
 
 **Status:** Open for execution · governing plan for Stage 4
 **Owner:** Wheel Engineering Intelligence Platform
-**Date:** 2026-08-11
+**Date:** 2026-08-11 (v1.0); 2026-08-19 (v1.1)
 **Prerequisite:** Phase 3F verdict (what is / is not forecastable), frozen v3f substrate,
 Event & Censoring Audit v1, `maintenance_event_specification_v1.0` (turning target),
-owner-confirmed root limit (3 mm), pinned environment (`ayush`).
+approved root limit (**6 mm — Wrpld table**, `configs/limit_register_v1.json`;
+supersedes the earlier 3 mm Q8 figure), pinned environment (`ayush`).
 
 ---
 
@@ -17,10 +18,12 @@ Phase 3F answered the scientific question it was chartered to answer:
   the conditional mean of the residual is ~0, persistence beats every arm, and the
   latent/mixed-effects probe (`720aaaa`) was falsified. This is the honest result and
   it is now a closed finding. **We will not return to diameter-curve regression.**
-- **The tail / ranking framing works.** Root-limit crossing (`root > 3 mm`) is
-  learnable as a calibrated probability (AUC ≈ 0.86, ECE ≈ 0.012, capture@top-10% ≈ 52%),
-  and the existing Track A maintenance-realization target already ranked usefully at
-  30–180d (Phase 3A: 90d XGB PR-AUC 0.364, R@5% 0.48).
+- **The tail / ranking framing works.** Root-limit crossing (`root > 6 mm`, the Wrpld
+  condemning value — see `risk_event_contract_v1.md` v1.1) is the Phase 4 target; the
+  earlier 3 mm tail probe (AUC ≈ 0.86, ECE ≈ 0.012, capture@top-10% ≈ 52%) was superseded
+  when the Wrpld register fixed root condemning at 6.0 mm, and the existing Track A
+  maintenance-realization target already ranked usefully at 30–180d (Phase 3A: 90d XGB
+  PR-AUC 0.364, R@5% 0.48).
 
 Phase 4 therefore stops adding intelligence and **proves the production decision
 system**: given a wheel inspection today, can we reliably produce the top-N list of
@@ -41,7 +44,7 @@ available at that inspection?
 
 | id | Target | Horizon(s) | Event definition | Limit status |
 | --- | --- | --- | --- | --- |
-| A | Engineering-risk: root constraint | 30 / 90 / 180 d | `root > 3 mm` strictly inside `(t, t+H]` | **Owner-confirmed** (Q8, 2026-08-08): direct defect depth, 3 mm = condemning, lower is better |
+| A | Engineering-risk: root constraint | 30 / 90 / 180 d | `root > 6 mm` strictly inside `(t, t+H]` | **APPROVED** — Wrpld table (`configs/limit_register_v1.json`): root wear 0-6 mm, condemning = 6.0 mm, lower is better. Supersedes the earlier 3 mm Q8 value (2026-08-08) |
 | B | Maintenance-realization: turning | 30 / 90 / 180 d | recorded turning (`wsmturning1 == 1`) strictly inside `(t, t+H]` | Approved event (`maintenance_event_specification_v1.0`) |
 
 **Explicitly excluded from Phase 4 primary outcomes:**
@@ -243,3 +246,4 @@ Exposure feature integration (Phase 5).
 | Date | Version | Change |
 | --- | --- | --- |
 | 2026-08-11 | 1.0 | Initial Phase 4 plan. Two frozen targets (root constraint, turning realization) at 30/90/180d; three required baselines + one candidate; rolling primary; loco stress; attribution + Wheel Risk Card; survival blocked; diameter regression closed. |
+| 2026-08-19 | 1.1 | Target A retuned to the Wrpld register: root constraint = `root > 6 mm` (was 3 mm). `configs/limit_register_v1.json` is the auditable source. Phase 4 datasets/artifacts labelled with `limit_root_mm`; date-stamped runs distinguish 3 mm (pre-register) from 6 mm. |

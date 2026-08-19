@@ -18,7 +18,7 @@ Per (target, horizon) at each cutoff T:
 Models (plan section 7):
   B0 prevalence / random ranking
   B1 regularized logistic (state/context set)
-  B2 margin-only logistic (current root margin = 3 - root)
+  B2 margin-only logistic (current root margin = 6 - root)
   C1 XGBoost candidate (comparator)
 
 Metrics: PR-AUC (primary), ROC-AUC, Brier, ECE, capture@5%, capture@10%,
@@ -43,7 +43,10 @@ V4 = ROOT / "model_datasets" / "v4" / "risk_benchmark.parquet"
 WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
 OUTPUT = ROOT / "models" / "experiments" / "v4"
 SEED = 42
-LIMIT_ROOT = 3.0
+# Root wear condemning limit (mm). Source: Wrpld table via
+# configs/limit_register_v1.json (root wear 0-6 mm). Supersedes the earlier
+# 3 mm figure (degradation_semantics.md Q8, 2026-08-08).
+LIMIT_ROOT = 6.0
 HORIZONS = (30, 90, 180)
 STEP = 30  # monthly refit
 
@@ -195,7 +198,7 @@ def main() -> None:
     t0 = pd.to_datetime(df["measurement_timestamp"]).to_numpy(dtype="datetime64[us]")
     eq = df["wheelset_equipment_id"].astype("int64").to_numpy()
 
-    # static: first root>3 event strictly after t; first turn event after t
+    # static: first root>6 event strictly after t; first turn event after t
     first_root = np.full(len(df), np.datetime64("NaT"), dtype="datetime64[us]")
     first_turn = np.full(len(df), np.datetime64("NaT"), dtype="datetime64[us]")
     obs_end_full = np.full(len(df), np.datetime64("NaT"), dtype="datetime64[us]")

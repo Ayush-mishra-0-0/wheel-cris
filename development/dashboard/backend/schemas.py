@@ -93,6 +93,9 @@ class TurnEvent(BaseModel):
 class TurnProbability(BaseModel):
     horizon: int
     probability: float | None = None
+    calibrated_probability: float | None = None
+    conf_decile: int | None = None
+    calibration_source: str | None = None
     turn_rate_train: float | None = None
     n_train: int | None = None
     roc_auc: float | None = None
@@ -100,6 +103,27 @@ class TurnProbability(BaseModel):
     pointer: str = ("P(turn) = estimated turning probability based on "
                     "historical maintenance behaviour - not a mandatory "
                     "turning recommendation")
+
+
+class Contributor(BaseModel):
+    feature: str
+    label: str
+    shap: float
+
+
+class WheelAttribution(BaseModel):
+    target: str
+    wheelset_equipment_id: int
+    measurement_record_id: int | None = None
+    locomotive_id: int | None = None
+    anchor: str | None = None
+    probability: float | None = None
+    risk: str | None = None
+    conf_decile: int | None = None
+    conf_empirical_rate: float | None = None
+    train_prevalence: float | None = None
+    realized_event: bool | None = None
+    contributors: list[Contributor] = Field(default_factory=list)
 
 
 class LocomotiveSummary(BaseModel):

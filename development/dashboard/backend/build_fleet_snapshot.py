@@ -8,7 +8,8 @@ Materialises a one-row-per-wheelset parquet of the CURRENT fleet state:
                     + conformal low/high interval edges
   - P(turn)       : 30/60/90d probabilities (historical behaviour, separate)
   - limiting dim  : dia condemning (1016 mm hard stop) when reached within the
-                    180d horizon, else the fastest-wearing flange/root/tread dim
+                    180d horizon; else the flange/root/tread wear dim that reaches
+                    its approved Wrpld limit soonest (or is closest to it)
   - risk signals  : KEPT SEPARATE (wear state, limit proximity, P(turn) are
                     distinct columns - never collapsed into one number)
   - provenance    : model_version / train_cutoff / data staleness so the UI can
@@ -54,6 +55,10 @@ WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
 HORIZONS = (30, 90, 180)
 CONDEMNING_DIA_MM = 1016.0
 MAX_HORIZON = 180
+# Approved wear condemning limits (mm) - Wrpld table, the authoritative wear
+# register (configs/limit_register_v1.json, ratified 2026-08-19): flange 0-3,
+# root 0-6, tread 0-6.5. Lower is better; value grows toward the limit.
+WEAR_LIMITS_MM = {"wsmFlange": 3.0, "wsmRoot": 6.0, "wsmThread": 6.5}
 
 
 def _crossing_days(times, values, limit: float, direction: str) -> float | None:
@@ -183,30 +188,54 @@ def build_snapshot() -> pd.DataFrame:
                 row[f"fc_{dim}_{h}d_adapt_applied"] = adapts[h]["applied"]
             row[f"{dim}_model_source"] = service.model_of_record().get(dim)
 
-        # P(turn) - separate signal, never merged into wear risk
+        # P(turn) - separate signal, never merged into wear risk. Phase 4
+        # empirical band: raw serving score + calibrated realized event rate
+        # (decile of the C1 training split) so ranking uses honest probabilities.
         Xp = service._feature_vector(fr, psvc["num_feats"], psvc["cat_feats"], psvc["enc"])
         for h in psvc["models"]:
             p = float(psvc["models"][h].predict_proba(Xp)[0, 1])
+            dec, cal_rate = service.calibrate_turn(h, p)
             row[f"pturn_{h}d"] = round(p, 4)
+            row[f"pturn_{h}d_calibrated"] = (round(cal_rate, 4)
+                                             if cal_rate is not None else None)
+            row[f"pturn_{h}d_decile"] = dec if cal_rate is not None else None
 
-        # limiting dimension
+        # limiting dimension: dia condemning hard stop when reached within the
+        # horizon; otherwise the wear dim that reaches its approved Wrpld limit
+        # soonest on the predicted path (fallback: closest normalized margin).
         dttl = _days_to_condemning(fr.get("mean_wsmDia"), pred_by_dim["wsmDia"])
         row["days_to_condemning_dia"] = round(dttl, 1) if dttl is not None else None
         if dttl is not None and dttl <= MAX_HORIZON:
             row["limiting_dim"] = "wsmDia"
             row["limiting_reason"] = "dia reaches condemning hard stop (1016 mm) within horizon"
         else:
-            # fastest-wearing primary wear dim (90d change in mm)
-            rates = {}
+            cand = {}
             for dim in WEAR_DIMS:
-                d90 = pred_by_dim[dim].get(90)
                 cur = fr.get(f"mean_{dim}")
-                if d90 is not None and cur is not None and np.isfinite(d90) and np.isfinite(cur):
-                    rates[dim] = d90 - cur
-            if rates:
-                top = max(rates, key=rates.get)
-                row["limiting_dim"] = top
-                row["limiting_reason"] = "fastest 90d wear among flange/root/tread (no approved action limit)"
+                if cur is None or not np.isfinite(cur):
+                    continue
+                path = [pred_by_dim[dim].get(h) for h in HORIZONS]
+                days = _crossing_days([0] + list(HORIZONS),
+                                      [cur] + path,
+                                      WEAR_LIMITS_MM[dim], "up")
+                limit = WEAR_LIMITS_MM[dim]
+                p180 = pred_by_dim[dim].get(180)
+                marg = (limit - p180) if p180 is not None and np.isfinite(p180) else (limit - cur)
+                cand[dim] = (days, marg / limit)
+            if cand:
+                # earliest within-horizon crossing wins; else closest to limit
+                top, (days, _nm) = min(cand.items(),
+                                       key=lambda kv: (kv[1][0] if kv[1][0] is not None else float("inf")))
+                if days is None:
+                    top = min(cand, key=lambda d: cand[d][1])
+                    days, _nm = cand[top]
+                    row["limiting_dim"] = top
+                    row["limiting_reason"] = (f"no within-horizon crossing; closest to approved "
+                                              f"{WEAR_LIMITS_MM[top]:g} mm wear limit (Wrpld)")
+                else:
+                    row["limiting_dim"] = top
+                    row["limiting_reason"] = (f"reaches approved {WEAR_LIMITS_MM[top]:g} mm wear "
+                                              f"limit in ~{days:.0f} d (Wrpld)")
             else:
                 row["limiting_dim"] = None
                 row["limiting_reason"] = None

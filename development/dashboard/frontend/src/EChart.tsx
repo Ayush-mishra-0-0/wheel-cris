@@ -20,10 +20,12 @@ export function EChart({
   option,
   height = 260,
   onEvents,
+  onInstance,
 }: {
   option: EChartsOption;
   height?: number | string;
   onEvents?: Record<string, (params: unknown) => void>;
+  onInstance?: (chart: ECharts) => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const chartRef = useRef<ECharts | null>(null);
@@ -41,6 +43,7 @@ export function EChart({
         chartRef.current = chart;
         window.addEventListener("resize", onResize);
         setReady(true);
+        onInstance?.(chart);
       })
       .catch(() => {}); // echarts failed to load; charts stay blank
     return () => {

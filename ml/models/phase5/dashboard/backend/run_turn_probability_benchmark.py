@@ -69,6 +69,26 @@ def build_matrix(df, enc=None):
     return Xn, Xc, enc
 
 
+def decile_calibration(y_tr, p_tr):
+    """Empirical reliability band (Phase 4 method): training-split score deciles
+    mapped to the realized event rate in each decile.
+
+    Returns bin_edges, bin_rates. At serve time a raw score is binned against
+    bin_edges and its decile's realized rate is the calibrated band. Only valid
+    for the model whose training scores produced it (the serving C1 uses the
+    same config and train split, so it carries over).
+    """
+    ok = np.isfinite(p_tr) & np.isfinite(y_tr)
+    y, p = y_tr[ok], p_tr[ok]
+    if p.size < 100:
+        return None, None
+    edges = np.percentile(p, np.arange(0, 101, 10))          # 11 edges, 10 bins
+    dec = np.clip(np.digitize(p, edges[1:-1]), 0, 9)
+    rates = [float(y[dec == i].mean()) if (dec == i).sum() else None
+             for i in range(10)]
+    return [round(float(e), 6) for e in edges], rates
+
+
 def ece(y, p, bins=10):
     ok = np.isfinite(p) & np.isfinite(y)
     y, p = y[ok], p[ok]
@@ -158,6 +178,17 @@ def main() -> None:
         m.fit(np.hstack([Xn_tr, Xc_tr]), ytr)
         Xn_te, Xc_te, _ = build_matrix(te_idx, enc)
         p2 = m.predict_proba(np.hstack([Xn_te, Xc_te]))[:, 1]
+        # Phase 4 reliability band: C1 training-split score deciles -> realized
+        # train event rate. Model-consistent with the serving C1 (same config +
+        # train split), so it is what the dashboard applies to served scores.
+        p2_tr = m.predict_proba(np.hstack([Xn_tr, Xc_tr]))[:, 1]
+        cal_edges, cal_rates = decile_calibration(ytr, p2_tr)
+        calibration = ({"method": "empirical score deciles (Phase 4)",
+                        "n_type": "train",
+                        "cutoff_based": True,
+                        "bin_edges": cal_edges, "bin_rates": cal_rates,
+                        "train_prevalence": round(float(np.mean(ytr)), 6)}
+                       if cal_edges is not None else None)
 
         per_model = {}
         for name, p in (("B0_prevalence", p0), ("B1_shed", p1), ("C1_xgb", p2)):
@@ -178,6 +209,8 @@ def main() -> None:
             mdict["brier"] = round(float(brier_score_loss(yte[ok], p[ok])), 4)
             mdict["ece"] = ece(yte, p)
             mdict["capture"] = capture_topk(yte, p)
+            if name == "C1_xgb" and calibration is not None:
+                mdict["calibration"] = calibration
             per_model[name] = mdict
         summary["horizons"][str(H)] = {"models": per_model}
         print(f"P(turn) {H}d  train={int(ytr.sum()):,}/{len(ytr):,} "

@@ -21,6 +21,9 @@ ROOT = ML_ROOT
 DEG_DIR = ROOT / "models" / "phase5" / "serving" / "degradation"
 RATE_DIR = ROOT / "models" / "phase5" / "serving" / "degradation_rate"
 PTURN_DIR = ROOT / "models" / "phase5" / "serving" / "turn_probability"
+PTURN_BENCH = ROOT / "models" / "experiments" / "v5" / "turn_probability_benchmark.json"
+V4_TURN_ATTRIB = ROOT / "models" / "experiments" / "v4" / "wheel_attribution_turn.parquet"
+V4_ROOT_ATTRIB = ROOT / "models" / "experiments" / "v4" / "wheel_attribution_root.parquet"
 SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 TURNS = ROOT / "model_datasets" / "v5" / "lifecycle_turns.parquet"
 TRAJ_ARTEFACT = ROOT / "models" / "experiments" / "v5" / "trajectory_product_analysis.json"
@@ -64,13 +67,17 @@ WEAR_RESTORE_MM = 0.2
 
 # ---------------------------------------------------------------------------
 # Engineering limit register (MAINTENANCE POLICY, not ML).
-# Only wsmDia has an approved numeric hard stop (1016 mm condemning, lower is
-# worse). Flange/root/tread action thresholds (attention / plan turn / turn
-# now) are NOT signed off by C&W / standards yet -> limit_mm stays None and
-# time-to-limit is not reported for them. Every threshold MUST be registered
-# here as a versioned constant (with status), never hardcoded in request code.
-# `status` is surfaced via /api/v1/config so the UI can label approved vs
-# provisional vs pending. Direction: "down" = value falls toward the limit.
+# The Wrpld table is the authoritative wear register (configs/limit_register_v1.json,
+# ratified 2026-08-19): flange 0-3 mm, root 0-6 mm, tread 0-6.5 mm (max = condemning,
+# lower is better) + dia 1016 mm dead floor. All four are APPROVED and drive
+# time-to-limit and the limiting dimension. The three-step ACTION ladder
+# (attention / plan turn / turn now) remains open with C&W / standards; those are
+# separate thoughts and are NOT required for condemning-limit proximity.
+# Every threshold MUST be registered here as a versioned constant (with status),
+# never hardcoded in request code. `status` is surfaced via /api/v1/config so the
+# UI can label approved vs provisional vs pending.
+# Direction: "down" = value falls toward the limit (dia); "up" = value rises toward
+# the limit (wear dims: flange/root/tread grow toward condemning).
 # ---------------------------------------------------------------------------
 CONDEMNING_DIA_MM = 1016.0
 LIMIT_REGISTER = {
@@ -84,31 +91,32 @@ LIMIT_REGISTER = {
         "note": "Hard stop: wheel diameter must not fall below 1016 mm.",
     },
     "wsmFlange": {
-        "limit_mm": None,
-        "direction": "down",
-        "label": "action (flange)",
+        "limit_mm": 3.0,
+        "direction": "up",
+        "label": "condemning (flange wear)",
         "unit": "mm",
-        "status": "pending",
-        "owner": "C&W / standards (IR/RDSO)",
-        "note": "Awaiting signed thresholds: attention / plan turn / turn now.",
+        "status": "approved",
+        "owner": "Wrpld (authoritative wear register)",
+        "note": "Wrpld: flange wear range 0-3 mm; 3.0 mm = condemning, lower is better.",
     },
     "wsmRoot": {
-        "limit_mm": None,
-        "direction": "down",
-        "label": "action (root)",
+        "limit_mm": 6.0,
+        "direction": "up",
+        "label": "condemning (root wear)",
         "unit": "mm",
-        "status": "pending",
-        "owner": "C&W / standards (IR/RDSO)",
-        "note": "Awaiting signed thresholds: attention / plan turn / turn now.",
+        "status": "approved",
+        "owner": "Wrpld (authoritative wear register)",
+        "note": ("Wrpld: root wear range 0-6 mm; 6.0 mm = condemning, lower is better. "
+                 "Supersedes any earlier 3 mm root figure."),
     },
     "wsmThread": {
-        "limit_mm": None,
-        "direction": "down",
-        "label": "action (tread)",
+        "limit_mm": 6.5,
+        "direction": "up",
+        "label": "condemning (tread wear)",
         "unit": "mm",
-        "status": "pending",
-        "owner": "C&W / standards (IR/RDSO)",
-        "note": "Awaiting signed thresholds: attention / plan turn / turn now.",
+        "status": "approved",
+        "owner": "Wrpld (authoritative wear register)",
+        "note": "Wrpld: tread wear range 0-6.5 mm; 6.5 mm = condemning, lower is better.",
     },
 }
 TTL_HORIZONS = (30, 90, 180)
@@ -306,6 +314,77 @@ def pturn_reliability() -> dict:
         return out
     except (KeyError, TypeError, ValueError):
         return {}
+
+
+@lru_cache(maxsize=1)
+def _turn_calibration() -> dict:
+    """Phase 4 empirical reliability band per P(turn) horizon.
+
+    Map: horizon -> {bin_edges, bin_rates, train_prevalence}. Computed in
+    run_turn_probability_benchmark.py on the C1 training split (the serving C1
+    uses the same config + train split, so the band carries over). `calibrated`
+    = the realized train event rate of the score decile a raw score falls into.
+    """
+    if not PTURN_BENCH.exists():
+        return {}
+    try:
+        data = json.loads(PTURN_BENCH.read_text())
+        out = {}
+        for h, block in data.get("horizons", {}).items():
+            cal = block.get("models", {}).get("C1_xgb", {}).get("calibration")
+            if cal and cal.get("bin_edges") and cal.get("bin_rates"):
+                out[int(h)] = cal
+        return out
+    except (KeyError, TypeError, ValueError):
+        return {}
+
+
+def calibrate_turn(h: int, p: float) -> tuple[int, float | None]:
+    """Map a raw P(turn) score to (decile, realized event rate) via the Phase 4 band."""
+    cal = _turn_calibration().get(int(h))
+    if not cal or p is None or not np.isfinite(p):
+        return 0, None
+    edges = cal["bin_edges"]; rates = cal["bin_rates"]
+    if not edges or not rates:
+        return 0, None
+    dec = int(np.clip(np.digitize(p, edges[1:-1]), 0, len(rates) - 1))
+    return dec, rates[dec]
+
+
+def turn_attribution(wheelset_id: int, target: str = "turn") -> dict | None:
+    """Phase 4 per-wheel SHAP attribution for the latest scored measurement.
+
+    target: "turn" (shipping) or "root" (exploratory - sparse, see report).
+    Returns None when the wheelset is not in the Phase 4 scored batch.
+    """
+    path = V4_TURN_ATTRIB if target == "turn" else V4_ROOT_ATTRIB
+    if not path.exists():
+        return None
+    df = pd.read_parquet(path, columns=[
+        "wheelset_equipment_id", "measurement_record_id", "locomotive_id",
+        "measurement_timestamp", "prob", "risk", "conf_decile",
+        "conf_empirical_rate", "train_prevalence", "realized_event",
+        "contributors"])
+    rows = df[df["wheelset_equipment_id"] == wheelset_id]
+    if rows.empty:
+        return None
+    r = rows.sort_values("measurement_timestamp").iloc[-1]
+    return {
+        "target": target,
+        "wheelset_equipment_id": wheelset_id,
+        "measurement_record_id": int(r["measurement_record_id"]),
+        "locomotive_id": int(r["locomotive_id"]) if pd.notna(r["locomotive_id"]) else None,
+        "anchor": pd.Timestamp(r["measurement_timestamp"]).isoformat(),
+        "probability": round(float(r["prob"]), 4),
+        "risk": str(r["risk"]),
+        "conf_decile": int(r["conf_decile"]),
+        "conf_empirical_rate": (round(float(r["conf_empirical_rate"]), 4)
+                                if r["conf_empirical_rate"] is not None else None),
+        "train_prevalence": round(float(r["train_prevalence"]), 6),
+        "realized_event": (None if pd.isna(r["realized_event"])
+                           else bool(float(r["realized_event"]))),
+        "contributors": list(r["contributors"]),
+    }
 
 
 def _artifact_version() -> str:
@@ -507,7 +586,11 @@ def predict_pturn(wheelset_id: int, anchor=None) -> dict:
         m = svc["models"][h]
         p = float(m.predict_proba(X)[0, 1])
         r = rel.get(int(h), {})
+        dec, cal_rate = calibrate_turn(h, p)
         out.append({"horizon": h, "probability": round(p, 4),
+                    "calibrated_probability": round(cal_rate, 4) if cal_rate is not None else None,
+                    "conf_decile": dec if cal_rate is not None else None,
+                    "calibration_source": "phase4_empirical_deciles",
                     "turn_rate_train": svc["turn_rate_train"].get(h),
                     "roc_auc": r.get("roc_auc"),
                     "turn_rate_test": r.get("turn_rate_test")})
@@ -590,7 +673,8 @@ def _crossing_days(times: list[int], values: list[float | None],
     """First day a piecewise-linear (t, value) path crosses `limit`.
 
     direction "down": value falls to the limit (dia shrinks to 1016).
-    direction "up":   value rises to the limit (root/tread grow to 3mm, TBD).
+    direction "up":   value rises to the limit (flange/root/tread wear grow to
+                      their approved Wrpld limits: 3.0 / 6.0 / 6.5 mm).
     Returns None if the limit is not crossed within the provided times.
     """
     first = True

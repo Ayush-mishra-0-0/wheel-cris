@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
-import type { Capabilities, LocoWheelsetTable, WheelsetDetail } from "./types";
+import type { Capabilities, LocoWheelsetTable, WheelAttribution, WheelsetDetail } from "./types";
 import { AxleMap } from "./AxleMap";
 import { BacktestView } from "./BacktestView";
+import { LimitChip } from "./LimitChip";
+import { OverlayPanel } from "./OverlayPanel";
 import { TrajectoryPanel } from "./TrajectoryPanel";
 import { EmptyState, ErrorState, SkeletonBlock } from "./States";
 function fmt(v: number | null | undefined, d = 2): string {
@@ -33,6 +35,8 @@ export function LocoView({
   const [loading, setLoading] = useState(true);
   const [reload, setReload] = useState(0);
   const [scope, setScope] = useState<"recent" | "all">("recent");
+  const [showOverlay, setShowOverlay] = useState(false);
+  const [overlayHover, setOverlayHover] = useState<number | null>(null);
 
   useEffect(() => {
     setLoading(true);
@@ -186,6 +190,13 @@ export function LocoView({
                 measured {table.wheelsets.length} of {table.n_expected_axles} expected axles
               </span>
             )}
+            <button
+              className={showOverlay ? "btn btn-primary" : "btn"}
+              onClick={() => setShowOverlay((s) => !s)}
+              title="Superimpose the wear paths of all wheelsets on one chart"
+            >
+              {showOverlay ? "Hide overlay" : "Travel overlay"}
+            </button>
           </div>
           <AxleMap
             rows={table.wheelsets_all ?? rows}
@@ -221,8 +232,10 @@ export function LocoView({
                   {rows.map((w) => (
                     <tr
                       key={w.wheelset_equipment_id}
-                      className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""} ${scope === "all" && !w.is_recently_measured ? "historical" : ""}`}
+                      className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""} ${overlayHover === w.wheelset_equipment_id ? "focused" : ""} ${scope === "all" && !w.is_recently_measured ? "historical" : ""}`}
                       onClick={() => setSelected(w.wheelset_equipment_id)}
+                      onMouseEnter={() => setOverlayHover(w.wheelset_equipment_id)}
+                      onMouseLeave={() => setOverlayHover((h) => (h === w.wheelset_equipment_id ? null : h))}
                     >
                       <td className="mono">#{w.wheelset_equipment_id}</td>
                       <td>{fmt(w.wheel_position_1_12, 0)}</td>
@@ -230,7 +243,7 @@ export function LocoView({
                       <td>{fmt(w.latest_mean_wsmFlange)}</td>
                       <td>{fmt(w.latest_mean_wsmRoot)}</td>
                       <td>{fmt(w.latest_mean_wsmThread)}</td>
-                      <td>{w.limiting_dim ?? "—"}</td>
+                      <td><LimitChip dim={w.limiting_dim} /></td>
                       <td>{fmt(w.days_to_condemning_dia, 0)} d</td>
                       <td>
                         <span className={w.pturn_90d != null && w.pturn_90d >= 0.01 ? "risk-high" : "risk-low"}>
@@ -248,6 +261,10 @@ export function LocoView({
               </table>
             </div>
         </section>
+      )}
+
+      {showOverlay && table && (
+        <OverlayPanel wheelsets={rows} onHover={setOverlayHover} />
       )}
 
       {selected != null && (
@@ -277,6 +294,15 @@ export function LocoView({
 
 function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabilities | null }) {
   const diaFix = caps?.p0_2_dia_fix ?? false;
+
+  const [attribution, setAttribution] = useState<WheelAttribution | null>(null);
+  useEffect(() => {
+    setAttribution(null);
+    api
+      .wheelsetAttribution(detail.wheelset_equipment_id, "turn")
+      .then(setAttribution)
+      .catch(() => setAttribution(null)); // not in the phase 4 scored batch -> hide the line
+  }, [detail.wheelset_equipment_id]);
 
   // engineering warnings surfaced from forecast flags + subgroup flags
   const warnings: string[] = [];
@@ -336,16 +362,35 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
                 <span className="pturn-h">{p.horizon}d</span>
                 <span className="pturn-p">{((p.probability ?? 0) * 100).toFixed(1)}%</span>
                 <span className="pturn-base">fleet rate {((p.turn_rate_train ?? 0) * 100).toFixed(1)}%</span>
-                {p.roc_auc != null && (
+                {p.calibrated_probability != null && p.conf_decile != null && (
+                  <span className="pturn-rel">
+                    realized ~{((p.calibrated_probability ?? 0) * 100).toFixed(1)}% 90d (decile {p.conf_decile}/9, Phase 4)
+                  </span>
+                )}
+                {p.calibrated_probability == null && p.roc_auc != null && (
                   <span className="pturn-rel">backtest ROC-AUC {(p.roc_auc * 100).toFixed(1)}%</span>
                 )}
               </div>
             ))}
           </div>
+          {attribution && attribution.contributors.length > 0 && (
+            <p className="muted small">
+              <strong>Likely contributors</strong> (SHAP, Phase 4 attribution):{" "}
+              {attribution.contributors
+                .slice(0, 4)
+                .map((c) => c.label)
+                .join(" · ")}
+              {attribution.probability != null &&
+                ` — Phase 4 90d P(turn) ~${((attribution.probability ?? 0) * 100).toFixed(1)}%`}
+              {attribution.conf_empirical_rate != null && attribution.conf_decile != null &&
+                ` (realized ~${((attribution.conf_empirical_rate ?? 0) * 100).toFixed(1)}%, decile ${attribution.conf_decile}/9)`}
+            </p>
+          )}
           <p className="muted small">
             Estimated turning probability from historical maintenance behaviour – not a mandatory
-            turning recommendation. ROC-AUC is the fleet-backtest discrimination of the P(turn)
-            model at that horizon (uncertainty context).
+            turning recommendation. Raw model score; "realized" is the empirical event rate of the
+            score's decile (Phase 4 reliability band). Attribution is model attribution, never
+            "cause" (contract §8).
           </p>
         </section>
       )}

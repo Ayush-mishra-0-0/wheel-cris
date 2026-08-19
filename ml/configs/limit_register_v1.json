@@ -1,0 +1,68 @@
+{
+  "register": "limit_register_v1",
+  "status": "APPROVED",
+  "effective_date": "2026-08-19",
+  "quantity": "mm",
+  "source": "Wrpld table - authoritative wheel-profile wear limits (C&W / standards). Treat the Wrpld table as the official source for wheel wear condemning values.",
+  "critical_change": "Any earlier '3 mm root' condemnation figure is SUPERSEDED. The Wrpld table records root wear working range 0-6 mm, i.e. the root condemning value is 6.0 mm, not 3.0 mm.",
+  "supersedes": {
+    "root_3mm": {
+      "where": "degradation_semantics.md §3.3 (Q8, 2026-08-08); risk_event_contract_v1.md v1.0 target A; phase3f probe constants",
+      "reason": "3 mm was the owner-questionnaire (Q8) working value; the Wrpld table is the authoritative wear register and records root wear 0-6 mm."
+    },
+    "tread_3mm": {
+      "where": "degradation_semantics.md §3.4 (Q8, 2026-08-08)",
+      "reason": "Q8 recorded tread condemning at 3 mm; the Wrpld table records tread wear 0-6.5 mm, i.e. the tread condemning value is 6.5 mm."
+    }
+  },
+  "wear_limits_mm": {
+    "flange": {
+      "max": 3.0,
+      "working_range": "0-3",
+      "direction": "upper bound (lower is better)",
+      "field": "wsmFlange1/wsmFlange2",
+      "source": "Wrpld"
+    },
+    "root": {
+      "max": 6.0,
+      "working_range": "0-6",
+      "direction": "upper bound (lower is better)",
+      "field": "wsmRoot1/wsmRoot2",
+      "source": "Wrpld"
+    },
+    "tread": {
+      "max": 6.5,
+      "working_range": "0-6.5",
+      "direction": "upper bound (lower is better)",
+      "field": "wsmThread1/wsmThread2",
+      "source": "Wrpld"
+    }
+  },
+  "diameter_mm": {
+    "dead_floor": 1016.0,
+    "safe_floor": 1020.0,
+    "new_reference": 1096.0,
+    "note": "Diameter floors unchanged and retain prior owner confirmation (2016 reprofiling reference constants)."
+  },
+  "margin_definitions": {
+    "flange_margin": "3.0 - flange (negative = beyond condemning)",
+    "root_margin": "6.0 - root (negative = beyond condemning)",
+    "tread_margin": "6.5 - tread (negative = beyond condemning)",
+    "dia_margin": "dia - 1016 (negative = below dead floor)"
+  },
+  "consumers": [
+    "ml/docs/contracts/risk_event_contract_v1.md (target A threshold v1.1)",
+    "ml/models/phase4/*.py (LIMIT_ROOT)",
+    "ml/models/phase5/run_turnpolicy_event_study.py (LIMITS)",
+    "ml/models/phase5/run_profile_event_study.py (LIMITS)",
+    "development/dashboard/backend/service.py (LIMIT_REGISTER)",
+    "development/dashboard/backend/build_fleet_snapshot.py (limiting dimension)",
+    "ml/models/phase3b/engineering_intelligence.py (EHI REFERENCE)"
+  ],
+  "changelog": [
+    {
+      "date": "2026-08-19",
+      "change": "Initial ratified register from the Wrpld table. Flange 3.0 / Root 6.0 / Tread 6.5 mm max wear condemning values locked as APPROVED. Supersedes the earlier root 3.0 mm (Q8) and tread 3.0 mm (Q8) indications in degradation_semantics.md."
+    }
+  ]
+}

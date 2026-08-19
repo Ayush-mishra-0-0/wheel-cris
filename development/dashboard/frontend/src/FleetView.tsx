@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { api } from "./api";
 import type { FleetOverview, RiskRow } from "./types";
+import { LimitChip } from "./LimitChip";
 import { EmptyState, ErrorState, SkeletonTable, StaleBanner } from "./States";
 
 function fmt(v: number | null | undefined, d = 2): string {
@@ -457,7 +458,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     <td>{fmt(r.mean_wsmFlange)}</td>
                     <td>{fmt(r.mean_wsmRoot)}</td>
                     <td>{fmt(r.mean_wsmThread)}</td>
-                    <td>{r.limiting_dim ?? "—"}</td>
+                    <td><LimitChip dim={r.limiting_dim} /></td>
                     <td>{fmt(r.days_to_condemning_dia, 0)} d</td>
                     <td>{fmt(r.staleness_days, 0)} d</td>
                   </tr>

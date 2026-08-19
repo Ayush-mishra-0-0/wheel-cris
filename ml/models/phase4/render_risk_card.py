@@ -24,7 +24,9 @@ OUTPUT = ROOT / "models" / "experiments" / "v4"
 
 BAR = "█"; EMPTY = "░"
 RISK_BAR = {"HIGH": 12, "MEDIUM": 7, "LOW": 3}
-LIMIT_ROOT = 3.0
+# Root wear condemning limit (mm). Source: Wrpld table via
+# configs/limit_register_v1.json (root wear 0-6 mm).
+LIMIT_ROOT = 6.0
 
 
 def bar(level: str) -> str:
@@ -93,8 +95,8 @@ def main() -> None:
     outdir.mkdir(parents=True, exist_ok=True)
     out = outdir / f"risk_card_{mr_id}.txt"
     out.write_text(card + "\n", encoding="utf-8")
-    print(card.encode("utf-8", "replace").decode("utf-8"))
-    print(f"\n-> {out.relative_to(ROOT)}")
+    sys.stdout.buffer.write((card + "\n").encode("utf-8"))
+    sys.stdout.buffer.write(f"\n-> {out.relative_to(ROOT)}\n".encode("utf-8"))
 
 
 if __name__ == "__main__":

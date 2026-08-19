@@ -9,6 +9,7 @@ import type {
   OperationalCapture,
   ShedOverview,
   TrajectoryContract,
+  WheelAttribution,
   WheelsetDetail,
   WheelsetReplay,
 } from "./types";
@@ -37,6 +38,8 @@ export const api = {
     get<LocoWheelsetTable>(`/loco/${encodeURIComponent(num)}/wheelsets`),
   wheelsetOverview: (id: number) =>
     get<WheelsetDetail>(`/wheelset/${id}/overview`),
+  wheelsetAttribution: (id: number, target: "turn" | "root" = "turn") =>
+    get<WheelAttribution>(`/wheelset/${id}/attribution`, { target }),
   wheelsetBacktest: (id: number, asof: string) =>
     get<WheelsetReplay>(`/wheelset/${id}/backtest`, { asof }),
   trajectory: (id: number, asof?: string) =>

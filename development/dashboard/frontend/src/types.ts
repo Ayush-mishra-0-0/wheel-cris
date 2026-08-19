@@ -92,10 +92,34 @@ export interface ForecastPoint {
 export interface TurnProbability {
   horizon: number;
   probability: number | null;
+  calibrated_probability?: number | null;
+  conf_decile?: number | null;
+  calibration_source?: string | null;
   turn_rate_train: number | null;
   pointer: string;
   roc_auc?: number | null;
   turn_rate_test?: number | null;
+}
+
+export interface Contributor {
+  feature: string;
+  label: string;
+  shap: number;
+}
+
+export interface WheelAttribution {
+  target: string;
+  wheelset_equipment_id: number;
+  measurement_record_id?: number | null;
+  locomotive_id?: number | null;
+  anchor?: string | null;
+  probability?: number | null;
+  risk?: string | null;
+  conf_decile?: number | null;
+  conf_empirical_rate?: number | null;
+  train_prevalence?: number | null;
+  realized_event?: boolean | null;
+  contributors: Contributor[];
 }
 
 export interface MeasurementPoint {

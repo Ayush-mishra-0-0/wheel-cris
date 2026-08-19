@@ -5,7 +5,8 @@ train/test split preserved, row order preserved). For each anchor row (an
 inspection at time t) and each horizon H in {30, 90, 180}, labels:
 
     target A (root constraint): 1 if any future WES root measurement
-        strictly inside (t, t+H] exceeds 3 mm (owner-confirmed condemning).
+        strictly inside (t, t+H] exceeds 6 mm (Wrpld approved condemning;
+        supersedes the earlier 3 mm Q8 value - see configs/limit_register_v1.json).
     target B (turning): 1 if a turning event day falls strictly inside
         (t, t+H] (equipment-day dedup per maintenance event spec).
 
@@ -41,7 +42,10 @@ V3F = ROOT / "model_datasets" / "v3f" / "change_space_benchmark.parquet"
 WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
 OUTPUT = ROOT / "model_datasets" / "v4"
 HORIZONS = (30, 90, 180)
-LIMIT_ROOT = 3.0
+# Root wear condemning limit (mm). Source: Wrpld table via
+# configs/limit_register_v1.json (root wear 0-6 mm). Supersedes the earlier
+# 3 mm figure (degradation_semantics.md Q8, 2026-08-08).
+LIMIT_ROOT = 6.0
 
 # Features observable at measurement time (point-in-time, no forward facts).
 # Excludes the v3f forward-machinery columns (next_*, delta_*, target_*, dX_*,

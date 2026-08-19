@@ -4,16 +4,16 @@
   "horizon_days": 90,
   "targets": {
     "root": {
-      "n_train": 211141,
+      "n_train": 208641,
       "n_scored": 4098,
-      "train_events": 26614,
-      "train_prevalence": 0.12604846997977653,
-      "realized_known_scored": 337,
-      "realized_events_scored": 337,
+      "train_events": 201,
+      "train_prevalence": 0.0009633772844263592,
+      "realized_known_scored": 1,
+      "realized_events_scored": 1,
       "risk_counts": {
-        "LOW": 3000,
-        "HIGH": 686,
-        "MEDIUM": 412
+        "LOW": 3233,
+        "HIGH": 460,
+        "MEDIUM": 405
       },
       "out_path": "models\\experiments\\v4\\wheel_attribution_root.parquet"
     },

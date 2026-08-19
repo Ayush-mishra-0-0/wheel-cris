@@ -5,8 +5,13 @@
 > (product framing, validation, serving, UI, integration).
 >
 > This is a living index — the primary source of truth is always the referenced files.
-> Last compiled: 2026-08-18. Where a number changed between versions, both are given with
+> Last compiled: 2026-08-19. Where a number changed between versions, both are given with
 > context so the report does not misrepresent either build.
+>
+> **2026-08-19 — Limit register locked (Wrpld):** flange 3.0 / root 6.0 / tread 6.5 mm are
+> APPROVED via the Wrpld table (`ml/configs/limit_register_v1.json`). The earlier "root 3 mm"
+> figure (degradation_semantics Q8) is superseded; the Phase 4 root-constraint target is
+> retuned to `root > 6 mm` (risk_event_contract v1.1).
 
 ---
 
@@ -158,7 +163,8 @@ These decisions shaped every later one, so they come first.
 - **Grain:** one wheelset lifecycle segment between turning/replacement boundaries.
 - **Turning decision is wear-driven, NOT diameter-driven** — condemning on `max(flange, root,
   tread)` (flange 3.0 mm, root 6.0 mm, tread 6.5 mm); diameter floors 1020 mm safe-end /
-  1016 mm dead-end / 1096 mm new-dia reference (owner-confirmed 2026-08-11)
+  1016 mm dead-end / 1096 mm new-dia reference. **Wear values ratified from the Wrpld table
+  2026-08-19** (`ml/configs/limit_register_v1.json`); earlier root 3 mm superseded
   (`wheel_profile_lifecycle_contract_v1.md:21-37, :78-80`).
 - **Turn detection is physics-based, not flag-based** (`build_lifecycle_segments.py:6-13`):
   the turning flag appears on only ~2% of rows and = 0 across whole wheelsets; a flag gate
@@ -361,7 +367,10 @@ These decisions shaped every later one, so they come first.
   "hazard + level" model was rejected. Separate train cutoffs, separate validation.
 - **Both suppress inference inside the k=3d post-turn window.**
 - **Tail-probability head (v3f, experimental):** "root will exceed 3 mm within horizon"
-  (AUC 0.862, ECE 0.012), kept as early-warning, validated separately.
+  (AUC 0.862, ECE 0.012), kept as early-warning, validated separately. **SUPERSEDED on the
+  limit (2026-08-19):** the Wrpld register sets root condemning = 6.0 mm; the Phase 4
+  root-constraint target is `root > 6 mm` (`risk_event_contract_v1.md` v1.1). The 3 mm
+  experiments remain as historical record only.
 
 ### 5.7 Hyperparameters & features
 
@@ -502,8 +511,10 @@ Enterprise hygiene deliberately deferred so they do not block ML/dashboard work
 2. **Replacement truth is heuristic, not source-authorised:** a source-authoritative
    replacement/repair record (event ledger) is the correct long-term fix
    (`ml/docs/ml_correctness_analysis.md:319-321`).
-3. **Flange/root/tread action limits pending engineering approval** — only dia (1016 mm) is
-   signed; "days to wear action" for wear dims is blocked on it
+3. **Flange/root/tread condemning limits — RESOLVED (2026-08-19).** The Wrpld table is the
+   authoritative wear register (`ml/configs/limit_register_v1.json`): flange 3.0 / root 6.0 /
+   tread 6.5 mm, all APPROVED. The remaining open item is the **three-step action ladder**
+   (attention / plan turn / turn now) per dimension, still pending C&W/standards
    (`domain_ask_wear_limits.md`).
 4. **Track geometry** (curve/gradient severity) — no authoritative source acquired yet
    (IR Geoportal candidate) (`ml/README.md:60`).
@@ -529,6 +540,7 @@ Enterprise hygiene deliberately deferred so they do not block ML/dashboard work
 | Serving | `ml/models/phase5/serving/{degradation,turn_probability}/*`, `ml/models/phase5/dashboard/backend/build_serving_models.py` |
 | Data quality | `ml/model_datasets/v2/label_audit_report.md` (repeatability floor) |
 | Wear limits ask | `domain_ask_wear_limits.md` |
+| Limit register (Wrpld) | `ml/configs/limit_register_v1.json`, `ml/docs/contracts/risk_event_contract_v1.md` (v1.1) |
 | Integration audit | `P4_AUDIT_REPORT.md` |
 | Deferred work | `future_work.md` |
 | Deployment | `development/readme.md`, `development/dashboard/DEPLOYMENT.md` |

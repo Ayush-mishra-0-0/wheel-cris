@@ -1,15 +1,18 @@
-# Risk Event Contract v1.0
+# Risk Event Contract v1.1
 
 **Status:** Approved for Phase 4 fixed-horizon risk-ranking benchmark (Track A decision intelligence).
 **Owner:** Wheel-Project Data Engineering
-**Approval date:** 2026-08-11
+**Approval date:** 2026-08-11 (v1.0); 2026-08-19 (v1.1)
 **Versioning:** this document is immutable. Any change is a new semantic version, appended
 to the changelog, never edited in place.
 **Dependencies:**
 - `docs/maintenance_event_specification_v1.0.md` (turning event semantics, approved 2026-08-06)
 - Event & Censoring Audit v1 (`models/experiments/v3/event_censoring_audit/`)
 - Target Eligibility Matrix v1 (`models/experiments/v3/target_eligibility/`)
-- `docs/degradation_semantics.md` §3.3 (root = direct defect depth, 3 mm condemning, owner-confirmed Q8)
+- `docs/degradation_semantics.md` §3.3 (root = direct defect depth, owner-confirmed Q8)
+- `configs/limit_register_v1.json` (APPROVED wear limits, source = **Wrpld table**:
+  flange 3.0 / root 6.0 / tread 6.5 mm). **Root condemning value is 6.0 mm; any earlier
+  "3 mm root" figure is superseded by Wrpld.**
 
 ---
 
@@ -34,7 +37,7 @@ or an engineering margin; those live in the Phase 4 plan and the engineering lay
 
 | Target | Id | Event definition |
 | --- | --- | --- |
-| Root constraint (engineering risk) | A | `root > 3 mm` strictly inside `(t, t+H]` |
+| Root constraint (engineering risk) | A | `root > 6 mm` strictly inside `(t, t+H]` |
 | Turning realization (maintenance) | B | recorded turning (`wsmturning1 == 1`) strictly inside `(t, t+H]` |
 
 Horizons `H` = **30 / 90 / 180 calendar days** (fixed-horizon labels only; survival
@@ -43,14 +46,15 @@ is out of scope, §8).
 ### 2.1 Target A — Root constraint
 
 - **Measurement semantics:** `wsmRoot` is a direct defect-depth measurement on the
-  wheel; **3 mm is the maximum / condemning value, lower is better**
-  (owner-confirmed Q8, 2026-08-08). It is **not** a cumulative since-turning index.
-- **Direction:** root *grows toward* the limit. Margin `= 3 − root`; negative margin =
+  wheel; **6 mm is the maximum / condemning value, lower is better** (Wrpld table,
+  `configs/limit_register_v1.json`; this supersedes the earlier 3 mm owner-questionnaire
+  value of 2026-08-08). It is **not** a cumulative since-turning index.
+- **Direction:** root *grows toward* the limit. Margin `= 6 − root`; negative margin =
   beyond condemning.
 - **Point-in-time state:** use the current measurement's valid side(s):
   mean of both valid sides, else the single valid side, else row excluded from
   target-A input (missing root).
-- **Event:** any within-horizon inspection whose root **exceeds 3 mm** while the
+- **Event:** any within-horizon inspection whose root **exceeds 6 mm** while the
   wheel remains within its lifecycle (replacement boundaries handled in §5).
 
 ### 2.2 Target B — Turning realization
@@ -145,3 +149,4 @@ Every Phase 4 result must record per (target, horizon):
 | Date | Version | Change |
 | --- | --- | --- |
 | 2026-08-11 | 1.0 | Initial risk event contract. Two targets (root>3mm, turning=1) at 30/90/180d; eligibility/exclusion/label rule; point-in-time leakage rules; survival blocked. |
+| 2026-08-19 | 1.1 | **Target A retuned from `root > 3 mm` to `root > 6 mm`.** The Wrpld table is now the authoritative wear register (`configs/limit_register_v1.json`): flange 3.0 / root 6.0 / tread 6.5 mm. The earlier 3 mm root figure (Q8, 2026-08-08) is superseded. Margin = `6 − root`. Benchmarks built before this change remain frozen and are labelled with their `limit_root_mm` in the v4 manifest; new runs use 6.0 mm. |

@@ -1,6 +1,6 @@
 # Wheel Profile Lifecycle Contract v1.0
 
-**Status:** DRAFT v1.2 — governing contract for Phase 5 (Wheel Profile Lifecycle System).
+**Status:** DRAFT v1.3 — governing contract for Phase 5 (Wheel Profile Lifecycle System).
 Supersedes the Phase 4 assumption that diameter independently drives turning.
 **Grain:** one wheelset lifecycle segment (between turning/replacement boundaries).
 **Consumes:** `wheel_engineering_state_v1.0` (immutable, v3) + FOIS shed attribution.
@@ -68,16 +68,22 @@ Per segment, emit:
   `wsmWheelGauge` (side-mean of quality-gated values);
 - per-dimension wear deltas within segment (end − start).
 
-## 3. Limit register (approved 2026-08-11)
+## 3. Limit register (approved 2026-08-11; source ratified 2026-08-19)
 
 | Quantity | Value | Source |
 | --- | ---: | --- |
-| Flange wear condemning | 3.0 mm | Owner-confirmed 2026-08-11 |
-| Root wear condemning | 6.0 mm | Owner-confirmed 2026-08-11 |
-| Tread wear condemning | 6.5 mm | Owner-confirmed 2026-08-11 |
+| Flange wear condemning | 3.0 mm | Owner-confirmed 2026-08-11; **Wrpld table** (ratified 2026-08-19) |
+| Root wear condemning | 6.0 mm | Owner-confirmed 2026-08-11; **Wrpld table** (ratified 2026-08-19) — supersedes any earlier 3 mm root figure |
+| Tread wear condemning | 6.5 mm | Owner-confirmed 2026-08-11; **Wrpld table** (ratified 2026-08-19) |
 | Diameter safe floor | 1020 mm | Owner: "safe end" |
 | Diameter dead floor | 1016 mm | Owner: "true dead end" (matches doc constant) |
 | New diameter reference | 1096 mm | Existing doc constant |
+
+> **Audit trail:** the authoritative wear register is `configs/limit_register_v1.json`,
+> sourced from the **Wrpld table**. Per Wrpld: flange wear range 0-3 mm (condemning
+> 3.0 mm), root wear range 0-6 mm (condemning 6.0 mm), tread wear range 0-6.5 mm
+> (condemning 6.5 mm). The earlier 3 mm root value (degradation_semantics Q8) is
+> superseded by the Wrpld value of 6.0 mm.
 
 Margins (Phase-5 layer only): `flange_margin = 3.0 − flange`,
 `root_margin = 6.0 − root`, `tread_margin = 6.5 − tread`,
@@ -138,3 +144,4 @@ root 0–30, tread 0–30 (source artefact removal only).
 | v1.0 | 2026-08-12 | Initial Phase 5 lifecycle contract: wear-driven turning model, cut = B−A, limits (flange 3 / root 6 / tread 6.5), dia floors 1016/1020, segment definition, PIT rules. |
 | v1.1 | 2026-08-12 | Post-turn eligibility rule (§4): training uses after-turning state; transient pre-turn at-shed rows excluded (default 3d look-ahead). Applies Layer 2+; v4 remains frozen. |
 | v1.2 | 2026-08-12 | Layer 1 gate verdict recorded (§1 wheel-life outcome, §7 artifact path corrected); Layer 2 degradation target defined as within-segment horizon state (§4); km exposure sourced from safe RTIS ledger (§4). |
+| v1.3 | 2026-08-19 | Limit register source ratified to the **Wrpld table** (`configs/limit_register_v1.json`). Values unchanged (flange 3.0 / root 6.0 / tread 6.5); Wrpld is now the authoritative, auditable source and any earlier 3 mm root figure is explicitly superseded. |
