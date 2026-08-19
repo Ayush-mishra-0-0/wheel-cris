@@ -1,0 +1,10 @@
+{
+  "phase": "v1.2_survival",
+  "task": "survival",
+  "label": "time_to_next_turning_days",
+  "model": "cox_ph",
+  "split_contract": "grouped temporal train/val/test by wheelset median interval-end",
+  "censoring": "per-wheelset observation end (last measurement - interval_end); event=1 on turning",
+  "note": "trained/scaled on full train; Cox/RFS/GBSA from scikit-survival; true Harrell C-index",
+  "random_state": 42
+}

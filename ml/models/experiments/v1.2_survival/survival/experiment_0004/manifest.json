@@ -1,0 +1,8 @@
+{
+  "dataset_version": "v1.2",
+  "feature_store_version": "1.0.0",
+  "feature_spec_version": "1.0.0",
+  "label_spec_version": "1.0.1",
+  "survival_learner": "cox_ph",
+  "generated_at_utc": "2026-08-19T10:03:54.114901+00:00"
+}

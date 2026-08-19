@@ -1,0 +1,5 @@
+model,split,c_index,n_likely_pairs_str
+cox_ph,test,0.4896,n/a
+cox_ph,val,0.5443,n/a
+dummy_median_time,test,0.5,n/a
+dummy_median_time,val,0.5,n/a
