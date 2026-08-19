@@ -684,9 +684,11 @@ function TrajectoryFootnote({ data }: { data: TrajectoryContract }) {
       points are actual within-segment measurements when a historical as-of is
       chosen. Physics flags (wear improving / diameter increasing) are reported,
       never clipped. Diameter is derived and never the primary trajectory.
-      "Days to condemning" is the first piecewise-linear crossing of the 1016 mm
-      dia hard stop (the only approved limit); the band uses the conformal
-      interval edges. Flange/root/tread action thresholds are not yet approved.
+      "Days to condemning" is the first piecewise-linear crossing of a Wrpld
+      condemning limit (dia 1016 mm hard stop, flange 3.0 / root 6.0 / tread 6.5
+      mm wear — register `ml/configs/limit_register_v1.json`, approved 2026-08-19);
+      the band uses the conformal interval edges. The three-step action ladder
+      beyond condemning is a policy layer, separate from the approved limits.
       Amber dashed vertical lines mark confirmed turning events (reset steps);
       the yellow line is the anchor (observed → forecast split). Amber
       "reduced confidence" marks a wheelset that belongs to a collapsed
