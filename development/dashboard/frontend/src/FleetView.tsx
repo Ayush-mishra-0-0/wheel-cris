@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { api } from "./api";
 import type { FleetOverview, RiskRow } from "./types";
-import { LimitChip } from "./LimitChip";
+import { LimitChip, WearBands } from "./LimitChip";
 import { EmptyState, ErrorState, SkeletonTable, StaleBanner } from "./States";
 
 function fmt(v: number | null | undefined, d = 2): string {
@@ -20,7 +20,7 @@ const MAX_STALENESS_DAYS = 365;
 type SortKey = "pturn_90d" | "pturn_60d" | "pturn_30d" | "days_to_condemning_dia" | "staleness_days" | "mean_wsmFlange" | "mean_wsmRoot" | "mean_wsmThread";
 
 const PRESETS: { key: string; label: string; sort_by: SortKey; desc: boolean; note: string }[] = [
-  { key: "pturn", label: "P(turn)", sort_by: "pturn_90d", desc: true, note: "maintenance behaviour — shed turning likelihood, not an engineering limit" },
+  { key: "pturn", label: "P(turn)", sort_by: "pturn_90d", desc: true, note: "primary ranking = calibrated 90d P(turn) (Phase 4 Target B realized rate) — maintenance behaviour, not an engineering limit" },
   { key: "wear", label: "Wear (flange)", sort_by: "mean_wsmFlange", desc: true, note: "current wear level — closest to an engineering signal" },
   { key: "condemning", label: "Condemning (dia)", sort_by: "days_to_condemning_dia", desc: false, note: "days to the 1016 mm dia hard stop — ascending = most urgent" },
   { key: "staleness", label: "Recency", sort_by: "staleness_days", desc: false, note: "oldest measurements first — data quality, not risk" },
@@ -34,9 +34,13 @@ const QUEUES: { key: QueueKey; label: string; note: string; disabled?: boolean }
   { key: "reduced", label: "Reduced-confidence only", note: "needs subgroup flags in the fleet snapshot (rebuild) — not yet available", disabled: true },
 ];
 
-function PturnCell({ v }: { v: number | null | undefined }) {
+function PturnCell({ v, raw, decile }: { v: number | null | undefined; raw?: number | null | undefined; decile?: number | null | undefined }) {
+  const tip =
+    raw != null
+      ? `raw model score ${(raw * 100).toFixed(2)}% · calibrated = realized rate of the score's decile${decile != null ? ` (decile ${decile}/9)` : ""}`
+      : undefined;
   return (
-    <span className={v != null && v >= 0.01 ? "risk-high" : "risk-low"}>
+    <span className={v != null && v >= 0.01 ? "risk-high" : "risk-low"} title={tip}>
       {pct(v)}
     </span>
   );
@@ -402,8 +406,9 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     onClick={() => toggleSort("pturn_90d")}
                     className="sortable"
                     aria-sort={sortBy === "pturn_90d" ? (descending ? "descending" : "ascending") : "none"}
+                    title="primary ranking = calibrated 90d P(turn) (Phase 4 Target B, empirical realized rate)"
                   >
-                    P(turn) 90d {sortBy === "pturn_90d" ? (descending ? "↓" : "↑") : ""}
+                    P(turn) 90d* {sortBy === "pturn_90d" ? (descending ? "↓" : "↑") : ""}
                   </th>
                   <th className={sortBy === "pturn_60d" ? "sorted" : ""}>
                     P(turn) 60d
@@ -424,6 +429,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     Thread {sortBy === "mean_wsmThread" ? (descending ? "↓" : "↑") : ""}
                   </th>
                   <th>Limiting</th>
+                  <th>Wear band</th>
                   <th onClick={() => toggleSort("days_to_condemning_dia")} className="sortable" aria-sort={sortBy === "days_to_condemning_dia" ? (descending ? "descending" : "ascending") : "none"}>
                     Condemning {sortBy === "days_to_condemning_dia" ? (descending ? "↓" : "↑") : ""}
                   </th>
@@ -444,13 +450,13 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     onKeyDown={(e) => onRowKey(e, i)}
                   >
                     <td className="risk-cell">
-                      <PturnCell v={r.pturn_90d} />
+                      <PturnCell v={r.pturn_90d_calibrated ?? r.pturn_90d} raw={r.pturn_90d} decile={r.pturn_90d_decile} />
                     </td>
                     <td className="risk-cell">
-                      <PturnCell v={r.pturn_60d} />
+                      <PturnCell v={r.pturn_60d_calibrated ?? r.pturn_60d} raw={r.pturn_60d} decile={r.pturn_60d_decile} />
                     </td>
                     <td className="risk-cell">
-                      <PturnCell v={r.pturn_30d} />
+                      <PturnCell v={r.pturn_30d_calibrated ?? r.pturn_30d} raw={r.pturn_30d} decile={r.pturn_30d_decile} />
                     </td>
                     <td>{r.loco_number ?? "—"}</td>
                     <td className="mono">#{r.wheelset_equipment_id}</td>
@@ -459,12 +465,20 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     <td>{fmt(r.mean_wsmRoot)}</td>
                     <td>{fmt(r.mean_wsmThread)}</td>
                     <td><LimitChip dim={r.limiting_dim} /></td>
+                    <td><WearBands bands={r.wear_bands} /></td>
                     <td>{fmt(r.days_to_condemning_dia, 0)} d</td>
                     <td>{fmt(r.staleness_days, 0)} d</td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            <p className="muted small table-footnote">
+              <span className="mono">P(turn)*</span> = calibrated 90d/60d/30d realized event rate (Phase 4
+              reliability band, decile of the raw model score). The fleet is ranked by calibrated 90d P(turn)
+              <span className="mono"> (Target B)</span>; raw XGB scores and deciles are in the row tooltip.
+              Wear band (F/R/T) is a display-only margin convention against the approved Wrpld limits
+              (flange 3.0 / root 6.0 / tread 6.5 mm) — never a sorting or condemning threshold.
+            </p>
           </div>
         )}
 

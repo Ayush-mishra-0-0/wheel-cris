@@ -39,9 +39,16 @@ export interface LocoWheelsetRow extends WheelsetHeader {
   pturn_30d: number | null;
   pturn_60d: number | null;
   pturn_90d: number | null;
+  pturn_30d_calibrated: number | null;
+  pturn_60d_calibrated: number | null;
+  pturn_90d_calibrated: number | null;
+  pturn_30d_decile: number | null;
+  pturn_60d_decile: number | null;
+  pturn_90d_decile: number | null;
   fc_wsmRoot_90d: number | null;
   fc_wsmFlange_90d: number | null;
   fc_wsmThread_90d: number | null;
+  wear_bands?: Record<string, WearBand>;
 }
 
 export interface LocoWheelsetTable {
@@ -415,6 +422,13 @@ export interface FleetOverview {
   days_to_condemning_within_180d: number;
   feature_days_since_turning: Record<string, number | null>;
   top_sheds: Array<{ shed_any?: string | null; n_wheelsets: number }>;
+  model_of_record_ranking?: {
+    primary?: string | null;
+    primary_label?: string | null;
+    roots?: string[];
+    secondary?: string | null;
+    note?: string | null;
+  };
 }
 
 export interface RiskRow {
@@ -432,15 +446,29 @@ export interface RiskRow {
   pturn_30d: number | null;
   pturn_60d: number | null;
   pturn_90d: number | null;
+  pturn_30d_calibrated: number | null;
+  pturn_60d_calibrated: number | null;
+  pturn_90d_calibrated: number | null;
+  pturn_30d_decile: number | null;
+  pturn_60d_decile: number | null;
+  pturn_90d_decile: number | null;
+  wear_bands?: Record<string, WearBand>;
   feature_coverage: number | null;
   staleness_days: number | null;
   latest_measurement: string | null;
+}
+
+export interface WearBand {
+  band: "healthy" | "watch" | "near" | "unknown" | string;
+  headroom: number | null;
+  limit_mm: number | null;
 }
 
 export interface FleetRiskResponse {
   total: number;
   page: number;
   page_size: number;
+  ranked_by?: string | null;
   max_staleness_days: number | null;
   days_to_condemning_max?: number | null;
   pturn_min?: number | null;

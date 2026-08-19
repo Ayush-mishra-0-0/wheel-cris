@@ -42,6 +42,13 @@ WEAR_BETTER_TOL = 0.25      # mm threshold below current to flag "wear improves"
 DIA_INC_TOL = 1.5           # mm; predicted diameter above current
 DAY = np.timedelta64(1, "D")
 
+# Wear-margin watch bands (DISPLAY-only, never a sorting/condemning key; the
+# approved Wrpld limits in LIMIT_REGISTER stay authoritative). `band` describes
+# how close the wear value sits to its approved limit relative to the limit's
+# range: healthy >= 35% headroom, watch < 35% headroom, near < 15% headroom.
+WATCH_BAND_HEALTHY = 0.35
+WATCH_BAND_NEAR = 0.15
+
 # ---------------------------------------------------------------------------
 # Second-stage wheelset adaptation (empirical-Bayes residual shrinkage).
 # At an anchor with prior_n >= 2 same-segment residuals, the population
@@ -1273,8 +1280,11 @@ def loco_wheelset_table(loco_number: str) -> dict:
                 row["days_to_condemning_dia"] = _f(r.get("days_to_condemning_dia"))
                 for h in (30, 60, 90):
                     row[f"pturn_{h}d"] = _f(r.get(f"pturn_{h}d"))
+                    row[f"pturn_{h}d_calibrated"] = _f(r.get(f"pturn_{h}d_calibrated"))
+                    row[f"pturn_{h}d_decile"] = _f(r.get(f"pturn_{h}d_decile"))
                 for dim in WEAR_DIMS:
                     row[f"fc_{dim}_90d"] = _f(r.get(f"fc_{dim}_90d_pred"))
+                row["wear_bands"] = _wear_watch_bands(r)
         rows_all.append(row)
         if w["is_recently_measured"]:
             rows.append(row)
@@ -1399,7 +1409,62 @@ def fleet_overview() -> dict:
             "q50": _f(df["days_since_turning"].quantile(0.5)) if "days_since_turning" in df else None,
             "q90": _f(df["days_since_turning"].quantile(0.9)) if "days_since_turning" in df else None},
         "top_sheds": shed.to_dict(orient="records"),
+        "model_of_record_ranking": {
+            "primary": "target_b_turn_90d_calibrated",
+            "primary_label": "Calibrated P(turn) 90d (Phase 4 Target B)",
+            "roots": ["flange", "root", "tread"],
+            "secondary": "wear_margin_watch_bands (display only, never ranked)",
+            "note": ("Target A (root > 6 mm) is quarantined as a diagnostic due to "
+                     "data prevalence; Target B (turning) is the production ranking."),
+        },
     }
+
+
+def _wear_watch_bands(r) -> dict:
+    """Wear-margin watch bands for one snapshot row (DISPLAY-only).
+
+    For each wear dim (root/flange/tread) the band is how close the 90d
+    predicted level sits to its approved Wrpld limit, relative to the limit
+    range: `healthy` (>= WATCH_BAND_HEALTHY headroom), `watch`, or `near`
+    (< WATCH_BAND_NEAR headroom). These are a UI colour convention and are
+    NEVER a sorting key or a condemning threshold - the LIMIT_REGISTER limits
+    stay authoritative. `headroom` = 1 - value/limit (clamped to >= 0).
+    """
+    bands = {}
+    for dim, reg in LIMIT_REGISTER.items():
+        if dim == "wsmDia" or reg.get("limit_mm") is None:
+            continue
+        limit = float(reg["limit_mm"])
+        value = r.get(f"fc_{dim}_90d_pred")
+        if value is None or not np.isfinite(value):
+            value = r.get(f"mean_{dim}")
+        if value is None or not np.isfinite(value):
+            bands[dim] = {"band": "unknown", "headroom": None}
+            continue
+        headroom = max(0.0, 1.0 - float(value) / limit)
+        if headroom >= WATCH_BAND_HEALTHY:
+            band = "healthy"
+        elif headroom >= WATCH_BAND_NEAR:
+            band = "watch"
+        else:
+            band = "near"
+        bands[dim] = {"band": band,
+                      "headroom": round(headroom, 4),
+                      "limit_mm": reg["limit_mm"]}
+    return bands
+
+
+def _rank_col(df: pd.DataFrame, sort_by: str) -> str:
+    """Column actually used for ranking.
+
+    The primary fleet ranking is the calibrated P(turn) (Phase 4 Target B,
+    empirical realized rate), not the raw model score - the UI hands us the
+    raw column and we promote to the calibrated twin when the snapshot has it.
+    """
+    cal = f"{sort_by}_calibrated"
+    if sort_by.startswith("pturn_") and cal in df.columns and df[cal].notna().any():
+        return cal
+    return sort_by
 
 
 def fleet_risk(shed: str | None = None, loco_type: str | None = None,
@@ -1436,18 +1501,21 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
         df = df[df["days_to_condemning_dia"].notna() &
                 (df["days_to_condemning_dia"] <= days_to_condemning_max)]
     if pturn_min is not None:
-        df = df[df["pturn_90d"].notna() & (df["pturn_90d"] >= pturn_min)]
+        cmp_col = "pturn_90d_calibrated" if "pturn_90d_calibrated" in df.columns else "pturn_90d"
+        df = df[df[cmp_col].notna() & (df[cmp_col] >= pturn_min)]
     if risk_level:
         # risk_level: "pturn" | "condemning" | "wear" - each level is its own cut
         if risk_level == "pturn":
-            df = df[df["pturn_90d"] >= 0.01]
+            cmp_col = "pturn_90d_calibrated" if "pturn_90d_calibrated" in df.columns else "pturn_90d"
+            df = df[df[cmp_col] >= 0.01]
         elif risk_level == "condemning":
             df = df[df.get("days_to_condemning_dia", np.inf) <= 180]
         elif risk_level == "wear":
             df = df[df["limiting_dim"].isin(["wsmRoot", "wsmFlange", "wsmThread"])]
 
-    if sort_by in df.columns and df[sort_by].notna().any():
-        df = df.sort_values(sort_by, ascending=not descending, na_position="last")
+    rank_col = _rank_col(df, sort_by)
+    if rank_col in df.columns and df[rank_col].notna().any():
+        df = df.sort_values(rank_col, ascending=not descending, na_position="last")
     total = int(len(df))
     start = (page - 1) * page_size
     page_df = df.iloc[start:start + page_size]
@@ -1465,8 +1533,10 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
     for item, (_, r) in zip(items, page_df.iterrows()):
         for c in pt_cols:
             item[c] = _f(r[c])
+        item["wear_bands"] = _wear_watch_bands(r)
     return {"total": total, "page": page, "page_size": page_size,
             "items": items, "columns": cols + pt_cols,
+            "ranked_by": rank_col,
             "max_staleness_days": max_staleness_days,
             "days_to_condemning_max": days_to_condemning_max,
             "pturn_min": pturn_min}

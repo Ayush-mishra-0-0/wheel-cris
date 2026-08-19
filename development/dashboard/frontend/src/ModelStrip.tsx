@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { api } from "./api";
-import type { Capabilities } from "./types";
+import type { Capabilities, FleetOverview } from "./types";
 
 /** Persistent model + policy status strip. Everything here is read-only
  *  server truth (config + fleet overview); it answers "what model am I
@@ -10,6 +10,7 @@ export function ModelStrip({ caps }: { caps: Capabilities | null }) {
   const [snapshotDays, setSnapshotDays] = useState<number | null>(null);
   const [modelVersion, setModelVersion] = useState<string | null>(null);
   const [cutoff, setCutoff] = useState<string | null>(null);
+  const [morRanking, setMorRanking] = useState<FleetOverview["model_of_record_ranking"] | undefined>(undefined);
 
   useEffect(() => {
     api
@@ -22,6 +23,7 @@ export function ModelStrip({ caps }: { caps: Capabilities | null }) {
         );
         if (o.model_version) setModelVersion(o.model_version);
         if (o.train_cutoff) setCutoff(o.train_cutoff);
+        if (o.model_of_record_ranking) setMorRanking(o.model_of_record_ranking);
       })
       .catch(() => {});
   }, []);
@@ -53,6 +55,12 @@ export function ModelStrip({ caps }: { caps: Capabilities | null }) {
         <span className="model-strip-item" title="model of record per dimension">
           <span className="model-strip-label">model of record</span>
           <span className="mono">{morText}</span>
+        </span>
+      )}
+      {morRanking?.primary_label && (
+        <span className="model-strip-item" title={morRanking.note ?? "fleet ranking contract"}>
+          <span className="model-strip-label">ranking MoR</span>
+          <span className="mono">{morRanking.primary_label}</span>
         </span>
       )}
       <span className="model-strip-item">

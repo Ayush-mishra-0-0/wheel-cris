@@ -374,6 +374,24 @@ tbody tr:hover td { background: #f6f6f1; }
 .limit-dim.lim-wsmThread { color: var(--success); background: var(--success-bg); }
 .limit-dim.lim-wsmDia { color: var(--info); background: var(--info-bg); }
 
+.wear-bands { display: inline-flex; gap: 4px; }
+.wear-band {
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+  padding: 1px 5px;
+  border-radius: var(--radius-sm);
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid transparent;
+}
+.wear-band-watch { color: var(--warning); background: var(--warning-bg); border-color: var(--warning); }
+.wear-band-near { color: var(--danger); background: var(--danger-bg); border-color: var(--danger); }
+.wear-band-healthy { color: var(--success); background: var(--success-bg); }
+.wear-band-unknown { color: var(--muted); background: transparent; border-color: var(--line); }
+
+.table-footnote { margin-top: 10px; max-width: 900px; }
+
 .risk-high { color: var(--danger); font-weight: 700; }
 .risk-high::before { content: "● "; color: var(--danger); font-size: 8px; vertical-align: 2px; }
 .risk-mid { color: var(--warning); font-weight: 600; }

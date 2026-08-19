@@ -144,9 +144,16 @@ class LocoWheelsetRow(WheelsetHeader):
     pturn_30d: float | None = None
     pturn_60d: float | None = None
     pturn_90d: float | None = None
+    pturn_30d_calibrated: float | None = None
+    pturn_60d_calibrated: float | None = None
+    pturn_90d_calibrated: float | None = None
+    pturn_30d_decile: float | None = None
+    pturn_60d_decile: float | None = None
+    pturn_90d_decile: float | None = None
     fc_wsmRoot_90d: float | None = None
     fc_wsmFlange_90d: float | None = None
     fc_wsmThread_90d: float | None = None
+    wear_bands: dict[str, dict] = Field(default_factory=dict)
 
 
 class LocoWheelsetTable(BaseModel):
@@ -400,6 +407,7 @@ class FleetOverview(BaseModel):
     days_to_condemning_within_180d: int = 0
     feature_days_since_turning: dict[str, float | None] = Field(default_factory=dict)
     top_sheds: list[dict] = Field(default_factory=list)
+    model_of_record_ranking: dict = Field(default_factory=dict)
 
 
 class RiskRow(BaseModel):
@@ -417,6 +425,13 @@ class RiskRow(BaseModel):
     pturn_30d: float | None = None
     pturn_60d: float | None = None
     pturn_90d: float | None = None
+    pturn_30d_calibrated: float | None = None
+    pturn_60d_calibrated: float | None = None
+    pturn_90d_calibrated: float | None = None
+    pturn_30d_decile: float | None = None
+    pturn_60d_decile: float | None = None
+    pturn_90d_decile: float | None = None
+    wear_bands: dict[str, dict] = Field(default_factory=dict)
     feature_coverage: float | None = None
     staleness_days: float | None = None
     latest_measurement: str | None = None
@@ -426,6 +441,7 @@ class FleetRiskResponse(BaseModel):
     total: int = 0
     page: int = 1
     page_size: int = 50
+    ranked_by: str | None = None
     max_staleness_days: int | None = None
     days_to_condemning_max: int | None = None
     pturn_min: float | None = None

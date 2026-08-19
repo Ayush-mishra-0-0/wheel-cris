@@ -3,7 +3,7 @@ import { api } from "./api";
 import type { Capabilities, LocoWheelsetTable, WheelAttribution, WheelsetDetail } from "./types";
 import { AxleMap } from "./AxleMap";
 import { BacktestView } from "./BacktestView";
-import { LimitChip } from "./LimitChip";
+import { LimitChip, WearBands } from "./LimitChip";
 import { OverlayPanel } from "./OverlayPanel";
 import { TrajectoryPanel } from "./TrajectoryPanel";
 import { EmptyState, ErrorState, SkeletonBlock } from "./States";
@@ -219,8 +219,9 @@ export function LocoView({
                     <th>Root</th>
                     <th>Thread</th>
                     <th>Limiting</th>
+                    <th>Wear band</th>
                     <th>Condemning</th>
-                    <th>P(turn) 90d</th>
+                    <th title="calibrated 90d P(turn) — Phase 4 Target B realized rate">P(turn) 90d</th>
                     <th>Fc root 90d</th>
                     <th>Fc flange 90d</th>
                     <th>Fc tread 90d</th>
@@ -244,11 +245,20 @@ export function LocoView({
                       <td>{fmt(w.latest_mean_wsmRoot)}</td>
                       <td>{fmt(w.latest_mean_wsmThread)}</td>
                       <td><LimitChip dim={w.limiting_dim} /></td>
+                      <td><WearBands bands={w.wear_bands} /></td>
                       <td>{fmt(w.days_to_condemning_dia, 0)} d</td>
                       <td>
-                        <span className={w.pturn_90d != null && w.pturn_90d >= 0.01 ? "risk-high" : "risk-low"}>
-                          {pct(w.pturn_90d)}
-                        </span>
+                        {(() => {
+                          const p = w.pturn_90d_calibrated ?? w.pturn_90d;
+                          return (
+                            <span
+                              className={p != null && p >= 0.01 ? "risk-high" : "risk-low"}
+                              title={w.pturn_90d != null ? `raw score ${(w.pturn_90d * 100).toFixed(2)}% · calibrated ${w.pturn_90d_calibrated != null ? ((w.pturn_90d_calibrated * 100).toFixed(2) + "%") : "—"}${w.pturn_90d_decile != null ? ` · decile ${w.pturn_90d_decile}/9` : ""}` : undefined}
+                            >
+                              {pct(p)}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td>{fmt(w.fc_wsmRoot_90d)}</td>
                       <td>{fmt(w.fc_wsmFlange_90d)}</td>
