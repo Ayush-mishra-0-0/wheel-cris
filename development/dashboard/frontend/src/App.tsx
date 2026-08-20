@@ -4,10 +4,11 @@ import type { Capabilities, FleetBacktest, OperationalCapture, SearchHit } from 
 import { CaptureTable, FleetTable } from "./BacktestView";
 import { FleetView } from "./FleetView";
 import { LocoView } from "./LocoView";
+import { ModelHealthPanel } from "./ModelHealthPanel";
 import { ModelStrip } from "./ModelStrip";
 import { ErrorState, SkeletonBlock } from "./States";
 
-type Page = "fleet" | "validation" | "loco";
+type Page = "fleet" | "validation" | "health" | "loco";
 
 export function App() {
   const [page, setPage] = useState<Page>("fleet");
@@ -154,6 +155,12 @@ export function App() {
             >
               Validation / Backtest
             </button>
+            <button
+              className={page === "health" ? "nav-item active" : "nav-item"}
+              onClick={() => go("health")}
+            >
+              Model health
+            </button>
           </nav>
           {page === "loco" && (
             <div className="sidebar-sub">
@@ -188,8 +195,14 @@ export function App() {
             </div>
           )}
 
+          {page === "health" && (
+            <div className="health-page">
+              <ModelHealthPanel />
+            </div>
+          )}
+
           {page === "loco" && (
-            <LocoView loco={loco} caps={caps} preselectWs={preselectWs} onWsChange={onWsChange} onBack={() => go("fleet")} />
+            <LocoView loco={loco} caps={caps} preselectWs={preselectWs} onWsChange={onWsChange} onNavigateLoco={(num) => openLoco(num)} onBack={() => go("fleet")} />
           )}
         </main>
       </div>

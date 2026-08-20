@@ -9,6 +9,7 @@ only source facts with business time at or before the interval end.
 from __future__ import annotations
 
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -23,6 +24,68 @@ except ImportError:
 
 
 INTERVAL_CONTEXT_VERSION = "v1.0"
+
+
+def _load_decode_register() -> dict:
+    """Load the verified SLAM reference decode register (wheel reading purposes, etc.)."""
+    path = PROJECT_ROOT / "configs" / "wheel_reference_decode_v1.json"
+    with path.open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _load_limit_register() -> dict:
+    """Load the ratified Wrpld wear limits (flange/root/tread mm, dia floors)."""
+    path = PROJECT_ROOT / "configs" / "limit_register_v1.json"
+    with path.open(encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+def _limiting_dim_from_reason(raw_codes: str, util: dict) -> str:
+    """Map a recorded LwrPurpose code set to a single limiting dimension.
+
+    Priority: single wear/dia codes (3 flange, 7 root, 8 tread, 9 dia); FW/RW (5)
+    resolves to the higher-utilization of flange/root; otherwise 'other'.
+    Returns None when no reason is recorded (caller falls back to ratio).
+    """
+    if raw_codes is None or (isinstance(raw_codes, float) and np.isnan(raw_codes)):
+        return None
+    text = str(raw_codes).strip()
+    if text == "" or text == "nan":
+        return None
+    codes = [int(c) for c in [x.strip() for x in text.split(",") if x.strip()] if c.isdigit()]
+    codes = [c for c in codes if c not in (0, 4)]  # 0 = none recorded, 4 = normal wear
+    if not codes:
+        return None
+    code_dim = {3: "flange", 7: "root", 8: "tread", 9: "dia"}
+    single = [code_dim[c] for c in codes if c in code_dim]
+    if 5 in codes and not single:
+        # FW/RW: both flange and root recorded; pick the one closer to its limit.
+        if util.get("flange") is not None or util.get("root") is not None:
+            fl = util.get("flange") if util.get("flange") is not None else -1.0
+            rt = util.get("root") if util.get("root") is not None else -1.0
+            return "flange" if fl >= rt else "root"
+        return "flange"
+    if single:
+        return single[0]
+    return "other"
+
+
+def _decode_codes(raw: pd.Series, mapping: dict) -> pd.Series:
+    """Decode a (possibly comma-separated, multi-valued) code string into labels.
+
+    Preserves unknown codes verbatim so missing mappings are never silently dropped.
+    """
+    def decode(value):
+        if value is None or (isinstance(value, float) and np.isnan(value)):
+            return pd.NA
+        text = str(value).strip()
+        if text == "" or text == "nan":
+            return pd.NA
+        text = text[:-2] if re.fullmatch(r"-?\d+\.0", text) else text
+        parts = [p.strip() for p in text.split(",") if p.strip()]
+        labels = [mapping.get(p, p) for p in parts]
+        return ", ".join(labels) if parts else pd.NA
+    return raw.map(decode)
 
 
 def _latest_at_or_before(values: pd.DataFrame, keys: list[str], time_col: str, end: pd.DataFrame, out: str) -> pd.Series:
@@ -81,7 +144,8 @@ def build_interval_context(
     out = intervals[["interval_start_measurement_id", "interval_end_measurement_id", "interval_end_timestamp", "wheelset_equipment_id", "LomNumber", "interval_start_locomotive_id"]].copy()
 
     # --- Wheel/axle position, register reference and inspection count ---
-    wm = wheel_measurements[["wsmId", "wsmEquipmentId", "wsmWRId", "wsmWheelSetPosition", "wsmW1EndType", "wsmUpdatedOn", "wsmturning1", "wsmProvDate"]].copy()
+    wm = wheel_measurements[["wsmId", "wsmEquipmentId", "wsmWRId", "wsmWheelSetPosition", "wsmW1EndType", "wsmUpdatedOn", "wsmturning1", "wsmProvDate",
+                             "wsmFlange1", "wsmFlange2", "wsmRoot1", "wsmRoot2", "wsmThread1", "wsmThread2"]].copy()
     wm["wsmId"] = pd.to_numeric(wm["wsmId"], errors="coerce").astype("Int64")
     wm["wsmEquipmentId"] = pd.to_numeric(wm["wsmEquipmentId"], errors="coerce").astype("Int64")
     wm["wsmWRId"] = pd.to_numeric(wm["wsmWRId"], errors="coerce").astype("Int64")
@@ -90,6 +154,8 @@ def build_interval_context(
     wm["wsmturning1"] = pd.to_numeric(wm["wsmturning1"], errors="coerce").astype("Int64")
     wm["wsmProvDate"] = pd.to_datetime(wm["wsmProvDate"], errors="coerce")
     wm["wsmUpdatedOn"] = pd.to_datetime(wm["wsmUpdatedOn"], errors="coerce")
+    for wear_col in ["wsmFlange1", "wsmFlange2", "wsmRoot1", "wsmRoot2", "wsmThread1", "wsmThread2"]:
+        wm[wear_col] = pd.to_numeric(wm[wear_col], errors="coerce")
 
     endpoint = out["interval_end_measurement_id"].rename("wsmId").to_frame()
     endpoint["wsmId"] = pd.to_numeric(endpoint["wsmId"], errors="coerce").astype("Int64")
@@ -138,12 +204,60 @@ def build_interval_context(
     out["days_since_turning"] = out["days_since_turning"].astype("Float64")
 
     # --- Wheel register: profile and schedule at the endpoint wheel ---
-    reg = wheel_register[["LwrId", "LwrWheelProfile", "LwrScheduleId", "LwrWsmSkidTurn"]].copy()
+    reg = wheel_register[["LwrId", "LwrWheelProfile", "LwrScheduleId", "LwrWsmSkidTurn", "LwrPurpose", "LwrTurningType"]].copy()
     reg["LwrId"] = pd.to_numeric(reg["LwrId"], errors="coerce").astype("Int64")
     wheel_info = out[["wheel_wr_id"]].rename(columns={"wheel_wr_id": "LwrId"}).merge(reg, on="LwrId", how="left")
     out["wheel_profile_2class"] = wheel_info["LwrWheelProfile"]
     out["wheel_schedule_id"] = wheel_info["LwrScheduleId"]
     out["wheel_skid_flag"] = wheel_info["LwrWsmSkidTurn"]
+
+    # --- Reason of turning / reading purpose decodes (SLAM website semantics) ---
+    ref = _load_decode_register()
+    out["reason_of_turning"] = _decode_codes(wheel_info["LwrPurpose"], ref["wheel_reading_purpose"]).astype("string")
+    out["reason_of_turning_raw_codes"] = wheel_info["LwrPurpose"].astype("string")
+    out["reading_purpose"] = _decode_codes(wheel_info["LwrTurningType"], ref["lwr_turning_type"]).astype("string")
+
+    # --- Utilization ratios + calibrated limiting dimension (attribution contract) ---
+    limits = _load_limit_register()
+    wear_limit = limits["wear_limits_mm"]
+    util = {
+        "flange": (pd.to_numeric(joined["wsmFlange1"], errors="coerce").add(
+            pd.to_numeric(joined["wsmFlange2"], errors="coerce"), fill_value=0) / 2
+                   ) / wear_limit["flange"]["max"],
+        "root": (pd.to_numeric(joined["wsmRoot1"], errors="coerce").add(
+            pd.to_numeric(joined["wsmRoot2"], errors="coerce"), fill_value=0) / 2
+                 ) / wear_limit["root"]["max"],
+        "tread": (pd.to_numeric(joined["wsmThread1"], errors="coerce").add(
+            pd.to_numeric(joined["wsmThread2"], errors="coerce"), fill_value=0) / 2
+                  ) / wear_limit["tread"]["max"],
+    }
+    for dim, s in util.items():
+        out[f"utilization_{dim}"] = s.astype("Float64")
+
+    priors = ref.get("calibration", {}).get("fleet_priors", {})
+    def row_limiting_dim(idx):
+        raw = out.loc[idx, "reason_of_turning_raw_codes"]
+        rec = _limiting_dim_from_reason(raw, {d: out.loc[idx, f"utilization_{d}"] for d in util})
+        if rec is not None:
+            return "recorded_reason", rec
+        # ratio-argmax over flange/root/tread (dia is a floor, not a util arg here)
+        vals = {d: out.loc[idx, f"utilization_{d}"] for d in util}
+        cand = {d: v for d, v in vals.items() if pd.notna(v)}
+        if not cand:
+            return None, "other"
+        dim = max(cand, key=cand.get)
+        return "ratio_calibrated", dim
+
+    srcs, dims = [], []
+    for idx in out.index:
+        s, d = row_limiting_dim(idx)
+        srcs.append(s if s else pd.NA)
+        dims.append(d)
+    out["limiting_dim_source"] = pd.Series(srcs, index=out.index, dtype="object").astype("string")
+    out["limiting_dim"] = pd.Series(dims, index=out.index, dtype="object").astype("string")
+    out["limiting_dim_prior"] = out.apply(
+        lambda r: priors.get(r["limiting_dim"]) if r["limiting_dim_source"] == "ratio_calibrated" else pd.NA,
+        axis=1).astype("Float64")
 
     # --- Home shed from the daily overdue ledger ---
     shed = daily_overdue[["LocoNumber", "EntryDate", "HomeShed"]].copy()

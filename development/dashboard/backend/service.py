@@ -324,6 +324,101 @@ def pturn_reliability() -> dict:
 
 
 @lru_cache(maxsize=1)
+def model_health() -> dict:
+    """Model-health panel data (read-only; one contract for the panel).
+
+    Surfaces what the serving models are claiming vs what the held-out
+    evaluation showed:
+      - degradation : per dim x horizon delta MAE / R2 / Spearman, the
+                      split-conformal band (nominal 80% coverage + achieved)
+                      and the measurement noise floor (central sigma).
+      - pturn       : per horizon C1 XGB ROC-AUC / PR-AUC / Brier / ECE plus
+                      train vs test realized turn rates (the reliability band).
+      - defect      : per dim x horizon operational capture@1/5/10%.
+      - provenance  : artifact contract versions (honesty: which report).
+    Every number maps 1:1 to a committed benchmark artifact - nothing is
+    recomputed here and nothing is invented. `predicted` flag notes that the
+    degradation panel uses the delta model's own evaluation, not a live probe.
+    """
+    artefact = trajectory_artefact()
+    degradation = {}
+    for dim, hs in artefact.get("1_delta_metrics", {}).items():
+        degradation[dim] = {}
+        for h, m in sorted(hs.items()):
+            noise = _noise_floor_mm(dim)
+            conf = artefact.get("3_conformal_80pct", {}).get(dim, {}).get(h, {})
+            op = artefact.get("4_operational_capture", {}).get(dim, {}).get(h, {})
+            degradation[dim][h] = {
+                "mae_mm": m.get("mae_mm") or m.get("delta_mae_mm"),
+                "r2": m.get("delta_r2") if "delta_r2" in m else m.get("r2"),
+                "spearman": m.get("delta_spearman") if "delta_spearman" in m else m.get("spearman"),
+                "noise_floor_mm": noise,
+                "conformal": {
+                    "level": 0.8,
+                    "width_mm": conf.get("conformal_width_mm"),
+                    "coverage": conf.get("coverage"),
+                    "n_fit": conf.get("n_fit"), "n_cal": conf.get("n_cal"), "n_test": conf.get("n_test"),
+                },
+                "capture_at_1_pct": op.get("capture_1%"),
+                "capture_at_5_pct": op.get("capture_5%"),
+                "capture_at_10_pct": op.get("capture_10%"),
+            }
+
+    pturn = {}
+    bench = json.loads(PTURN_BENCH.read_text()) if PTURN_BENCH.exists() else {}
+    for h, hb in bench.get("horizons", {}).items():
+        m = hb.get("models", {}).get("C1_xgb")
+        if not m:
+            continue
+        pturn[h] = {
+            "roc_auc": m.get("roc_auc"), "pr_auc": m.get("pr_auc"),
+            "brier": m.get("brier"), "ece": m.get("ece"),
+            "n_test": m.get("n_test"),
+            "turn_rate_train": m.get("turn_rate_train"), "turn_rate_test": m.get("turn_rate_test"),
+        }
+
+    return {
+        "degradation": degradation,
+        "pturn": pturn,
+        "provenance": {
+            "trajectory_artefact_contract": artefact.get("contract"),
+            "trajectory_artefact_task": artefact.get("task"),
+            "turn_probability_contract": bench.get("contract"),
+            "artefact_generated": artefact.get("generated_at"),
+            "predicted": True,
+            "note": ("Every number maps 1:1 to the committed benchmark artifacts "
+                     "(trajectory_product_analysis.json + turn_probability_benchmark.json). "
+                     "This is the model's self-assessment on held-out splits, not a live probe."),
+        },
+    }
+
+
+def fleet_locos() -> dict:
+    """Ordered loco list for the switcher, from the P1.1 fleet snapshot.
+
+    Returns a stable ordering (by loco number) of every distinct locomotive in
+    the snapshot with its wheelset count and latest-measurement recency, so
+    the UI can offer prev/next + dropdown navigation between locos.
+    """
+    df = _snapshot_df()
+    if df is None or df.empty or "loco_number" not in df:
+        return {"error": "fleet snapshot not built or has no loco identity",
+                "locos": [], "total": 0}
+    grp = (df.dropna(subset=["loco_number"])[["loco_number", "wheelset_equipment_id", "staleness_days"]]
+             .groupby("loco_number"))
+    locos = []
+    for loco_number, g in grp:
+        locos.append({
+            "loco_number": str(loco_number),
+            "n_wheelsets": int(len(g)),
+            "n_recent": int((g["staleness_days"] <= 90).sum()),
+            "locos_note": "staleness_days recency is a measurement signal, not a proven fit",
+        })
+    locos.sort(key=lambda r: r["loco_number"])
+    return {"locos": locos, "total": len(locos),
+            "error": None, "note": "ordered by loco number; recency is measurement-based"}
+
+
 def _turn_calibration() -> dict:
     """Phase 4 empirical reliability band per P(turn) horizon.
 
@@ -939,6 +1034,64 @@ def _turn_markers(wheelset_id: int, asof: pd.Timestamp) -> list[dict]:
     return out
 
 
+def _limiting_dim_provenance(wheelset_id: int) -> dict | None:
+    """Gold-contract limiting-dim attribution for one wheelset.
+
+    Joins the current fleet snapshot's `limiting_dim_verified` /
+    `limiting_dim_source` columns (emitted from the interval-context contract).
+    Returns None when the wheelset is not in the snapshot. Never re-derives the
+    argmax or fleet priors here - the contract is the single source of truth.
+    """
+    try:
+        df = _snapshot_df()
+    except Exception:
+        return None
+    if df is None or df.empty:
+        return None
+    row = df[df["wheelset_equipment_id"] == int(wheelset_id)]
+    if row.empty:
+        return None
+    r = row.iloc[0]
+    dim = r.get("limiting_dim_verified")
+    heur = r.get("limiting_dim")
+    return {
+        "limiting_dim_verified": str(dim) if pd.notna(dim) else None,
+        "limiting_dim_source": r.get("limiting_dim_source") if pd.notna(r.get("limiting_dim_source")) else None,
+        "limiting_dim_heuristic": str(heur) if pd.notna(heur) else None,
+        "limiting_reason": r.get("limiting_reason") if pd.notna(r.get("limiting_reason")) else None,
+        "prior": _f(r.get("limiting_dim_prior")),
+        "contract": "fleet_snapshot_v1",
+    }
+
+
+def _segment_bands(w: pd.DataFrame) -> list[dict]:
+    """Lifecycle segment bands for one wheelset's full history.
+
+    Contiguous runs of the same `seg_id` become one band with start/end ts,
+    boundary kind at its end (turn / replacement / None), and the number of
+    measurements inside. Used by the continuous-lifecycle chart to shade each
+    segment and put a marker where the current forecast anchor sits.
+    """
+    if w.empty or "seg_id" not in w:
+        return []
+    bands = []
+    for seg_id, g in w.groupby("seg_id", sort=False):
+        g = g.sort_values("measurement_timestamp")
+        band = {
+            "segment_index": int(seg_id) if pd.notna(seg_id) else None,
+            "start_ts": pd.Timestamp(g.iloc[0]["measurement_timestamp"]),
+            "end_ts": pd.Timestamp(g.iloc[-1]["measurement_timestamp"]),
+            "n_measurements": int(len(g)),
+            "boundary_kind": None,
+        }
+        last = g.iloc[-1]
+        band["boundary_kind"] = (
+            "turn" if bool(last.get("turn_event", False))
+            else "replacement" if bool(last.get("replacement", False)) else None)
+        bands.append(band)
+    return bands
+
+
 def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
     """Chart-data contract for the trajectory panel (trajectory_chart_v1).
 
@@ -1141,6 +1294,8 @@ def trajectory(wheelset_id: int, asof: pd.Timestamp | None = None) -> dict:
         "dims": dims,
         "turns": _turn_markers(wheelset_id, pd.Timestamp(anchor)),
         "turn_reset": turn_reset_policy(w, p),
+        "segments": _segment_bands(w),
+        "limiting_dim_provenance": _limiting_dim_provenance(wheelset_id),
         "delta_metrics": _delta_metrics_slim(),
         "conformal": _conformal_table(),
         "forecast_condition": "no_turn_within_horizon",

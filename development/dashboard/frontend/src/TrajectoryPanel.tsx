@@ -3,7 +3,7 @@ import * as echarts from "echarts";
 import { EChart } from "./EChart";
 import type { EChartsOption } from "./EChart";
 import { api } from "./api";
-import type { TrajectoryContract, TrajectoryDim, TrajectoryForecast, TurnMarker } from "./types";
+import type { SegmentBand, TrajectoryContract, TrajectoryDim, TrajectoryForecast, TurnMarker } from "./types";
 import { ErrorState, EmptyState, SkeletonBlock } from "./States";
 
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
@@ -209,6 +209,32 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
               </span>
             </div>
           )}
+          {data.limiting_dim_provenance && (
+            <div className="provenance-row">
+              <span className="muted small">
+                Limiting dim:
+              </span>
+              <span className="chip">
+                verified <b>{data.limiting_dim_provenance.limiting_dim_verified ?? "—"}</b>
+              </span>
+              <span
+                className={`chip chip-source-${data.limiting_dim_provenance.limiting_dim_source ?? ""}`}
+                title="recorded_reason = shed/register reason of turning; ratio_calibrated = fleet-calibrated bottleneck; predicted = forecast heuristic fallback"
+              >
+                source {data.limiting_dim_provenance.limiting_dim_source ?? "—"}
+              </span>
+              {data.limiting_dim_provenance.limiting_dim_heuristic &&
+                data.limiting_dim_provenance.limiting_dim_verified &&
+                data.limiting_dim_provenance.limiting_dim_heuristic !== data.limiting_dim_provenance.limiting_dim_verified && (
+                  <span className="muted small">
+                    heuristic says {data.limiting_dim_provenance.limiting_dim_heuristic}
+                  </span>
+                )}
+              {data.limiting_dim_provenance.limiting_reason && (
+                <span className="muted small">{data.limiting_dim_provenance.limiting_reason}</span>
+              )}
+            </div>
+          )}
           <ForecastReadout
             data={data}
             showDia={showDia}
@@ -224,7 +250,7 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
             {dimOrder.map((dim) => {
               const d = data.dims.find((x) => x.dim === dim);
               return d ? (
-                <TrajectoryChart key={dim} data={d} turns={data.turns} />
+                <TrajectoryChart key={dim} data={d} turns={data.turns} segments={data.segments ?? []} />
               ) : null;
             })}
           </div>
@@ -238,9 +264,11 @@ export function TrajectoryPanel({ wheelsetId }: { wheelsetId: number }) {
 function TrajectoryChart({
   data,
   turns,
+  segments,
 }: {
   data: TrajectoryDim;
   turns: TurnMarker[];
+  segments: SegmentBand[];
 }) {
   const color = COLORS[data.dim] ?? "#7a6a9e";
   const primary = PRIMARY_DIMS.includes(data.dim);
@@ -249,6 +277,16 @@ function TrajectoryChart({
 
   const option = useMemo<EChartsOption>(() => {
     const ttlLocal = data.time_to_limit;
+    // continuous-lifecycle segment shading: alternate translucent bands per
+    // lifecycle segment (observed history), so resets/turns read as steps
+    const segAreas: echarts.MarkAreaComponentOption["data"] = [];
+    segments.forEach((s, i) => {
+      if (s.start_ts == null || s.end_ts == null) return;
+      segAreas.push([
+        { xAxis: s.start_ts, itemStyle: { color: i % 2 === 0 ? "rgba(122, 106, 158, 0.05)" : "rgba(122, 106, 158, 0.10)" } },
+        { xAxis: s.end_ts },
+      ]);
+    });
     const limitLine = ttlLocal?.limit_mm != null
       ? {
           silent: true,
@@ -389,6 +427,7 @@ function TrajectoryChart({
         showSymbol: data.observed.length <= 40,
         z: 2,
         markLine: limitLine,
+        markArea: segAreas.length ? { silent: true, data: segAreas, z: 0 } : undefined,
         tooltip: { valueFormatter: (v) => `${fmt(v as number)} mm` },
       },
       {

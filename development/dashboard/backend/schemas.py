@@ -364,6 +364,23 @@ class TurnMarker(BaseModel):
     post_wsmThread: float | None = None
 
 
+class SegmentBand(BaseModel):
+    segment_index: int | None = None
+    start_ts: dt.datetime | None = None
+    end_ts: dt.datetime | None = None
+    n_measurements: int = 0
+    boundary_kind: str | None = None
+
+
+class LimitingDimProvenance(BaseModel):
+    limiting_dim_verified: str | None = None
+    limiting_dim_source: str | None = None
+    limiting_dim_heuristic: str | None = None
+    limiting_reason: str | None = None
+    prior: float | None = None
+    contract: str | None = None
+
+
 class TrajectoryContract(BaseModel):
     wheelset_equipment_id: int
     loco_number: str | None = None
@@ -376,6 +393,8 @@ class TrajectoryContract(BaseModel):
     dims: list[TrajectoryDim] = Field(default_factory=list)
     turns: list[TurnMarker] = Field(default_factory=list)
     turn_reset: TurnReset = TurnReset()
+    segments: list[SegmentBand] = Field(default_factory=list)
+    limiting_dim_provenance: LimitingDimProvenance | None = None
     delta_metrics: dict = Field(default_factory=dict)
     conformal: dict = Field(default_factory=dict)
     forecast_condition: str | None = None
@@ -472,3 +491,23 @@ class ShedOverview(BaseModel):
     days_to_condemning_within_180d: int = 0
     staleness_days_median: float | None = None
     error: str | None = None
+
+
+class ModelHealth(BaseModel):
+    degradation: dict[str, dict] = Field(default_factory=dict)
+    pturn: dict[str, dict] = Field(default_factory=dict)
+    provenance: dict = Field(default_factory=dict)
+
+
+class LocoSwitcherItem(BaseModel):
+    loco_number: str
+    n_wheelsets: int = 0
+    n_recent: int = 0
+    locos_note: str | None = None
+
+
+class FleetLocos(BaseModel):
+    total: int = 0
+    locos: list[LocoSwitcherItem] = Field(default_factory=list)
+    error: str | None = None
+    note: str | None = None

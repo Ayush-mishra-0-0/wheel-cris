@@ -1,0 +1,114 @@
+{
+  "run_id": "8f5ccb0f-7d2f-40c5-b5f1-6b2bf4386589",
+  "contract_version": "v1.0",
+  "generated_at_utc": "2026-08-20T09:31:50.238509+00:00",
+  "point_in_time_rule": "interval_end_timestamp; only source facts with business time at or before interval end",
+  "input_sha256": {
+    "intervals": "48bc4c172c77eb63ef6c3fa82ba0805b816106cfecefda6785c3c31123c9e495",
+    "wheel_measurements": "8bc32a34ed8fe5a365a16e33644c68f79cf595e94d3828ef15f09a400da75bba",
+    "formation": "241598c26c1fecbab7b7ef424ae8d058f078e1378d7a6912acd4144fe361e05a",
+    "wheel_register": "81696bd4113d3a05826fbf56ad367a4076dacb7683acf7da78a31fa2c7d091fb",
+    "daily_overdue": "81d6964c5cfc8dd54a08333e3824c4a6d63dbbf4db1f8d5b5880f1ff77eae356",
+    "defects": "c107b1d1d1fcf28a48624b0f152db63d53cddcfdd619bc0d8284cdd9a03a2c30",
+    "equipment_master": "6b10b0c2478ef6193a4e42e2af0e27096ceb027f4201bd7163492dbeadc6420d"
+  },
+  "rows": 225262,
+  "coverage": {
+    "axle_position_1_6": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "wheel_wr_id": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "turning_indicator_raw": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "wheel_position_1_12": {
+      "non_null_rows": 225243,
+      "coverage_pct": 99.9916
+    },
+    "inspection_count_through_interval_end": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    },
+    "days_since_turning": {
+      "non_null_rows": 41604,
+      "coverage_pct": 18.4692
+    },
+    "wheel_profile_2class": {
+      "non_null_rows": 169042,
+      "coverage_pct": 75.0424
+    },
+    "wheel_schedule_id": {
+      "non_null_rows": 219757,
+      "coverage_pct": 97.5562
+    },
+    "wheel_skid_flag": {
+      "non_null_rows": 225219,
+      "coverage_pct": 99.9809
+    },
+    "reason_of_turning": {
+      "non_null_rows": 219237,
+      "coverage_pct": 97.3253
+    },
+    "reason_of_turning_raw_codes": {
+      "non_null_rows": 219237,
+      "coverage_pct": 97.3253
+    },
+    "reading_purpose": {
+      "non_null_rows": 225219,
+      "coverage_pct": 99.9809
+    },
+    "utilization_flange": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    },
+    "utilization_root": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    },
+    "utilization_tread": {
+      "non_null_rows": 225251,
+      "coverage_pct": 99.9951
+    },
+    "limiting_dim_source": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    },
+    "limiting_dim": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    },
+    "limiting_dim_prior": {
+      "non_null_rows": 133144,
+      "coverage_pct": 59.1063
+    },
+    "home_shed": {
+      "non_null_rows": 112369,
+      "coverage_pct": 49.8837
+    },
+    "defect_zone": {
+      "non_null_rows": 166341,
+      "coverage_pct": 73.8433
+    },
+    "defect_division": {
+      "non_null_rows": 166510,
+      "coverage_pct": 73.9184
+    },
+    "wheel_age_days_proxy": {
+      "non_null_rows": 178243,
+      "coverage_pct": 79.127
+    },
+    "wheel_age_date_source": {
+      "non_null_rows": 178243,
+      "coverage_pct": 79.127
+    },
+    "interval_context_contract_version": {
+      "non_null_rows": 225262,
+      "coverage_pct": 100.0
+    }
+  }
+}

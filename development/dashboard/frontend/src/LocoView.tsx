@@ -4,6 +4,7 @@ import type { Capabilities, LocoWheelsetTable, WheelAttribution, WheelsetDetail 
 import { AxleMap } from "./AxleMap";
 import { BacktestView } from "./BacktestView";
 import { LimitChip, WearBands } from "./LimitChip";
+import { LocoSwitcher } from "./LocoSwitcher";
 import { OverlayPanel } from "./OverlayPanel";
 import { TrajectoryPanel } from "./TrajectoryPanel";
 import { EmptyState, ErrorState, SkeletonBlock } from "./States";
@@ -19,12 +20,14 @@ export function LocoView({
   caps,
   preselectWs,
   onWsChange,
+  onNavigateLoco,
   onBack,
 }: {
   loco: string;
   caps: Capabilities | null;
   preselectWs?: number | null;
   onWsChange?: (ws: number) => void;
+  onNavigateLoco?: (locoNumber: string) => void;
   onBack: () => void;
 }) {
   const [table, setTable] = useState<LocoWheelsetTable | null>(null);
@@ -102,6 +105,11 @@ export function LocoView({
             <span className="kpi-label">Loco</span>
             <span className="kpi-value">{table.loco_number}</span>
           </div>
+          {onNavigateLoco && (
+            <div className="kpi kpi-switcher">
+              <LocoSwitcher loco={loco} onNavigate={onNavigateLoco} />
+            </div>
+          )}
           <div className="kpi">
             <span className="kpi-label">Type</span>
             <span className="kpi-value">{table.loco_type ?? "—"}</span>

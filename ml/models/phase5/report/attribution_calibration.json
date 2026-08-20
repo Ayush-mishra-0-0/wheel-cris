@@ -1,0 +1,274 @@
+{
+  "n_turns": 41276,
+  "n_turns_with_recorded_reason": 4481,
+  "n_sheds_with_min_turns": 14,
+  "top_sheds": [
+    {
+      "shed": "UNKNOWN",
+      "n_turns": 29049,
+      "recorded": {
+        "no_cut": 29049
+      },
+      "ratio": {
+        "root": 14189,
+        "flange": 12105,
+        "tread": 2755
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.0,
+        "root": 0.0,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.0
+    },
+    {
+      "shed": "LGDE",
+      "n_turns": 7712,
+      "recorded": {
+        "no_cut": 7707,
+        "wear": 4,
+        "dia": 1
+      },
+      "ratio": {
+        "root": 4561,
+        "flange": 3150,
+        "tread": 1
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.25,
+        "root": 0.5,
+        "tread": 0.25
+      },
+      "share_recorded_wear": 0.001
+    },
+    {
+      "shed": "HWHE ",
+      "n_turns": 1565,
+      "recorded": {
+        "other": 1474,
+        "wear": 56,
+        "dia": 35
+      },
+      "ratio": {
+        "root": 856,
+        "flange": 556,
+        "tread": 153
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.75,
+        "root": 0.25,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.036
+    },
+    {
+      "shed": "SRCE",
+      "n_turns": 873,
+      "recorded": {
+        "other": 797,
+        "wear": 61,
+        "dia": 15
+      },
+      "ratio": {
+        "root": 655,
+        "flange": 176,
+        "tread": 42
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.77,
+        "root": 0.197,
+        "tread": 0.033
+      },
+      "share_recorded_wear": 0.07
+    },
+    {
+      "shed": "BNDL",
+      "n_turns": 804,
+      "recorded": {
+        "other": 357,
+        "wear": 336,
+        "dia": 90,
+        "no_cut": 21
+      },
+      "ratio": {
+        "flange": 440,
+        "root": 226,
+        "tread": 138
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.548,
+        "root": 0.161,
+        "tread": 0.292
+      },
+      "share_recorded_wear": 0.418
+    },
+    {
+      "shed": "GDDE",
+      "n_turns": 535,
+      "recorded": {
+        "dia": 258,
+        "wear": 245,
+        "other": 21,
+        "no_cut": 11
+      },
+      "ratio": {
+        "flange": 395,
+        "root": 114,
+        "tread": 26
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.751,
+        "root": 0.212,
+        "tread": 0.037
+      },
+      "share_recorded_wear": 0.458
+    },
+    {
+      "shed": "SRC",
+      "n_turns": 194,
+      "recorded": {
+        "other": 194
+      },
+      "ratio": {
+        "root": 127,
+        "tread": 51,
+        "flange": 16
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.0,
+        "root": 0.0,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.0
+    },
+    {
+      "shed": "AQE  ",
+      "n_turns": 147,
+      "recorded": {
+        "other": 88,
+        "dia": 33,
+        "wear": 19,
+        "no_cut": 7
+      },
+      "ratio": {
+        "flange": 85,
+        "root": 57,
+        "tread": 5
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.684,
+        "root": 0.316,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.129
+    },
+    {
+      "shed": "HTE",
+      "n_turns": 95,
+      "recorded": {
+        "other": 95
+      },
+      "ratio": {
+        "root": 62,
+        "flange": 26,
+        "tread": 7
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.0,
+        "root": 0.0,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.0
+    },
+    {
+      "shed": "BRCE",
+      "n_turns": 71,
+      "recorded": {
+        "wear": 35,
+        "dia": 28,
+        "other": 8
+      },
+      "ratio": {
+        "flange": 48,
+        "root": 23
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.571,
+        "root": 0.429,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.493
+    },
+    {
+      "shed": "TATE",
+      "n_turns": 60,
+      "recorded": {
+        "wear": 29,
+        "other": 25,
+        "dia": 6
+      },
+      "ratio": {
+        "flange": 46,
+        "root": 14
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.966,
+        "root": 0.034,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.483
+    },
+    {
+      "shed": "GZBE ",
+      "n_turns": 35,
+      "recorded": {
+        "other": 32,
+        "wear": 3
+      },
+      "ratio": {
+        "root": 29,
+        "flange": 6
+      },
+      "p_recorded_wear_given_ratio": {
+        "flange": 0.0,
+        "root": 1.0,
+        "tread": 0.0
+      },
+      "share_recorded_wear": 0.086
+    }
+  ],
+  "fleet_confusion_recorded_vs_ratio": {
+    "flange": {
+      "wear": 538,
+      "dia": 316,
+      "other": 0,
+      "no_cut": 0
+    },
+    "root": {
+      "wear": 174,
+      "dia": 155,
+      "other": 0,
+      "no_cut": 0
+    },
+    "tread": {
+      "wear": 110,
+      "dia": 26,
+      "other": 0,
+      "no_cut": 0
+    }
+  },
+  "p_recorded_wear_given_ratio_dim": {
+    "flange": 0.63,
+    "root": 0.529,
+    "tread": 0.809
+  },
+  "operational_rule": "bottleneck = recorded_reason when present; else ratio-argmax calibrated per shed",
+  "min_shed_turns_used": 20,
+  "inputs": {
+    "wheel_measurements": "data/bronze/wheel_measurements.parquet (2026-08-20)",
+    "wheel_register": "data/bronze/loco_wheel_register.parquet (2026-08-20)",
+    "functional_locations": "data/bronze/functional_locations.parquet",
+    "limits": "configs/limit_register_v1.json",
+    "decode": "configs/wheel_reference_decode_v1.json"
+  }
+}

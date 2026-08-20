@@ -46,6 +46,8 @@ from models.phase5.dashboard.backend.features import (  # noqa: E402
     extract_features, load_segments, load_wes,
 )
 
+CONTRACT_INTERVAL_CONTEXT = ML_ROOT / "data/gold/interval_context/v1.0/inspection_interval_context.parquet"
+
 ROOT = ML_ROOT
 OUT = ROOT / "model_datasets" / "v5" / "fleet_snapshot.parquet"
 MANIFEST = OUT.with_suffix(".manifest.json")
@@ -55,6 +57,8 @@ WEAR_DIMS = ("wsmRoot", "wsmFlange", "wsmThread")
 HORIZONS = (30, 90, 180)
 CONDEMNING_DIA_MM = 1016.0
 MAX_HORIZON = 180
+# Contract dim label -> snapshot wsm* convention (same domain as `limiting_dim`)
+CONTRACT_DIM_TO_WSM = {"flange": "wsmFlange", "root": "wsmRoot", "tread": "wsmThread", "dia": "wsmDia", "other": "other"}
 # Approved wear condemning limits (mm) - Wrpld table, the authoritative wear
 # register (configs/limit_register_v1.json, ratified 2026-08-19): flange 0-3,
 # root 0-6, tread 0-6.5. Lower is better; value grows toward the limit.
@@ -91,12 +95,37 @@ def _days_to_condemning(current: float | None, pred: dict) -> float | None:
                           CONDEMNING_DIA_MM, "down")
 
 
+def _load_contract_limiting_dim() -> dict[int, tuple[str, str]]:
+    """Provenance-aware limiting dim from the Gold interval-context contract.
+
+    Latest interval-context row per wheelset at or before that wheelset's current
+    anchor (last WES measurement). Emits (limiting_dim, source) where source is
+    recorded_reason | ratio_calibrated; never re-derives argmax/priors here.
+    """
+    if not CONTRACT_INTERVAL_CONTEXT.exists():
+        return {}
+    ic = pd.read_parquet(CONTRACT_INTERVAL_CONTEXT)
+    ic = ic[["wheelset_equipment_id", "interval_end_timestamp", "limiting_dim", "limiting_dim_source"]]
+    ic = ic.dropna(subset=["wheelset_equipment_id", "interval_end_timestamp", "limiting_dim"])
+    ic["interval_end_timestamp"] = pd.to_datetime(ic["interval_end_timestamp"], utc=True)
+    ws_last = load_wes()[["wheelset_equipment_id", "measurement_timestamp"]]
+    ws_last["measurement_timestamp"] = pd.to_datetime(ws_last["measurement_timestamp"], utc=True)
+    ws_last = ws_last.drop_duplicates("wheelset_equipment_id", keep="last")
+    joined = ws_last.merge(ic, on="wheelset_equipment_id", how="inner")
+    joined = joined[joined["interval_end_timestamp"] <= joined["measurement_timestamp"]]
+    joined = joined.sort_values("interval_end_timestamp").groupby(
+        "wheelset_equipment_id", as_index=False).tail(1)
+    return {int(r.wheelset_equipment_id): (str(r.limiting_dim), str(r.limiting_dim_source))
+            for r in joined.itertuples()}
+
+
 def build_snapshot() -> pd.DataFrame:
     wes_all = load_wes()
     seg = load_segments()
     svc = service.degradation_models()
     meta = service.degradation_meta()
     psvc = service.pturn_models()
+    contract_limiting = _load_contract_limiting_dim()
 
     def feat_row(w: pd.DataFrame):
         anchor = pd.Timestamp(w.iloc[-1]["measurement_timestamp"])
@@ -239,6 +268,19 @@ def build_snapshot() -> pd.DataFrame:
             else:
                 row["limiting_dim"] = None
                 row["limiting_reason"] = None
+
+        # Provenance-aware limiting dim from the Gold contract (verified) vs the
+        # forecast heuristic above (inferred). record_reason / ratio_calibrated
+        # come from SLAM Reason Of Turning provenance; predicted is the forecast
+        # projection when the wheelset has no interval-context contract row.
+        cls = contract_limiting.get(int(ws_id))
+        if cls is not None:
+            verified_dim, source = cls
+            row["limiting_dim_verified"] = CONTRACT_DIM_TO_WSM.get(verified_dim, verified_dim)
+            row["limiting_dim_source"] = source
+        else:
+            row["limiting_dim_verified"] = row["limiting_dim"]
+            row["limiting_dim_source"] = "predicted"
 
         rows.append(row)
         if (i + 1) % 2500 == 0:

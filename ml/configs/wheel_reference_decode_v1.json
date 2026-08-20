@@ -1,0 +1,71 @@
+{
+  "register": "wheel_reference_decode_v1",
+  "status": "VERIFIED",
+  "verified_date": "2026-08-20",
+  "source": "SLAM_PROD_DB_10.05.2022 lookup tables (WheelReadingPurpose, WheelProfile, ScheduleTypes). Decode values captured live from the server and cross-checked against the SLAM website rows for 39023/33762/51061/30397/41201/33674.",
+  "wheel_reading_purpose": {
+    "0": "No Reason Recorded",
+    "1": "Bogie Balancing",
+    "2": "Bogie Changing",
+    "3": "Flange Wear limit crossed (0-3mm)",
+    "4": "Normal Wear",
+    "5": "FW/RW",
+    "6": "Pitting Marks",
+    "7": "Root Wear limit crossed (0-6mm)",
+    "8": "Tread Wear limit crossed (0-6.5mm)",
+    "9": "Wheel Dia Matching",
+    "10": "Wheel Skidding",
+    "11": "Others",
+    "12": "Scratching Marks",
+    "13": "Metal Chip Out"
+  },
+  "wheel_profile": {
+    "1": "Thick Flange",
+    "2": "Wear Adapted"
+  },
+  "lwr_turning_type": {
+    "0": "Before Turning",
+    "1": "After Turning",
+    "2": "Regular CheckUp",
+    "-1": "Unspecified"
+  },
+  "schedule_types": {
+    "1": {"code": "UnSch", "name": "Special Repair"},
+    "2": {"code": "TS", "name": "Traffic Spare"},
+    "3": {"code": "GC", "name": "General Checkup"},
+    "4": {"code": "IC0", "name": "IC0"},
+    "5": {"code": "IA", "name": "IA"},
+    "6": {"code": "IC", "name": "IC"},
+    "7": {"code": "TI", "name": "TI"},
+    "8": {"code": "IB", "name": "IB"},
+    "10": {"code": "IOH", "name": "IOH"},
+    "12": {"code": "POH", "name": "POH"},
+    "74": {"code": "Minor UST", "name": "WAP7 Minor + UST"}
+  },
+  "calibration": {
+    "register": "attribution_calibration_v1",
+    "generated_at_utc": "2026-08-20",
+    "method": "fleet-level empirical prior P(recorded wear reason present | ratio-argmax dimension), estimated on fresh Bronze (2026-08-20), n=41,276 turns; applied ONLY when recorded_reason is absent (provenance never overwritten)",
+    "n_turns": 41276,
+    "fleet_priors": {
+      "flange": 0.63,
+      "root": 0.53,
+      "tread": 0.81
+    },
+    "per_shed_min_turns": 20,
+    "note": "Per-shed priors exist in models/phase5/report/attribution_calibration.json for sheds with >=20 turns, but shed coverage is limited to ~30% of turns by wheelset migration; fleet priors are the default. See ml/docs/slam_website_field_mapping.md."
+  },
+  "consumers": [
+    "ml/silver_gold/interval_context.py (reason_of_turning decode + limiting_dim)",
+    "ml/sql/extraction/wheel_reading_purpose.sql",
+    "ml/sql/extraction/wheel_profile.sql",
+    "ml/sql/extraction/schedule_types.sql",
+    "ml/sql/exploration/slam_website_view.sql"
+  ],
+  "changelog": [
+    {
+      "date": "2026-08-20",
+      "change": "Initial decode register captured live from SLAM lookup tables; verified against the SLAM website rows."
+    }
+  ]
+}

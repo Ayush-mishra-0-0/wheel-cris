@@ -1,0 +1,112 @@
+{
+  "n_turns_with_prestate": 41276,
+  "recorded_reason_distribution": {
+    "Wheel Dia Matching": 739,
+    "FW/RW": 545,
+    "Flange Wear limit crossed (0-3mm)": 271,
+    "Others": 94,
+    "Normal Wear": 81,
+    "Wheel Skidding": 37,
+    "Scratching Marks": 34,
+    "Root Wear limit crossed (0-6mm)": 21,
+    "Metal Chip Out": 18,
+    "Bogie Changing": 7,
+    "Tread Wear limit crossed (0-6.5mm)": 2,
+    "Bogie Balancing": 1
+  },
+  "recorded_wear_class": {
+    "no_cut": 39780,
+    "wear": 822,
+    "dia": 497,
+    "other": 177
+  },
+  "limiting_dim_ratio_distribution": {
+    "root": 21003,
+    "flange": 17083,
+    "tread": 3190
+  },
+  "agreement_ratio_vs_recorded": {
+    "overall_pct": 2.42,
+    "breakdown": {
+      "wear": {
+        "n": 822,
+        "limit_dim": {
+          "flange": 538,
+          "root": 174,
+          "tread": 110
+        },
+        "pct_with_recorded_wear_code": 1.99
+      },
+      "dia": {
+        "n": 497,
+        "limit_dim": {
+          "flange": 316,
+          "root": 155,
+          "tread": 26
+        },
+        "pct_with_recorded_wear_code": 1.2
+      },
+      "no_cut": {
+        "n": 39780,
+        "limit_dim": {
+          "root": 20585,
+          "flange": 16143,
+          "tread": 3052
+        },
+        "pct_with_recorded_wear_code": 96.38
+      },
+      "other": {
+        "n": 177,
+        "limit_dim": {
+          "root": 89,
+          "flange": 86,
+          "tread": 2
+        },
+        "pct_with_recorded_wear_code": 0.43
+      }
+    }
+  },
+  "per_dimension": {
+    "flange": {
+      "n_ratio_limiting": 17083,
+      "median_pre_mm": 0.95,
+      "pct_over_limit": 0.23
+    },
+    "root": {
+      "n_ratio_limiting": 21003,
+      "median_pre_mm": 2.65,
+      "pct_over_limit": 0.05
+    },
+    "tread": {
+      "n_ratio_limiting": 3190,
+      "median_pre_mm": 2.0,
+      "pct_over_limit": 0.25
+    }
+  },
+  "reason_by_limit_dim": {
+    "flange": {
+      "no_cut": 16143,
+      "wear": 538,
+      "dia": 316,
+      "other": 86
+    },
+    "root": {
+      "no_cut": 20585,
+      "wear": 174,
+      "dia": 155,
+      "other": 89
+    },
+    "tread": {
+      "no_cut": 3052,
+      "wear": 110,
+      "dia": 26,
+      "other": 2
+    }
+  },
+  "inputs": {
+    "wheel_register": "data\\bronze\\loco_wheel_register.parquet",
+    "wheel_measurements": "data\\bronze\\wheel_measurements.parquet",
+    "limits": "configs/limit_register_v1.json",
+    "decode": "configs/wheel_reference_decode_v1.json"
+  }
+}

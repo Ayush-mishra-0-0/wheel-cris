@@ -356,6 +356,23 @@ export interface TurnMarker {
   post_wsmThread: number | null;
 }
 
+export interface SegmentBand {
+  segment_index: number | null;
+  start_ts: string | null;
+  end_ts: string | null;
+  n_measurements: number;
+  boundary_kind: string | null;
+}
+
+export interface LimitingDimProvenance {
+  limiting_dim_verified: string | null;
+  limiting_dim_source: string | null;
+  limiting_dim_heuristic: string | null;
+  limiting_reason: string | null;
+  prior: number | null;
+  contract: string | null;
+}
+
 export interface TurnReset {
   condition: string;
   boundary_kind: string | null;
@@ -376,6 +393,8 @@ export interface TrajectoryContract {
   dims: TrajectoryDim[];
   turns: TurnMarker[];
   turn_reset: TurnReset;
+  segments: SegmentBand[];
+  limiting_dim_provenance: LimitingDimProvenance | null;
   delta_metrics: Record<string, Record<string, { mae_mm?: number; delta_r2?: number; delta_spearman?: number }>>;
   conformal: Record<string, Record<string, ConformalCell>>;
   forecast_condition: string | null;
@@ -533,4 +552,61 @@ export interface FleetDegradation {
   static?: Record<string, Record<string, DegradationCell>>;
   rolling?: unknown;
   [k: string]: unknown;
+}
+
+export interface ConformalHealth {
+  level: number;
+  width_mm: number | null;
+  coverage: number | null;
+  n_fit: number | null;
+  n_cal: number | null;
+  n_test: number | null;
+}
+
+export interface DegradationHealthCell {
+  mae_mm: number | null;
+  r2: number | null;
+  spearman: number | null;
+  noise_floor_mm: number | null;
+  conformal: ConformalHealth;
+  capture_at_1_pct: number | null;
+  capture_at_5_pct: number | null;
+  capture_at_10_pct: number | null;
+}
+
+export interface PturnHealthCell {
+  roc_auc: number | null;
+  pr_auc: number | null;
+  brier: number | null;
+  ece: number | null;
+  n_test: number | null;
+  turn_rate_train: number | null;
+  turn_rate_test: number | null;
+}
+
+export interface ModelHealth {
+  degradation: Record<string, Record<string, DegradationHealthCell>>;
+  pturn: Record<string, PturnHealthCell>;
+  provenance: {
+    trajectory_artefact_contract?: string | null;
+    trajectory_artefact_task?: string | null;
+    turn_probability_contract?: string | null;
+    artefact_generated?: string | null;
+    predicted?: boolean;
+    note?: string | null;
+  };
+}
+
+export interface LocoSwitcherItem {
+  loco_number: string;
+  n_wheelsets: number;
+  n_recent: number;
+  locos_note?: string | null;
+}
+
+export interface FleetLocos {
+  total: number;
+  locos: LocoSwitcherItem[];
+  error?: string | null;
+  note?: string | null;
 }

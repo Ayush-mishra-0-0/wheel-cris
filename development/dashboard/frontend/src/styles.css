@@ -927,6 +927,57 @@ tbody tr:hover td { background: #f6f6f1; }
 .export-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .export-bar .btn { font-size: var(--fs-sm); padding: 6px 12px; }
 
+/* ---------------------------------------------------------------------------
+   Chart foundation: continuous lifecycle + model health + loco switcher
+--------------------------------------------------------------------------- */
+.provenance-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 6px 0;
+}
+.chip-source-recorded_reason {
+  color: var(--success);
+  border-color: var(--success-line);
+  background: var(--success-bg);
+}
+.chip-source-ratio_calibrated {
+  color: var(--warning);
+  border-color: var(--warning-line);
+  background: var(--warning-bg);
+}
+.chip-source-predicted {
+  color: var(--muted);
+  border-style: dashed;
+}
+
+.loco-switcher {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.loco-switcher-select {
+  padding: 4px 6px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: var(--card);
+  color: var(--ink);
+  font-size: var(--fs-sm);
+  max-width: 220px;
+}
+.btn-sm { font-size: var(--fs-sm); padding: 4px 10px; }
+
+.model-health { display: flex; flex-direction: column; gap: 14px; }
+.mh-note { margin: -6px 0 8px; }
+.mh-block { display: flex; flex-direction: column; gap: 6px; }
+.mh-block h4 { margin: 0; font-size: var(--fs-sm); color: var(--muted); }
+.mh-table th { font-size: var(--fs-xs); }
+.mh-table td.mono { font-size: var(--fs-sm); }
+.mh-good { color: var(--success); font-weight: 600; }
+.mh-mid { color: var(--warning); }
+.mh-bad { color: var(--danger); }
+
 @media (max-width: 860px) {
   .topbar { flex-wrap: wrap; }
   .global-search input { width: 100%; }

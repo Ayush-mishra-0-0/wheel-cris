@@ -1,11 +1,13 @@
 import type {
   Capabilities,
   FleetBacktest,
+  FleetLocos,
   FleetOverview,
   FleetRiskResponse,
   FleetSearchResponse,
   LocomotiveSummary,
   LocoWheelsetTable,
+  ModelHealth,
   OperationalCapture,
   ShedOverview,
   TrajectoryContract,
@@ -61,6 +63,8 @@ export const api = {
     pturn_min?: number | null;
   }) => get<FleetRiskResponse>(`/fleet/risk`, params),
   fleetSearch: (q: string) => get<FleetSearchResponse>(`/fleet/search`, { q }),
+  fleetLocos: () => get<FleetLocos>(`/fleet/locos`),
+  modelHealth: () => get<ModelHealth>(`/model/health`),
   shed: (shed: string) => get<ShedOverview>(`/shed/${encodeURIComponent(shed)}`),
   config: () => get<Capabilities>(`/config`),
 };

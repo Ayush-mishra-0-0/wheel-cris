@@ -1,7 +1,7 @@
 {
   "task": "fleet snapshot (P1.1) - one row per wheelset, current state",
   "contract": "fleet_snapshot_v1",
-  "built_at_utc": "2026-08-19T11:14:08.923539+00:00",
+  "built_at_utc": "2026-08-20T10:00:26.443199+00:00",
   "n_wheelsets": 19167,
   "n_with_forecast": 19167,
   "model_version": "3404998be4",

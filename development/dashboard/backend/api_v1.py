@@ -19,9 +19,10 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pathlib import Path
 
 from .schemas import (
-    Capabilities, FleetBacktest, FleetOverview, FleetRiskResponse, FleetSearchResponse,
-    LocomotiveSummary, LocoWheelsetTable, OperationalCapture, ShedOverview,
-    TrajectoryContract, WheelAttribution, WheelsetDetail, WheelsetReplay,
+    Capabilities, FleetBacktest, FleetLocos, FleetOverview, FleetRiskResponse,
+    FleetSearchResponse, LocomotiveSummary, LocoWheelsetTable, ModelHealth,
+    OperationalCapture, ShedOverview, TrajectoryContract, WheelAttribution,
+    WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
 from .config import ENABLE_LEGACY_PLOTS
@@ -127,6 +128,24 @@ def loco_wheelset_table(loco_number: str) -> LocoWheelsetTable:
         raise HTTPException(status_code=404,
                             detail=f"no wheelsets found for loco {loco_number}")
     return LocoWheelsetTable(**data)
+
+
+@router.get("/model/health", response_model=ModelHealth, tags=["meta"])
+def model_health() -> ModelHealth:
+    """Model-health panel: per-dim x horizon prediction quality + P(turn)
+
+    reliability. Read-only self-assessment from the committed benchmark
+    artifacts (trajectory_product_analysis.json, turn_probability_benchmark.json);
+    nothing is recomputed live.
+    """
+    return ModelHealth(**service.model_health())
+
+
+@router.get("/fleet/locos", response_model=FleetLocos, tags=["fleet"])
+def fleet_locos() -> FleetLocos:
+    """Ordered list of all locomotives in the snapshot for the loco switcher."""
+    data = service.fleet_locos()
+    return FleetLocos(**data)
 
 
 @router.get("/wheelset/{ws}/attribution", response_model=WheelAttribution | None, tags=["wheelset"])
@@ -235,14 +254,7 @@ def _trajectory_contract_to_csv(contract: dict) -> bytes:
         # Index forecasts by horizon (30/90/180d)
         fc_by_horizon = {}
         for fc in forecasts:
-            # Try to infer horizon from asof_ts or use placeholder
-            h_str = fc.get("asof_ts", "")
-            if "30" in h_str or len(fc_by_horizon) == 0:
-                fc_by_horizon[30] = fc
-            elif "90" in h_str or len(fc_by_horizon) == 1:
-                fc_by_horizon[90] = fc
-            elif "180" in h_str or len(fc_by_horizon) == 2:
-                fc_by_horizon[180] = fc
+            fc_by_horizon[int(fc["horizon"])] = fc
         
         # Write observation rows
         for obs in observed:
