@@ -124,6 +124,16 @@ def disposition_summary() -> DispositionSummary:
     return DispositionSummary(**service.disposition_summary())
 
 
+@router.get("/fleet/trend", tags=["fleet"])
+def fleet_trend():
+    """Fleet KPI trend across archived snapshots (oldest -> newest).
+
+    One point per archived snapshot date; the live snapshot joins when its
+    build date differs. Fewer than two points = history still collecting.
+    """
+    return service.fleet_trend()
+
+
 @router.post("/wheelset/{ws}/disposition", response_model=DispositionRecord, tags=["wheelset"])
 def record_disposition(ws: int, body: DispositionCreate) -> DispositionRecord:
     """Record an engineer decision on this wheelset (turn/inspect/defer/no_action).

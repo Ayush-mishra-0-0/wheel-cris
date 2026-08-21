@@ -1014,3 +1014,5 @@ tbody tr:hover td { background: #f6f6f1; }
 
 .disposition { margin-top: 18px; }
 .disposition-actions { display: flex; gap: 8px; margin: 8px 0; }
+
+.trend-strip { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 6px; }

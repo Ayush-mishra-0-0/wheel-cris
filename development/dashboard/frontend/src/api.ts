@@ -6,6 +6,7 @@ import type {
   FleetOverview,
   FleetRiskResponse,
   FleetSearchResponse,
+  FleetTrend,
   FleetWorklistResponse,
   LocomotiveSummary,
   LocoWheelsetTable,
@@ -78,6 +79,7 @@ export const api = {
     pturn_min?: number | null;
   }) => get<FleetRiskResponse>(`/fleet/risk`, params),
   fleetSearch: (q: string) => get<FleetSearchResponse>(`/fleet/search`, { q }),
+  fleetTrend: () => get<FleetTrend>(`/fleet/trend`),
   fleetWorklist: (k = 10, shed?: string) =>
     get<FleetWorklistResponse>(`/fleet/worklist`, { k, shed: shed ?? null }),
   dispositions: (id: number) => get<DispositionRecord[]>(`/wheelset/${id}/dispositions`),

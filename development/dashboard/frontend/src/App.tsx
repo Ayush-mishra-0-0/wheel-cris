@@ -178,6 +178,7 @@ export function App() {
 
           {page === "fleet" && (
             <FleetView
+              caps={caps}
               onSelect={(ws, locoNumber) => {
                 if (locoNumber) {
                   openLoco(locoNumber, ws);

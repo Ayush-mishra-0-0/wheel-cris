@@ -1,0 +1,32 @@
+{
+  "contract": "action_ladder_v1",
+  "status": "PENDING_CW_SIGNOFF",
+  "purpose": "Three-step engineering action ladder (attention/inspect, plan turn, turn now) on top of the approved condemning limits. Thresholds are a C&W/standards decision and are intentionally absent until signed off; the dashboard must never derive tiers from unapproved numbers.",
+  "tiers": [
+    {
+      "tier": "attention",
+      "label": "attention / inspect",
+      "basis": null,
+      "thresholds": {}
+    },
+    {
+      "tier": "plan_turn",
+      "label": "plan turn",
+      "basis": null,
+      "thresholds": {}
+    },
+    {
+      "tier": "turn_now",
+      "label": "turn now",
+      "basis": null,
+      "thresholds": {}
+    }
+  ],
+  "allowed_basis": [
+    "days_to_limit_point (time-to-limit on the predicted path)",
+    "pturn_90d_calibrated (Target B realized rate)",
+    "wear_headroom_fraction (margin to approved Wrpld limit)"
+  ],
+  "owner_question": "C&W/standards to provide the numeric thresholds (and basis) per tier. Until then tiers must not be computed or displayed as engineering guidance.",
+  "environment_override": "WHEEL_ACTION_LADDER_CONFIG"
+}

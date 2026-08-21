@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { api } from "./api";
-import type { FleetOverview, RiskRow } from "./types";
+import type { Capabilities, FleetOverview, FleetTrend, RiskRow } from "./types";
 import { LimitChip, WearBands } from "./LimitChip";
 import { EmptyState, ErrorState, SkeletonTable, StaleBanner } from "./States";
 
@@ -46,7 +46,7 @@ function PturnCell({ v, raw, decile }: { v: number | null | undefined; raw?: num
   );
 }
 
-export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) => void }) {
+export function FleetView({ onSelect, caps }: { onSelect: (ws: number, loco?: string) => void; caps?: Capabilities | null }) {
   const [overview, setOverview] = useState<FleetOverview | null>(null);
   const [rows, setRows] = useState<RiskRow[]>([]);
   const [total, setTotal] = useState(0);
@@ -66,7 +66,12 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
   const [focusedIdx, setFocusedIdx] = useState(0);
   const [wlBusy, setWlBusy] = useState(false);
   const [wlErr, setWlErr] = useState<string | null>(null);
+  const [trend, setTrend] = useState<FleetTrend | null>(null);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
+
+  useEffect(() => {
+    api.fleetTrend().then(setTrend).catch(() => setTrend(null));
+  }, [reload]);
 
   // action-queue state (shareable via URL ?shed=&queue=&preset=)
   const [queue, setQueue] = useState<QueueKey>(() => {
@@ -318,6 +323,26 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
               </span>
             ))}
           </div>
+          {trend && trend.points.length >= 2 && (
+            <div className="trend-strip">
+              <span className="muted small">Snapshot trend:</span>
+              {trend.points.map((p) => (
+                <span
+                  key={p.date}
+                  className="chip"
+                  title={`${p.n_wheelsets.toLocaleString()} wheelsets · condemning ≤180d: ${p.condemning_within_180d ?? "—"} · median staleness ${fmt(p.staleness_days_median, 0)} d`}
+                >
+                  {p.date}: <b>{fmt(p.pturn_90d_cal_ge1pct_pct, 1)}%</b> ≥1% cal P(turn)
+                </span>
+              ))}
+            </div>
+          )}
+          {trend && trend.points.length === 1 && (
+            <p className="muted small">
+              Snapshot history collecting — a dated archive is written on every rebuild; the
+              trend strip appears from the second point.
+            </p>
+          )}
           <p className="muted small">
             Wear distribution (mm) — flange/root/tread q50·q90·q99:{" "}
             {["wsmFlange", "wsmRoot", "wsmThread"].map((d) => {
@@ -394,6 +419,14 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
             ))}
           </select>
           <button className="btn" onClick={exportCsv}>Export CSV</button>
+          {caps?.action_ladder && !caps.action_ladder.ready && (
+            <span
+              className="chip"
+              title={`Action ladder (${caps.action_ladder.status}): attention / plan-turn / turn-now thresholds await C&W sign-off. Only condemning limits are approved; no tier is derived until then.`}
+            >
+              action ladder: pending C&W
+            </span>
+          )}
           <button
             className="btn"
             disabled={wlBusy}

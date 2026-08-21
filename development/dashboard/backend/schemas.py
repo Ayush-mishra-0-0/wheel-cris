@@ -415,6 +415,7 @@ class Capabilities(BaseModel):
     limits: dict[str, dict] = Field(default_factory=dict)
     validation: dict = Field(default_factory=dict)
     data_health: dict = Field(default_factory=dict)
+    action_ladder: dict = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------

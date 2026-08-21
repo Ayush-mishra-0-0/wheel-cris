@@ -1,0 +1,567 @@
+{
+  "task": "phase 4 free-delta ablation (Target B primary; Target A diagnostic)",
+  "protocol": "frozen v4 risk_benchmark; B1 config identical to rolling benchmark",
+  "delta_features": [
+    "flange_thickness_delta_mm",
+    "root_delta_mm",
+    "wheel_gauge_delta_mm",
+    "tire_thickness_delta_mm",
+    "days_since_previous_measurement",
+    "has_prior_measurement",
+    "skid_flag"
+  ],
+  "coverage": {
+    "anchors": 239684,
+    "with_delta_row": 239684,
+    "join_coverage_pct": 100.0,
+    "with_prior_measurement": 224697,
+    "n_loco_total": 2110,
+    "n_loco_holdout": 422
+  },
+  "evaluations": {
+    "turn": {
+      "frozen_test_split": {
+        "30": {
+          "B0_prevalence": {
+            "n": 39579.0,
+            "events": 186.0,
+            "prevalence": 0.0047,
+            "pr_auc": 0.0043,
+            "roc_auc": 0.5,
+            "brier": 0.0047,
+            "ece": 0.0011,
+            "capture5": 0.0,
+            "capture10": 0.0054,
+            "lift5": 0.0,
+            "lift10": 0.0538
+          },
+          "B1_baseline": {
+            "n": 39579.0,
+            "events": 186.0,
+            "prevalence": 0.0047,
+            "pr_auc": 0.0654,
+            "roc_auc": 0.8716,
+            "brier": 0.0045,
+            "ece": 0.0023,
+            "capture5": 0.5376,
+            "capture10": 0.6398,
+            "lift5": 10.7579,
+            "lift10": 6.3993
+          },
+          "B1_free_deltas": {
+            "n": 39579.0,
+            "events": 186.0,
+            "prevalence": 0.0047,
+            "pr_auc": 0.0638,
+            "roc_auc": 0.8719,
+            "brier": 0.0045,
+            "ece": 0.0025,
+            "capture5": 0.5323,
+            "capture10": 0.6559,
+            "lift5": 10.6503,
+            "lift10": 6.5606
+          },
+          "delta_lift_capture10": 0.0161,
+          "delta_lift_roc_auc": 0.0003,
+          "calibration": {
+            "arm": "B1_free_deltas",
+            "decile_band": {
+              "ece": 0.0023,
+              "brier": 0.0046,
+              "reliability": [
+                {
+                  "bin": 0,
+                  "n": 39579,
+                  "mean_pred": 0.00239,
+                  "empirical": 0.0047
+                }
+              ]
+            },
+            "isotonic": {
+              "ece": 0.0025,
+              "brier": 0.0045,
+              "reliability": [
+                {
+                  "bin": 0,
+                  "n": 39466,
+                  "mean_pred": 0.00191,
+                  "empirical": 0.00433
+                },
+                {
+                  "bin": 1,
+                  "n": 113,
+                  "mean_pred": 0.15938,
+                  "empirical": 0.13274
+                }
+              ]
+            }
+          }
+        },
+        "90": {
+          "B0_prevalence": {
+            "n": 29291.0,
+            "events": 607.0,
+            "prevalence": 0.0207,
+            "pr_auc": 0.0206,
+            "roc_auc": 0.5,
+            "brier": 0.0203,
+            "ece": 0.0014,
+            "capture5": 0.0,
+            "capture10": 0.0033,
+            "lift5": 0.0,
+            "lift10": 0.033
+          },
+          "B1_baseline": {
+            "n": 29291.0,
+            "events": 607.0,
+            "prevalence": 0.0207,
+            "pr_auc": 0.2416,
+            "roc_auc": 0.8326,
+            "brier": 0.0177,
+            "ece": 0.01,
+            "capture5": 0.4876,
+            "capture10": 0.6573,
+            "lift5": 9.7565,
+            "lift10": 6.5735
+          },
+          "B1_free_deltas": {
+            "n": 29291.0,
+            "events": 607.0,
+            "prevalence": 0.0207,
+            "pr_auc": 0.2346,
+            "roc_auc": 0.8323,
+            "brier": 0.0179,
+            "ece": 0.0108,
+            "capture5": 0.4942,
+            "capture10": 0.6524,
+            "lift5": 9.8884,
+            "lift10": 6.5241
+          },
+          "delta_lift_capture10": -0.0049,
+          "delta_lift_roc_auc": -0.0004,
+          "calibration": {
+            "arm": "B1_baseline",
+            "decile_band": {
+              "ece": 0.0108,
+              "brier": 0.0186,
+              "reliability": [
+                {
+                  "bin": 0,
+                  "n": 27674,
+                  "mean_pred": 0.00206,
+                  "empirical": 0.01059
+                },
+                {
+                  "bin": 1,
+                  "n": 1617,
+                  "mean_pred": 0.14493,
+                  "empirical": 0.19419
+                }
+              ]
+            },
+            "isotonic": {
+              "ece": 0.0107,
+              "brier": 0.0178,
+              "reliability": [
+                {
+                  "bin": 0,
+                  "n": 28116,
+                  "mean_pred": 0.00285,
+                  "empirical": 0.01227
+                },
+                {
+                  "bin": 1,
+                  "n": 694,
+                  "mean_pred": 0.15239,
+                  "empirical": 0.12824
+                },
+                {
+                  "bin": 2,
+                  "n": 303,
+                  "mean_pred": 0.23839,
+                  "empirical": 0.30033
+                },
+                {
+                  "bin": 3,
+                  "n": 93,
+                  "mean_pred": 0.32888,
+                  "empirical": 0.41935
+                },
+                {
+                  "bin": 4,
+                  "n": 85,
+                  "mean_pred": 0.46129,
+                  "empirical": 0.50588
+                }
+              ]
+            }
+          }
+        },
+        "180": {
+          "B0_prevalence": {
+            "n": 9327.0,
+            "events": 1445.0,
+            "prevalence": 0.1549,
+            "pr_auc": 0.1494,
+            "roc_auc": 0.5,
+            "brier": 0.1439,
+            "ece": 0.1137,
+            "capture5": 0.0083,
+            "capture10": 0.0083,
+            "lift5": 0.1662,
+            "lift10": 0.0831
+          },
+          "B1_baseline": {
+            "n": 9327.0,
+            "events": 1445.0,
+            "prevalence": 0.1549,
+            "pr_auc": 0.4942,
+            "roc_auc": 0.76,
+            "brier": 0.1138,
+            "ece": 0.0957,
+            "capture5": 0.2325,
+            "capture10": 0.3744,
+            "lift5": 4.654,
+            "lift10": 3.7468
+          },
+          "B1_free_deltas": {
+            "n": 9327.0,
+            "events": 1445.0,
+            "prevalence": 0.1549,
+            "pr_auc": 0.4888,
+            "roc_auc": 0.7579,
+            "brier": 0.1148,
+            "ece": 0.0974,
+            "capture5": 0.2256,
+            "capture10": 0.3716,
+            "lift5": 4.5155,
+            "lift10": 3.7191
+          },
+          "delta_lift_capture10": -0.0028,
+          "delta_lift_roc_auc": -0.0021,
+          "calibration": {
+            "arm": "B1_baseline",
+            "decile_band": {
+              "ece": 0.1122,
+              "brier": 0.1219,
+              "reliability": [
+                {
+                  "bin": 0,
+                  "n": 8098,
+                  "mean_pred": 0.00631,
+                  "empirical": 0.09422
+                },
+                {
+                  "bin": 2,
+                  "n": 1229,
+                  "mean_pred": 0.28301,
+                  "empirical": 0.55492
+                }
+              ]
+            },
+            "isotonic": {
+              "ece": 0.0965,
+              "brier": 0.114,
+              "reliability": [
+                {
+                  "bin": 0,
+                  "n": 8161,
+                  "mean_pred": 0.00701,
+                  "empirical": 0.0968
+                },
+                {
+                  "bin": 1,
+                  "n": 130,
+                  "mean_pred": 0.14442,
+                  "empirical": 0.56154
+                },
+                {
+                  "bin": 2,
+                  "n": 161,
+                  "mean_pred": 0.24213,
+                  "empirical": 0.37888
+                },
+                {
+                  "bin": 3,
+                  "n": 224,
+                  "mean_pred": 0.36182,
+                  "empirical": 0.41071
+                },
+                {
+                  "bin": 4,
+                  "n": 291,
+                  "mean_pred": 0.4351,
+                  "empirical": 0.53265
+                },
+                {
+                  "bin": 5,
+                  "n": 142,
+                  "mean_pred": 0.51721,
+                  "empirical": 0.74648
+                },
+                {
+                  "bin": 6,
+                  "n": 92,
+                  "mean_pred": 0.62876,
+                  "empirical": 0.72826
+                },
+                {
+                  "bin": 7,
+                  "n": 126,
+                  "mean_pred": 0.71913,
+                  "empirical": 0.80159
+                }
+              ]
+            }
+          }
+        }
+      },
+      "never_seen_loco": {
+        "30": {
+          "B1_baseline": {
+            "n": 45951.0,
+            "events": 237.0,
+            "prevalence": 0.0052,
+            "pr_auc": 0.0644,
+            "roc_auc": 0.904,
+            "brier": 0.0051,
+            "ece": 0.0009,
+            "capture5": 0.5907,
+            "capture10": 0.7004,
+            "lift5": 11.8172,
+            "lift10": 7.0044
+          },
+          "B1_free_deltas": {
+            "n": 45951.0,
+            "events": 237.0,
+            "prevalence": 0.0052,
+            "pr_auc": 0.0696,
+            "roc_auc": 0.9045,
+            "brier": 0.0052,
+            "ece": 0.0009,
+            "capture5": 0.6076,
+            "capture10": 0.7046,
+            "lift5": 12.1548,
+            "lift10": 7.0466
+          },
+          "delta_lift_capture10": 0.0042,
+          "delta_lift_roc_auc": 0.0006
+        },
+        "90": {
+          "B1_baseline": {
+            "n": 43211.0,
+            "events": 744.0,
+            "prevalence": 0.0172,
+            "pr_auc": 0.215,
+            "roc_auc": 0.9134,
+            "brier": 0.0149,
+            "ece": 0.0029,
+            "capture5": 0.5887,
+            "capture10": 0.7245,
+            "lift5": 11.7772,
+            "lift10": 7.2448
+          },
+          "B1_free_deltas": {
+            "n": 43211.0,
+            "events": 744.0,
+            "prevalence": 0.0172,
+            "pr_auc": 0.2327,
+            "roc_auc": 0.9166,
+            "brier": 0.0147,
+            "ece": 0.0034,
+            "capture5": 0.6075,
+            "capture10": 0.7392,
+            "lift5": 12.1536,
+            "lift10": 7.3926
+          },
+          "delta_lift_capture10": 0.0148,
+          "delta_lift_roc_auc": 0.0032
+        },
+        "180": {
+          "B1_baseline": {
+            "n": 37441.0,
+            "events": 1573.0,
+            "prevalence": 0.042,
+            "pr_auc": 0.4009,
+            "roc_auc": 0.8977,
+            "brier": 0.0306,
+            "ece": 0.0072,
+            "capture5": 0.5175,
+            "capture10": 0.6771,
+            "lift5": 10.3499,
+            "lift10": 6.7707
+          },
+          "B1_free_deltas": {
+            "n": 37441.0,
+            "events": 1573.0,
+            "prevalence": 0.042,
+            "pr_auc": 0.409,
+            "roc_auc": 0.8994,
+            "brier": 0.0302,
+            "ece": 0.0084,
+            "capture5": 0.5423,
+            "capture10": 0.6771,
+            "lift5": 10.8458,
+            "lift10": 6.7707
+          },
+          "delta_lift_capture10": 0.0,
+          "delta_lift_roc_auc": 0.0017
+        }
+      }
+    },
+    "root": {
+      "frozen_test_split": {
+        "30": {},
+        "90": {
+          "B0_prevalence": {
+            "n": 29291.0,
+            "events": 40.0,
+            "prevalence": 0.0014,
+            "pr_auc": 0.0014,
+            "roc_auc": 0.5,
+            "brier": 0.0014,
+            "ece": 0.0005,
+            "capture5": 0.0,
+            "capture10": 0.0,
+            "lift5": 0.0,
+            "lift10": 0.0
+          },
+          "B1_baseline": {
+            "n": 29291.0,
+            "events": 40.0,
+            "prevalence": 0.0014,
+            "pr_auc": 0.002,
+            "roc_auc": 0.5461,
+            "brier": 0.0014,
+            "ece": 0.0003,
+            "capture5": 0.1,
+            "capture10": 0.175,
+            "lift5": 2.0008,
+            "lift10": 1.7501
+          },
+          "B1_free_deltas": {
+            "n": 29291.0,
+            "events": 40.0,
+            "prevalence": 0.0014,
+            "pr_auc": 0.002,
+            "roc_auc": 0.5433,
+            "brier": 0.0014,
+            "ece": 0.0003,
+            "capture5": 0.075,
+            "capture10": 0.2,
+            "lift5": 1.5006,
+            "lift10": 2.0001
+          },
+          "delta_lift_capture10": 0.025,
+          "delta_lift_roc_auc": -0.0028
+        },
+        "180": {
+          "B0_prevalence": {
+            "n": 9327.0,
+            "events": 63.0,
+            "prevalence": 0.0067,
+            "pr_auc": 0.0085,
+            "roc_auc": 0.5,
+            "brier": 0.0067,
+            "ece": 0.005,
+            "capture5": 0.0,
+            "capture10": 0.0,
+            "lift5": 0.0,
+            "lift10": 0.0
+          },
+          "B1_baseline": {
+            "n": 9327.0,
+            "events": 63.0,
+            "prevalence": 0.0067,
+            "pr_auc": 0.0119,
+            "roc_auc": 0.619,
+            "brier": 0.0067,
+            "ece": 0.0047,
+            "capture5": 0.0635,
+            "capture10": 0.3333,
+            "lift5": 1.2708,
+            "lift10": 3.3358
+          },
+          "B1_free_deltas": {
+            "n": 9327.0,
+            "events": 63.0,
+            "prevalence": 0.0067,
+            "pr_auc": 0.0136,
+            "roc_auc": 0.6235,
+            "brier": 0.0067,
+            "ece": 0.0047,
+            "capture5": 0.1111,
+            "capture10": 0.3651,
+            "lift5": 2.2239,
+            "lift10": 3.6535
+          },
+          "delta_lift_capture10": 0.0317,
+          "delta_lift_roc_auc": 0.0045
+        }
+      },
+      "never_seen_loco": {
+        "30": {},
+        "90": {
+          "B1_baseline": {
+            "n": 43211.0,
+            "events": 55.0,
+            "prevalence": 0.0013,
+            "pr_auc": 0.0033,
+            "roc_auc": 0.542,
+            "brier": 0.0013,
+            "ece": 0.0005,
+            "capture5": 0.1818,
+            "capture10": 0.2545,
+            "lift5": 3.6373,
+            "lift10": 2.5455
+          },
+          "B1_free_deltas": {
+            "n": 43211.0,
+            "events": 55.0,
+            "prevalence": 0.0013,
+            "pr_auc": 0.0034,
+            "roc_auc": 0.5387,
+            "brier": 0.0013,
+            "ece": 0.0005,
+            "capture5": 0.1636,
+            "capture10": 0.2545,
+            "lift5": 3.2736,
+            "lift10": 2.5455
+          },
+          "delta_lift_capture10": 0.0,
+          "delta_lift_roc_auc": -0.0034
+        },
+        "180": {
+          "B1_baseline": {
+            "n": 37441.0,
+            "events": 103.0,
+            "prevalence": 0.0027,
+            "pr_auc": 0.0071,
+            "roc_auc": 0.5976,
+            "brier": 0.0028,
+            "ece": 0.001,
+            "capture5": 0.165,
+            "capture10": 0.2816,
+            "lift5": 3.3011,
+            "lift10": 2.8156
+          },
+          "B1_free_deltas": {
+            "n": 37441.0,
+            "events": 103.0,
+            "prevalence": 0.0027,
+            "pr_auc": 0.0079,
+            "roc_auc": 0.5922,
+            "brier": 0.0027,
+            "ece": 0.001,
+            "capture5": 0.1845,
+            "capture10": 0.2913,
+            "lift5": 3.6894,
+            "lift10": 2.9127
+          },
+          "delta_lift_capture10": 0.0097,
+          "delta_lift_roc_auc": -0.0054
+        }
+      }
+    }
+  }
+}

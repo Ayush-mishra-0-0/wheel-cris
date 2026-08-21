@@ -418,6 +418,11 @@ export interface Capabilities {
     target_mode?: string | null;
     model_of_record?: Record<string, string> | null;
   };
+  action_ladder?: {
+    status?: string | null;
+    ready?: boolean;
+    tiers?: Array<{ tier: string; label?: string | null; basis?: string | null; thresholds_present?: boolean }>;
+  };
   limits?: Record<
     string,
     {
@@ -515,6 +520,22 @@ export interface FleetRiskResponse {
   pturn_min?: number | null;
   items: RiskRow[];
   columns: string[];
+}
+
+export interface FleetTrendPoint {
+  date: string;
+  n_wheelsets: number;
+  pturn_90d_cal_ge1pct_pct: number | null;
+  pturn_90d_cal_ge5pct_pct: number | null;
+  limiting_dim: Record<string, number>;
+  condemning_within_180d: number | null;
+  staleness_days_median: number | null;
+  source: string;
+}
+
+export interface FleetTrend {
+  points: FleetTrendPoint[];
+  note?: string | null;
 }
 
 export interface SearchHit {

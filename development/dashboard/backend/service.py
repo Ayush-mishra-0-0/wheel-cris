@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 from datetime import datetime, timezone
 from functools import lru_cache
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -626,12 +628,81 @@ def capabilities() -> dict:
         },
         "limits": limits_register(),
         "data_health": data_health(),
+        "action_ladder": {
+            "status": action_ladder().get("status"),
+            "tiers": [
+                {"tier": t.get("tier"), "label": t.get("label"),
+                 "basis": t.get("basis"), "thresholds_present": bool(t.get("thresholds"))}
+                for t in action_ladder().get("tiers", [])],
+            "ready": ladder_ready(),
+        },
     }
 
 
 SCOPE_CONFIG = ROOT / "configs" / "measurement_scope_v1.json"
+ACTION_LADDER_CONFIG = ROOT / "configs" / "action_ladder_v1.json"
 BRONZE_META = ROOT / "data" / "bronze" / "wheel_measurements_metadata.json"
 LIFECYCLE_MANIFEST = ROOT / "model_datasets" / "v5" / "lifecycle_segments_manifest.json"
+
+
+@lru_cache(maxsize=1)
+def action_ladder() -> dict:
+    """Versioned C&W action ladder (attention/plan-turn/turn-now).
+
+    Returned verbatim from the register; `status` gates whether tiers may be
+    computed. While status != APPROVED (or thresholds are absent) the UI must
+    show the ladder as unavailable - never derive tiers from unapproved
+    numbers.
+    """
+    path = ACTION_LADDER_CONFIG
+    override = os.environ.get("WHEEL_ACTION_LADDER_CONFIG")
+    if override:
+        path = Path(override) if Path(override).is_absolute() else ROOT / override
+    if not path.exists():
+        return {"status": "MISSING", "tiers": []}
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except (ValueError, OSError):
+        return {"status": "UNREADABLE", "tiers": []}
+
+
+def ladder_ready() -> bool:
+    lad = action_ladder()
+    if lad.get("status") != "APPROVED":
+        return False
+    return all(t.get("basis") and t.get("thresholds") for t in lad.get("tiers", []))
+
+
+def action_tier_for(r) -> dict | None:
+    """Tier for one snapshot row, or None while the ladder is not approved.
+
+    Basis implementations are added only when C&W supplies thresholds; an
+    approved-but-unimplemented basis raises loudly rather than guessing.
+    """
+    if not ladder_ready():
+        return None
+    lad = action_ladder()
+    values = {
+        "days_to_limit_point": r.get("days_to_condemning_dia"),
+        "pturn_90d_calibrated": r.get("pturn_90d_calibrated"),
+    }
+    bands = _wear_watch_bands(r)
+    headrooms = [b.get("headroom") for b in bands.values() if b.get("headroom") is not None]
+    values["wear_headroom_fraction"] = min(headrooms) if headrooms else None
+    best = None
+    for tier in lad.get("tiers", []):
+        basis = tier.get("basis")
+        if basis not in values:
+            raise RuntimeError(f"[action_ladder] unimplemented basis: {basis}")
+        v = values.get(basis)
+        thr = tier.get("thresholds") or {}
+        if v is None or not np.isfinite(v):
+            continue
+        lo, hi = thr.get("min"), thr.get("max")
+        if ((lo is None or v >= lo) and (hi is None or v <= hi)):
+            best = tier["tier"]
+            break
+    return {"tier": best, "basis_used": lad.get("tiers", [{}])[0].get("basis") if best else None}
 
 
 @lru_cache(maxsize=1)
@@ -1840,6 +1911,7 @@ def fleet_risk(shed: str | None = None, loco_type: str | None = None,
         for c in pt_cols:
             item[c] = _f(r[c])
         item["wear_bands"] = _wear_watch_bands(r)
+        item["action_tier"] = action_tier_for(r)
     return {"total": total, "page": page, "page_size": page_size,
             "items": items, "columns": cols + pt_cols,
             "ranked_by": rank_col,
@@ -1901,6 +1973,64 @@ def shed_overview(shed: str) -> dict:
         "days_to_condemning_within_180d": int((sub.get("days_to_condemning_dia", 0) <= 180).sum()),
         "staleness_days_median": _f(sub["staleness_days"].median()) if "staleness_days" in sub else None,
     }
+
+
+SNAPSHOT_DIR = ROOT / "model_datasets" / "v5"
+SNAPSHOT_ARCHIVE = SNAPSHOT_DIR / "snapshots"
+
+
+def fleet_trend() -> dict:
+    """Fleet KPI trend across archived snapshots (oldest -> newest).
+
+    Reads every `v5/snapshots/fleet_snapshot_*.parquet` plus the live snapshot
+    (only if its build date differs from the newest archive). Per point:
+    wheelset count, calibrated 90d P(turn) shares (>=1%/>=5%), limiting-dim
+    distribution, condemning<=180d count and median staleness. With fewer than
+    two points the UI shows "collecting history" - no trend is invented.
+    """
+    import re
+
+    points: list[dict] = []
+    paths: list[tuple[str, Path]] = []
+    for p in sorted(SNAPSHOT_ARCHIVE.glob("fleet_snapshot_*.parquet")):
+        m = re.search(r"fleet_snapshot_(\d{4}-\d{2}-\d{2})\.parquet$", p.name)
+        if m:
+            paths.append((m.group(1), p))
+    seen_dates = {d for d, _ in paths}
+    live_manifest_ts = _manifest_ts()
+    live_date = live_manifest_ts[:10] if live_manifest_ts else None
+
+    def _point(label: str, path: Path | None) -> dict:
+        df = pd.read_parquet(path)
+        cal = df.get("pturn_90d_calibrated")
+        lim = df.get("limiting_dim")
+        dttl = df.get("days_to_condemning_dia")
+        stal = df.get("staleness_days")
+        return {
+            "date": label,
+            "n_wheelsets": int(len(df)),
+            "pturn_90d_cal_ge1pct_pct": round(float((cal >= 0.01).mean()) * 100, 2) if cal is not None else None,
+            "pturn_90d_cal_ge5pct_pct": round(float((cal >= 0.05).mean()) * 100, 2) if cal is not None else None,
+            "limiting_dim": ({k: int(v) for k, v in lim.value_counts(dropna=False).items() if pd.notna(k)}
+                             if lim is not None else {}),
+            "condemning_within_180d": int((dttl <= 180).sum()) if dttl is not None else None,
+            "staleness_days_median": round(float(stal.median()), 1) if stal is not None else None,
+            "source": str(path.relative_to(ROOT)),
+        }
+
+    for label, p in paths:
+        try:
+            points.append(_point(label, p))
+        except Exception:
+            continue
+    if live_date and live_date not in seen_dates:
+        try:
+            points.append(_point(live_date, SNAPSHOT_PARQUET))
+        except Exception:
+            pass
+    points.sort(key=lambda x: x["date"])
+    return {"points": points, "note": ("KPIs per archived fleet snapshot; "
+            "P(turn) shares use the calibrated Target B score.")}
 
 
 def _first_str(df: pd.DataFrame, col: str) -> str | None:

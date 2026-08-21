@@ -53,7 +53,10 @@ authoritative next-steps plan and supersedes open items from the review where no
 
 ## Open action threads (tracked, not blocked)
 
-- **Distance semantics**: blocked on RTIS/chainage path — see `distance_recovery/README.md`.
+- **Distance semantics**: RESOLVED for the serving path — the RTIS-safe
+  `interval_distance_km` rule was owner-approved (2026-08-05) and is released
+  to serving; see `docs/distance_serving_gate.md` (authoritative). Remaining
+  open item is coverage improvement only.
 - **PADX shed error enrichment**: ~11× error enrichment observed; documentation/reproduction memo
   pending (ties into live priority 3 deltas and 4 distance).
 - **Survival numerator**: time to turning is a discretionary shed decision; survival re-opens only
