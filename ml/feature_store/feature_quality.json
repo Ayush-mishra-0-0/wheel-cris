@@ -2,10 +2,10 @@
   "row_count": 225262,
   "duplicate_feature_store_keys": 0,
   "null_locomotive_id": 0,
-  "approved_feature_count": 18,
-  "excluded_feature_count": 6,
+  "approved_feature_count": 19,
+  "excluded_feature_count": 5,
   "excluded_by_status": {
-    "BLOCKED": 3,
+    "BLOCKED": 2,
     "FUTURE": 2,
     "PENDING": 1
   },

@@ -4,6 +4,7 @@ import type { EChartsOption } from "./EChart";
 import { EChart } from "./EChart";
 import { api } from "./api";
 import type { LocoWheelsetRow, TrajectoryContract, TrajectoryDim } from "./types";
+import { LimitChip } from "./LimitChip";
 import { SkeletonBlock } from "./States";
 
 const PRIMARY_DIMS = ["wsmFlange", "wsmRoot", "wsmThread"];
@@ -24,7 +25,17 @@ export function OverlayPanel({
   wheelsets: LocoWheelsetRow[];
   onHover?: (ws: number | null) => void;
 }) {
-  const ids = useMemo(() => wheelsets.map((w) => w.wheelset_equipment_id), [wheelsets]);
+  // One loco comparison is six wheelsets; exclude extra historical rows from
+  // the shared axis while keeping the selection client-side.
+  const plottedWheelsets = useMemo(
+    () => [...wheelsets]
+      .sort((a, b) => (a.axle_position_1_6 ?? 99) - (b.axle_position_1_6 ?? 99)
+        || (a.wheel_position_1_12 ?? 99) - (b.wheel_position_1_12 ?? 99)
+        || a.wheelset_equipment_id - b.wheelset_equipment_id)
+      .slice(0, 6),
+    [wheelsets],
+  );
+  const ids = useMemo(() => plottedWheelsets.map((w) => w.wheelset_equipment_id), [plottedWheelsets]);
   const idKey = ids.join(",");
 
   const [checked, setChecked] = useState<Set<number>>(() => new Set(ids));
@@ -68,13 +79,13 @@ export function OverlayPanel({
 
   const colorById = useMemo(() => {
     const m: Record<number, string> = {};
-    wheelsets.forEach((w, i) => {
+    plottedWheelsets.forEach((w, i) => {
       m[w.wheelset_equipment_id] = WHEEL_COLORS[i % WHEEL_COLORS.length];
     });
     return m;
-  }, [wheelsets]);
+  }, [plottedWheelsets]);
 
-  const visible = wheelsets.filter((w) => checked.has(w.wheelset_equipment_id));
+  const visible = plottedWheelsets.filter((w) => checked.has(w.wheelset_equipment_id));
   const dims = showDia ? [...PRIMARY_DIMS, ...DERIVED_DIMS] : [...PRIMARY_DIMS];
   const anyVisible = visible.length > 0;
 
@@ -87,7 +98,7 @@ export function OverlayPanel({
     });
   };
 
-  const allChecked = visible.length === wheelsets.length;
+  const allChecked = visible.length === plottedWheelsets.length;
 
   const handleExport = async (format: "csv" | "png" | "svg") => {
     setExporting(format);
@@ -161,7 +172,7 @@ export function OverlayPanel({
         <button className="chip pick-none" onClick={() => setChecked(new Set())}>
           clear
         </button>
-        {wheelsets.map((w) => {
+        {plottedWheelsets.map((w) => {
           const id = w.wheelset_equipment_id;
           const on = checked.has(id);
           return (
@@ -181,6 +192,12 @@ export function OverlayPanel({
               <span className="mono">#{id}</span>
               {w.wheel_position_1_12 != null && (
                 <span className="muted small">pos {fmt(w.wheel_position_1_12, 0)}</span>
+              )}
+              {w.limiting_dim && <LimitChip dim={w.limiting_dim} />}
+              {w.pturn_90d_calibrated != null && (
+                <span className={`mono small ${w.pturn_90d_calibrated >= 0.05 ? "risk-high" : w.pturn_90d_calibrated >= 0.01 ? "risk-mid" : "risk-low"}`} title={`calibrated ${(w.pturn_90d_calibrated*100).toFixed(1)}% (raw ${(w.pturn_90d ?? 0 *100).toFixed(1)}%)`}>
+                  {(w.pturn_90d_calibrated*100).toFixed(1)}%
+                </span>
               )}
             </label>
           );
@@ -300,7 +317,8 @@ function OverlayChart({
         symbolSize: 3,
         lineStyle: { color: e.color, width: 1.5 },
         itemStyle: { color: e.color },
-        connectNulls: true,
+        // Missing wheelset measurements are real gaps; do not interpolate them.
+        connectNulls: false,
         showSymbol: e.d.observed.length <= 60,
         markLine:
           limitMm != null
@@ -346,7 +364,7 @@ function OverlayChart({
             ? { color: e.color, width: 1.6, type: "dotted" }
             : { color: e.color, width: 1.8, type: "dashed" },
           itemStyle: { color: e.color },
-          connectNulls: true,
+          connectNulls: false,
           tooltip: { valueFormatter: (v: unknown) => `${fmt(v)} mm` },
         });
       }

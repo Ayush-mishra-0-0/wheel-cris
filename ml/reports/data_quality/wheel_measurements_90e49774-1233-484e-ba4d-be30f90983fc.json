@@ -1,0 +1,37 @@
+{
+  "run_id": "90e49774-1233-484e-ba4d-be30f90983fc",
+  "contract_version": "1.0.0",
+  "generated_at_utc": "2026-08-21T09:47:30.537764+00:00",
+  "source": {
+    "path": "data\\bronze\\wheel_measurements.parquet",
+    "sha256": "f55c4649abafafa29aa3635e8aa105aee5020361645ce85176ee9f36cd3600d7",
+    "rows": 1194416
+  },
+  "output": {
+    "accepted_rows": 1194416,
+    "quarantined_rows": 0
+  },
+  "quality_flag_counts": {
+    "valid": 1139016,
+    "missing_equipment_id": 19084,
+    "implausible_wsmWheelGauge1;implausible_wsmWheelGauge2": 17152,
+    "implausible_wsmDia1;implausible_wsmDia2;implausible_wsmWheelGauge1;implausible_wsmWheelGauge2": 12278,
+    "missing_equipment_id;implausible_wsmWheelGauge1;implausible_wsmWheelGauge2": 5247,
+    "implausible_wsmWheelGauge2": 849,
+    "implausible_wsmDia1;implausible_wsmWheelGauge1;implausible_wsmWheelGauge2": 222,
+    "implausible_wsmDia2;implausible_wsmWheelGauge1;implausible_wsmWheelGauge2": 161,
+    "missing_equipment_id;implausible_wsmWheelGauge2": 111,
+    "implausible_wsmDia1": 88,
+    "implausible_wsmFlangeThickness1": 49,
+    "implausible_wsmDia1;implausible_wsmDia2": 41,
+    "implausible_wsmDia2": 41,
+    "implausible_wsmWheelGauge1": 25,
+    "implausible_wsmFlangeThickness2": 25,
+    "implausible_wsmFlangeThickness1;implausible_wsmFlangeThickness2": 19,
+    "implausible_wsmDia1;implausible_wsmWheelGauge2": 3,
+    "implausible_wsmDia1;implausible_wsmDia2;implausible_wsmWheelGauge1": 2,
+    "missing_equipment_id;implausible_wsmDia2;implausible_wsmWheelGauge2": 1,
+    "implausible_wsmDia2;implausible_wsmWheelGauge2": 1,
+    "missing_equipment_id;implausible_wsmDia1;implausible_wsmWheelGauge2": 1
+  }
+}

@@ -695,6 +695,12 @@
       "feature_family": "Operational",
       "point_in_time_safe": true,
       "expected_missing_pct": 37.32
+      ,"materialization": {
+        "source": "operational_exposure",
+        "columns": {
+          "interval_distance_km": "distance_km"
+        }
+      }
     },
     {
       "feature_id": "wear_rate_mm_per_km",

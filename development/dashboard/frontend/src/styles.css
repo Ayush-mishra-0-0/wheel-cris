@@ -397,6 +397,17 @@ tbody tr:hover td { background: #f6f6f1; }
 .risk-mid { color: var(--warning); font-weight: 600; }
 .risk-low { color: inherit; }
 
+/* row-level hierarchy: high calibrated p(turn) rows pop; limit chips keep contrast */
+.risk-table tr.risk-row-high td { background: var(--danger-bg); border-bottom-color: var(--danger-line); }
+.risk-table tr.risk-row-high td:first-child { box-shadow: inset 3px 0 0 var(--danger); }
+.risk-table tr.risk-row-mid td:first-child { box-shadow: inset 3px 0 0 var(--warning); }
+.risk-table tr.risk-row-high:hover td, .risk-table tr.risk-row-mid:hover td { filter: brightness(0.98); }
+.residual-strip { margin-top: -4px; border-top: 1px solid var(--line-soft); padding-top: 4px; }
+.residual-note { display: block; margin: -8px 0 4px 46px; }
+.no-turn-banner { margin: 10px 0 12px; }
+.limit-chip.limit-wsmRoot, .limit-dim.lim-wsmRoot { border-width: 1.5px; }
+.limit-chip.limit-wsmFlange, .limit-dim.lim-wsmFlange { border-width: 1.5px; }
+
 .flag-row td { background: var(--danger-bg); color: var(--danger); }
 .subgroup-row td { background: var(--warning-bg); }
 
@@ -977,9 +988,29 @@ tbody tr:hover td { background: #f6f6f1; }
 .mh-good { color: var(--success); font-weight: 600; }
 .mh-mid { color: var(--warning); }
 .mh-bad { color: var(--danger); }
+.mh-reliability-grid { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 14px; }
+.mh-reliability-card { min-width: 260px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; }
+.mh-deciles { height: 86px; display: flex; align-items: end; gap: 4px; margin-top: 8px; }
+.mh-deciles span { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: end; align-items: center; gap: 3px; }
+.mh-deciles i { display: block; width: 100%; min-height: 4px; background: var(--accent); border-radius: 3px 3px 0 0; }
+.mh-deciles small { font-size: 10px; }
 
 @media (max-width: 860px) {
   .topbar { flex-wrap: wrap; }
   .global-search input { width: 100%; }
   .content { padding: 16px; }
 }
+
+.data-health-banner {
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+  padding: 6px 16px; border-bottom: 1px solid var(--line);
+  background: var(--card); font-size: 12px;
+}
+.data-health-banner.data-health-stale { background: var(--warning-bg); }
+.data-health-title { font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+.data-health-item { display: inline-flex; gap: 6px; align-items: baseline; }
+.data-health-label { color: var(--muted); }
+.data-health-missing { color: var(--danger); }
+
+.disposition { margin-top: 18px; }
+.disposition-actions { display: flex; gap: 8px; margin: 8px 0; }

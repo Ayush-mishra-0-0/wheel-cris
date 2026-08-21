@@ -22,3 +22,4 @@ Generated from `configs/engineering_feature_specification_v1.json`; do not edit 
 | Wheel age proxy (days, EmrDoR-anchored) | READY_WITH_CAVEAT | Derived | Identity | interval_end_timestamp - cascade[EmrDoR per wsmEquipmentId -> EmrDoM -> wsmProvDate at interval end]; date source recorded in wheel_age_date_source |
 | Raw turning indicator | READY_WITH_CAVEAT | Observed | Maintenance | wsmturning1 at the interval-end measurement |
 | Days since last wheel turning | READY_WITH_CAVEAT | Derived | Maintenance | interval_end_timestamp - MAX(wsmUpdatedOn WHERE wsmEquipmentId = interval-end equipment AND wsmturning1 = 1 AND wsmUpdatedOn <= interval_end_timestamp) |
+| Physical distance travelled | READY_FOR_MATERIALISATION | Observed | Exposure | owner-approved (2026-08-05) daily aggregation: deduped per-loco per-day SUM of division km with combined outlier rejection (07_safe_rtis_daily_aggregation.py), summed over interval (start, end] |

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import argparse
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -15,12 +16,9 @@ import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[1]
 RAW = ROOT / "data" / "bronze" / "wheel_measurements.parquet"
-TIMELINE = ROOT / "data" / "gold" / "wheel_timeline_gold_b.parquet"
+TIMELINE = ROOT / "data" / "gold" / "business_truth" / "v1.0" / "wheel_timeline_gold_b.parquet"
 FEATURE_STORE = ROOT / "feature_store" / "feature_store_v1.parquet"
 OUTPUT_DIR = ROOT / "model_datasets" / "v3"
-OUTPUT = OUTPUT_DIR / "wheel_engineering_state_v1.0.parquet"
-MANIFEST = OUTPUT_DIR / "wheel_engineering_state_manifest_v1.0.json"
-CARD = OUTPUT_DIR / "wheel_engineering_state_card_v1.0.md"
 
 QUALITY_WINDOWS = {
     "wsmDia1": (1000.0, 1100.0), "wsmDia2": (1000.0, 1100.0),
@@ -44,9 +42,12 @@ def quality_code(values: pd.Series, low: float, high: float) -> pd.Series:
     return pd.Series("OBSERVED_VALID", index=values.index, dtype="string").mask(values.isna(), "MISSING").mask(values.notna() & ~values.between(low, high), "IMPLAUSIBLE")
 
 
-def main() -> None:
-    if any(path.exists() for path in (OUTPUT, MANIFEST, CARD)):
-        raise FileExistsError("Wheel Engineering State v1.0 already exists; create a new version instead of overwriting it.")
+def main(version: str = "v1.0") -> None:
+    output = OUTPUT_DIR / f"wheel_engineering_state_{version}.parquet"
+    manifest_path = OUTPUT_DIR / f"wheel_engineering_state_manifest_{version}.json"
+    card_path = OUTPUT_DIR / f"wheel_engineering_state_card_{version}.md"
+    if any(path.exists() for path in (output, manifest_path, card_path)):
+        raise FileExistsError(f"Wheel Engineering State {version} already exists; create a new version instead of overwriting it.")
     raw_columns = ["wsmId", *QUALITY_WINDOWS.keys(), *BLOCKED_FIELDS, "wsmturning1", "wsmturning2", "wsmSkidTurn1", "wsmSkidTurn2", "wsmProvDate"]
     raw = pd.read_parquet(RAW, columns=raw_columns).rename(columns={"wsmId": "measurement_record_id"})
     timeline_columns = ["measurement_record_id", "wheelset_equipment_id", "measurement_timestamp", "quality_flags", "record_status", "timeline_quality_tier", "locomotive_id", "LomNumber", "LocoType"]
@@ -66,9 +67,9 @@ def main() -> None:
     state = state.sort_values(["wheelset_equipment_id", "measurement_timestamp", "measurement_record_id"]).reset_index(drop=True)
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    state.to_parquet(OUTPUT, index=False)
+    state.to_parquet(output, index=False)
     manifest = {
-        "dataset_version": "wheel_engineering_state_v1.0",
+        "dataset_version": f"wheel_engineering_state_{version}",
         "generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "grain": "one Gold-B attributable inspection measurement",
         "rows": int(len(state)),
@@ -79,10 +80,10 @@ def main() -> None:
         "blocked_fields": list(BLOCKED_FIELDS),
         "context_available_rows": int(state["interval_context_available"].sum()),
     }
-    MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     quality_columns = [column for column in state if column.endswith("_quality")]
     lines = [
-        "# Wheel Engineering State v1.0", "",
+        f"# Wheel Engineering State {version}", "",
         f"- **Rows:** {len(state):,}",
         f"- **Columns:** {len(state.columns):,}",
         "- **Grain:** one Gold-B attributable inspection measurement.",
@@ -97,9 +98,11 @@ def main() -> None:
         other = int(len(state) - valid - missing)
         lines.append(f"| {column} | {valid:,} | {missing:,} | {other:,} |")
     lines += ["", "Plausibility windows are data-quality filters, not condemning limits. See `docs/wheel_engineering_state_specification_v1.0.md`."]
-    CARD.write_text("\n".join(lines) + "\n", encoding="utf-8")
-    print(OUTPUT.relative_to(ROOT))
+    card_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(output.relative_to(ROOT))
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--version", default="v1.0", help="Version suffix, e.g. v1.1; existing artifacts are never overwritten.")
+    main(parser.parse_args().version)

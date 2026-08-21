@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { api } from "./api";
 import type { Capabilities, FleetBacktest, OperationalCapture, SearchHit } from "./types";
 import { CaptureTable, FleetTable } from "./BacktestView";
+import { DataHealthBanner } from "./DataHealthBanner";
 import { FleetView } from "./FleetView";
 import { LocoView } from "./LocoView";
 import { ModelHealthPanel } from "./ModelHealthPanel";
@@ -133,6 +134,7 @@ export function App() {
       </header>
 
       <ModelStrip caps={caps} />
+      <DataHealthBanner health={caps?.data_health} />
 
       <div className="shell">
         <aside className="sidebar">

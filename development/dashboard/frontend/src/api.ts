@@ -1,10 +1,12 @@
 import type {
   Capabilities,
+  DispositionRecord,
   FleetBacktest,
   FleetLocos,
   FleetOverview,
   FleetRiskResponse,
   FleetSearchResponse,
+  FleetWorklistResponse,
   LocomotiveSummary,
   LocoWheelsetTable,
   ModelHealth,
@@ -30,6 +32,19 @@ async function get<T>(path: string, params?: Record<string, string | number | bo
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.detail || `HTTP ${res.status}`);
+  }
+  return res.json() as Promise<T>;
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const res = await fetch(`${BASE}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.detail || `HTTP ${res.status}`);
   }
   return res.json() as Promise<T>;
 }
@@ -63,6 +78,11 @@ export const api = {
     pturn_min?: number | null;
   }) => get<FleetRiskResponse>(`/fleet/risk`, params),
   fleetSearch: (q: string) => get<FleetSearchResponse>(`/fleet/search`, { q }),
+  fleetWorklist: (k = 10, shed?: string) =>
+    get<FleetWorklistResponse>(`/fleet/worklist`, { k, shed: shed ?? null }),
+  dispositions: (id: number) => get<DispositionRecord[]>(`/wheelset/${id}/dispositions`),
+  recordDisposition: (id: number, action: string, note?: string, loco?: string | null) =>
+    post<DispositionRecord>(`/wheelset/${id}/disposition`, { action, note, loco_number: loco ?? null }),
   fleetLocos: () => get<FleetLocos>(`/fleet/locos`),
   modelHealth: () => get<ModelHealth>(`/model/health`),
   shed: (shed: string) => get<ShedOverview>(`/shed/${encodeURIComponent(shed)}`),

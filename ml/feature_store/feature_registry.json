@@ -158,16 +158,19 @@
       "columns": [
         "days_since_turning"
       ]
+    },
+    {
+      "feature_id": "interval_distance_km",
+      "status": "READY_FOR_MATERIALISATION",
+      "evidence_level": "Observed",
+      "columns": [
+        "interval_distance_km"
+      ]
     }
   ],
   "excluded_features": [
     {
       "feature_id": "wear_rate_mm_per_day",
-      "status": "BLOCKED",
-      "reason": "status_not_approved_for_feature_store"
-    },
-    {
-      "feature_id": "interval_distance_km",
       "status": "BLOCKED",
       "reason": "status_not_approved_for_feature_store"
     },

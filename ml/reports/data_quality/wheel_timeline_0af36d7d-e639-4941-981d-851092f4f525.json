@@ -1,0 +1,19 @@
+{
+  "run_id": "0af36d7d-e639-4941-981d-851092f4f525",
+  "business_truth_version": "v1.0",
+  "contract_version": "1.0.0",
+  "generated_at_utc": "2026-08-21T09:47:50.325505+00:00",
+  "inputs": {
+    "silver_wheel_measurements_sha256": "86f4f1ab93d22fdc356b5b9eebb3f9b4bdb475ead701e33f38f2c7f6a16e78c1",
+    "silver_loco_equipment_history_sha256": "3dd8e49c8e8e69f13b1616b6f8fa29dff79fa6e8d986327972afda816758ac34",
+    "cohort_sha256": "8a09dfc297f8f69debf5668cadc0d95400acad39e268e2d96c70c527786287fe"
+  },
+  "measurements_outside_cohort_history_universe": 842984,
+  "measurements_evaluated": 326988,
+  "gold_b_timeline_rows": 278480,
+  "gold_c_exclusions": 48508,
+  "exclusions_by_reason": {
+    "no_valid_assignment_interval": 45306,
+    "ambiguous_assignment_interval": 3202
+  }
+}

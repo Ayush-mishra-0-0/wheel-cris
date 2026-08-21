@@ -64,6 +64,8 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
   const [reload, setReload] = useState(0);
   const [preset, setPreset] = useState("pturn");
   const [focusedIdx, setFocusedIdx] = useState(0);
+  const [wlBusy, setWlBusy] = useState(false);
+  const [wlErr, setWlErr] = useState<string | null>(null);
   const tbodyRef = useRef<HTMLTableSectionElement>(null);
 
   // action-queue state (shareable via URL ?shed=&queue=&preset=)
@@ -234,6 +236,38 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
     URL.revokeObjectURL(a.href);
   }
 
+  async function exportWorklist() {
+    setWlErr(null);
+    try {
+      const wl = await api.fleetWorklist(10, shed || undefined);
+      const header = ["shed_any", "loco_number", "wheelset_equipment_id",
+        "axle_position_1_6", "wheel_position_1_12", "rank_score", "rank_score_kind",
+        "pturn_90d_decile", "limiting_dim", "limiting_reason",
+        "days_to_condemning_dia", "mean_wsmDia", "mean_wsmFlange", "mean_wsmRoot",
+        "mean_wsmThread", "staleness_days", "latest_measurement"];
+      const lines = [header.join(","),
+        `# top-${wl.k_per_shed} per shed by calibrated 90d P(turn); ${wl.n_sheds} sheds; ${wl.total} rows; generated ${wl.generated_at}`];
+      for (const r of wl.items) {
+        lines.push(header.map((h) => {
+          const v = (r as unknown as Record<string, unknown>)[h];
+          if (v == null) return "";
+          const s = String(v);
+          return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        }).join(","));
+      }
+      const blob = new Blob([lines.join("\n")], { type: "text/csv" });
+      const a = document.createElement("a");
+      a.href = URL.createObjectURL(blob);
+      a.download = `worklist_top10_per_shed${shed ? "_" + shed : ""}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(a.href);
+    } catch (e) {
+      setWlErr((e as Error).message);
+    }
+  }
+
 
   return (
     <div className="fleet">
@@ -360,6 +394,15 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
             ))}
           </select>
           <button className="btn" onClick={exportCsv}>Export CSV</button>
+          <button
+            className="btn"
+            disabled={wlBusy}
+            onClick={() => { setWlBusy(true); exportWorklist().finally(() => setWlBusy(false)); }}
+            title="Capacity-aware morning worklist: top-10 wheelsets per shed by calibrated 90d P(turn) — one shed cannot crowd out the rest"
+          >
+            {wlBusy ? "Worklist…" : "Worklist (top-10/shed)"}
+          </button>
+          {wlErr && <span className="muted small" style={{ color: "var(--danger)" }}>{wlErr}</span>}
           <select value={shed} onChange={(e) => { setShed(e.target.value); setPage(1); clearQueue(); }}>
             <option value="">Shed: all</option>
             {sheds.slice(0, 40).map((s) => (
@@ -439,13 +482,16 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                 </tr>
               </thead>
               <tbody ref={tbodyRef}>
-                {rows.map((r, i) => (
+                {rows.map((r, i) => {
+                  const cal = r.pturn_90d_calibrated ?? r.pturn_90d;
+                  const rowRisk = cal != null && cal >= 0.05 ? " risk-row-high" : cal != null && cal >= 0.01 ? " risk-row-mid" : "";
+                  return (
                   <tr
                     key={r.wheelset_equipment_id}
                     data-i={i}
                     tabIndex={i === focusedIdx ? 0 : -1}
                     aria-selected={i === focusedIdx}
-                    className={`clickable ${i === focusedIdx ? "focused" : ""}`}
+                    className={`clickable${rowRisk} ${i === focusedIdx ? "focused" : ""}`}
                     onClick={() => onSelect(r.wheelset_equipment_id, r.loco_number ?? undefined)}
                     onKeyDown={(e) => onRowKey(e, i)}
                   >
@@ -469,7 +515,7 @@ export function FleetView({ onSelect }: { onSelect: (ws: number, loco?: string) 
                     <td>{fmt(r.days_to_condemning_dia, 0)} d</td>
                     <td>{fmt(r.staleness_days, 0)} d</td>
                   </tr>
-                ))}
+                );})}
               </tbody>
             </table>
             <p className="muted small table-footnote">

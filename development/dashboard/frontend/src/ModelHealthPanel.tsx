@@ -121,6 +121,26 @@ function PturnTable({ pturn }: { pturn: ModelHealth["pturn"] }) {
           </tbody>
         </table>
       </div>
+      <div className="mh-reliability-grid">
+        {hs.map((h) => {
+          const calibration = pturn[h].calibration;
+          if (!calibration?.bin_rates?.length) return null;
+          return (
+            <div key={`reliability-${h}`} className="mh-reliability-card">
+              <strong>{h}d score decile reliability</strong>
+              <div className="mh-deciles">
+                {calibration.bin_rates.map((rate, i) => (
+                  <span key={i} title={`Decile ${i + 1}: realized ${(rate == null ? 0 : rate * 100).toFixed(1)}%`}>
+                    <i style={{ height: `${Math.max(4, Math.min(100, (rate ?? 0) * 100 * 3))}%` }} />
+                    <small>{rate == null ? "—" : `${(rate * 100).toFixed(1)}%`}</small>
+                  </span>
+                ))}
+              </div>
+              <small className="muted">Train-score deciles · realized event rate</small>
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }

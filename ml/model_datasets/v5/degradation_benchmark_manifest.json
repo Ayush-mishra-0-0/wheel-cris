@@ -2,16 +2,16 @@
   "task": "phase 5 layer 2 degradation-benchmark substrate",
   "contract": "wheel_profile_lifecycle_contract_v1",
   "anchor": "v3f within-lifecycle rows (frozen split)",
-  "source_wes": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
+  "source_wes": "model_datasets\\v3\\wheel_engineering_state_v1.1.parquet",
   "source_v3f": "model_datasets\\v3f\\change_space_benchmark.parquet",
   "source_segments": "model_datasets\\v5\\lifecycle_segments_shed.parquet",
   "output": "model_datasets\\v5\\degradation_benchmark.parquet",
-  "sha256": "5898963e5a2733f3f7e0d5cd372a4ec828ae683ff344b1877535a0712606a408",
+  "sha256": "662b9e4bd5f634fa407ba30b150c6702d70212236520e6063fb52af12280daf6",
   "rows": 239684,
   "rows_train": 191747,
   "rows_test": 47937,
-  "transient_excluded_3d": 30855,
-  "transient_pct": 12.87,
+  "transient_excluded_3d": 30862,
+  "transient_pct": 12.88,
   "shed_coverage_pct": 88.34,
   "profile_class_coverage_pct": 63.29,
   "horizons": [
@@ -32,13 +32,13 @@
       "target_median": 1.75
     },
     "wsmRoot_90d": {
-      "eligible": 146197,
-      "eligible_test": 36479,
+      "eligible": 146191,
+      "eligible_test": 36473,
       "target_median": 2.0
     },
     "wsmRoot_180d": {
-      "eligible": 176007,
-      "eligible_test": 41241,
+      "eligible": 176001,
+      "eligible_test": 41235,
       "target_median": 2.25
     },
     "wsmFlange_30d": {
@@ -47,14 +47,14 @@
       "target_median": 0.75
     },
     "wsmFlange_90d": {
-      "eligible": 146197,
-      "eligible_test": 36479,
+      "eligible": 146191,
+      "eligible_test": 36473,
       "target_median": 0.75
     },
     "wsmFlange_180d": {
-      "eligible": 176007,
-      "eligible_test": 41241,
-      "target_median": 0.875
+      "eligible": 176001,
+      "eligible_test": 41235,
+      "target_median": 0.9
     },
     "wsmThread_30d": {
       "eligible": 90722,
@@ -62,13 +62,13 @@
       "target_median": 1.25
     },
     "wsmThread_90d": {
-      "eligible": 146197,
-      "eligible_test": 36479,
+      "eligible": 146191,
+      "eligible_test": 36473,
       "target_median": 1.25
     },
     "wsmThread_180d": {
-      "eligible": 176007,
-      "eligible_test": 41241,
+      "eligible": 176001,
+      "eligible_test": 41235,
       "target_median": 1.5
     },
     "wsmDia_30d": {
@@ -77,13 +77,13 @@
       "target_median": 1075.0
     },
     "wsmDia_90d": {
-      "eligible": 146197,
-      "eligible_test": 36479,
+      "eligible": 146191,
+      "eligible_test": 36473,
       "target_median": 1074.0
     },
     "wsmDia_180d": {
-      "eligible": 176007,
-      "eligible_test": 41241,
+      "eligible": 176001,
+      "eligible_test": 41235,
       "target_median": 1073.5
     }
   }

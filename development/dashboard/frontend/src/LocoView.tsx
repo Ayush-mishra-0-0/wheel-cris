@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { api } from "./api";
-import type { Capabilities, LocoWheelsetTable, WheelAttribution, WheelsetDetail } from "./types";
+import type { Capabilities, DispositionRecord, LocoWheelsetTable, WheelAttribution, WheelsetDetail } from "./types";
 import { AxleMap } from "./AxleMap";
 import { BacktestView } from "./BacktestView";
 import { LimitChip, WearBands } from "./LimitChip";
@@ -91,6 +91,12 @@ export function LocoView({
     return [...all.filter((w) => w.is_recently_measured), ...all.filter((w) => !w.is_recently_measured)];
   }, [table, scope]);
 
+  const noTurnIndicated = rows.length > 0 && rows.every((w) => {
+    const p = w.pturn_90d_calibrated ?? w.pturn_90d;
+    return (p == null || p < 0.01) &&
+      (w.days_to_condemning_dia == null || w.days_to_condemning_dia > 180);
+  });
+
   const allCount = table?.wheelsets_all?.length ?? table?.wheelsets.length ?? 0;
 
   return (
@@ -173,6 +179,14 @@ export function LocoView({
               <button className="nav-item back" onClick={onBack}>← Back to fleet</button>
             </div>
           </div>
+          {noTurnIndicated && (
+            <div className="banner banner-neutral no-turn-banner">
+              <strong>No turn indicated in the current horizon.</strong> No wheelset has
+              calibrated P(turn) 90d at or above 1% or a diameter hard-stop crossing within
+              180 days. This is a prioritisation signal, not a guarantee that inspection is
+              unnecessary.
+            </div>
+          )}
           <div className="loco-table-bar">
             <button
               className={scope === "recent" ? "btn btn-primary" : "btn"}
@@ -238,10 +252,13 @@ export function LocoView({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((w) => (
+                  {rows.map((w) => {
+                    const cal = w.pturn_90d_calibrated ?? w.pturn_90d;
+                    const rowRisk = cal != null && cal >= 0.05 ? " risk-row-high" : cal != null && cal >= 0.01 ? " risk-row-mid" : "";
+                    return (
                     <tr
                       key={w.wheelset_equipment_id}
-                      className={`clickable ${w.wheelset_equipment_id === selected ? "selected" : ""} ${overlayHover === w.wheelset_equipment_id ? "focused" : ""} ${scope === "all" && !w.is_recently_measured ? "historical" : ""}`}
+                      className={`clickable${rowRisk} ${w.wheelset_equipment_id === selected ? "selected" : ""} ${overlayHover === w.wheelset_equipment_id ? "focused" : ""} ${scope === "all" && !w.is_recently_measured ? "historical" : ""}`}
                       onClick={() => setSelected(w.wheelset_equipment_id)}
                       onMouseEnter={() => setOverlayHover(w.wheelset_equipment_id)}
                       onMouseLeave={() => setOverlayHover((h) => (h === w.wheelset_equipment_id ? null : h))}
@@ -274,7 +291,7 @@ export function LocoView({
                       <td>{w.n_turns}</td>
                       <td title={w.latest_measurement ?? undefined}>{w.staleness_days != null ? `${fmt(w.staleness_days, 0)} d ago` : "—"}</td>
                     </tr>
-                  ))}
+                  );})}
                 </tbody>
               </table>
             </div>
@@ -321,6 +338,35 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
       .then(setAttribution)
       .catch(() => setAttribution(null)); // not in the phase 4 scored batch -> hide the line
   }, [detail.wheelset_equipment_id]);
+
+  // disposition loop: what did the shed decide about this recommendation?
+  const [dispositions, setDispositions] = useState<DispositionRecord[] | null>(null);
+  const [dispBusy, setDispBusy] = useState<string | null>(null);
+  const [dispErr, setDispErr] = useState<string | null>(null);
+  const loadDispositions = (wsId: number) => {
+    api
+      .dispositions(wsId)
+      .then(setDispositions)
+      .catch(() => setDispositions(null));
+  };
+  useEffect(() => {
+    setDispositions(null);
+    setDispErr(null);
+    loadDispositions(detail.wheelset_equipment_id);
+  }, [detail.wheelset_equipment_id]);
+
+  async function record(action: string) {
+    setDispErr(null);
+    setDispBusy(action);
+    try {
+      await api.recordDisposition(detail.wheelset_equipment_id, action, undefined, detail.loco_number);
+      loadDispositions(detail.wheelset_equipment_id);
+    } catch (e) {
+      setDispErr((e as Error).message);
+    } finally {
+      setDispBusy(null);
+    }
+  }
 
   // engineering warnings surfaced from forecast flags + subgroup flags
   const warnings: string[] = [];
@@ -369,6 +415,44 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
 
       <section className="forecast">
         <TrajectoryPanel wheelsetId={detail.wheelset_equipment_id} />
+      </section>
+
+      <section className="disposition">
+        <h3>Shed disposition</h3>
+        <p className="muted small">
+          Record what was actually decided — accepted or rejected, every entry is
+          logged with the score the shed saw. This closes the recommendation loop
+          (no action is executed by the dashboard).
+        </p>
+        <div className="disposition-actions">
+          {(["turn", "inspect", "defer", "no_action"] as const).map((a) => (
+            <button
+              key={a}
+              className={a === "turn" ? "btn btn-primary" : "btn"}
+              disabled={dispBusy != null}
+              onClick={() => record(a)}
+            >
+              {dispBusy === a ? "…" : a === "no_action" ? "no action" : a}
+            </button>
+          ))}
+        </div>
+        {dispErr && <p className="muted small" style={{ color: "var(--danger)" }}>{dispErr}</p>}
+        {dispositions && dispositions.length > 0 && (
+          <table>
+            <thead>
+              <tr><th>when (UTC)</th><th>action</th><th>cal P(turn) 90d seen</th></tr>
+            </thead>
+            <tbody>
+              {[...dispositions].reverse().slice(0, 5).map((d, i) => (
+                <tr key={i}>
+                  <td>{(d.ts_utc ?? "").slice(0, 16).replace("T", " ")}</td>
+                  <td>{d.action}</td>
+                  <td>{d.context?.pturn_90d_calibrated != null ? pct(d.context.pturn_90d_calibrated) : "—"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
       </section>
 
       {diaFix && (
@@ -424,6 +508,7 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
                 <th>pre dia</th>
                 <th>post dia</th>
                 <th>dia cut</th>
+                <th>reason of turning</th>
               </tr>
             </thead>
             <tbody>
@@ -434,6 +519,13 @@ function WheelsetView({ detail, caps }: { detail: WheelsetDetail; caps: Capabili
                   <td>{t.pre_wsmDia ?? "—"}</td>
                   <td>{t.post_wsmDia ?? "—"}</td>
                   <td>{t.dia_cut ?? "—"}</td>
+                  <td
+                    title={t.reason_of_turning_source === "recorded_reason"
+                      ? "Recorded by SLAM register"
+                      : "No confirmed SLAM reason matched to this turn event"}
+                  >
+                    {t.reason_of_turning ?? "No reason recorded"}
+                  </td>
                 </tr>
               ))}
             </tbody>

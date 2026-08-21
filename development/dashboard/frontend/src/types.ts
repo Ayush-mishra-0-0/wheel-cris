@@ -153,6 +153,9 @@ export interface TurnEvent {
   pre_wsmFlange: number | null;
   post_wsmFlange: number | null;
   dia_cut?: number | null;
+  reason_of_turning?: string | null;
+  reason_of_turning_raw_code?: number | null;
+  reason_of_turning_source?: string | null;
 }
 
 export interface WheelsetDetail {
@@ -348,6 +351,9 @@ export interface TurnMarker {
   pre_wsmDia: number | null;
   post_wsmDia: number | null;
   dia_cut: number | null;
+  reason_of_turning?: string | null;
+  reason_of_turning_raw_code?: number | null;
+  reason_of_turning_source?: string | null;
   pre_wsmFlange: number | null;
   post_wsmFlange: number | null;
   pre_wsmRoot: number | null;
@@ -427,6 +433,22 @@ export interface Capabilities {
   validation?: {
     warnings?: string[];
   };
+  data_health?: DataHealth;
+}
+
+export interface DataHealthItem {
+  name: string;
+  built_at: string | null;
+  note: string;
+  rows?: number;
+  path?: string;
+  missing?: boolean;
+}
+
+export interface DataHealth {
+  scope_status?: string | null;
+  wes_version?: string | null;
+  items: DataHealthItem[];
 }
 
 export interface FleetOverview {
@@ -508,6 +530,49 @@ export interface FleetSearchResponse {
   items: SearchHit[];
 }
 
+export interface FleetWorklistItem {
+  shed_any: string;
+  loco_number: string | null;
+  loco_type: string | null;
+  wheelset_equipment_id: number;
+  axle_position_1_6: number | null;
+  wheel_position_1_12: number | null;
+  limiting_dim: string | null;
+  limiting_reason: string | null;
+  days_to_condemning_dia: number | null;
+  mean_wsmDia: number | null;
+  mean_wsmFlange: number | null;
+  mean_wsmRoot: number | null;
+  mean_wsmThread: number | null;
+  staleness_days: number | null;
+  latest_measurement: string | null;
+  rank_score: number | null;
+  rank_score_kind: string | null;
+  pturn_90d_decile: number | null;
+  wear_bands?: Record<string, WearBand>;
+}
+
+export interface FleetWorklistResponse {
+  k_per_shed: number;
+  n_sheds: number;
+  total: number;
+  generated_at: string | null;
+  items: FleetWorklistItem[];
+}
+
+export interface DispositionRecord {
+  ts_utc: string | null;
+  wheelset_equipment_id: number;
+  loco_number: string | null;
+  action: string;
+  note: string | null;
+  context?: {
+    snapshot_built_at?: string | null;
+    pturn_90d_calibrated?: number | null;
+    pturn_90d_decile?: number | null;
+  };
+}
+
 export interface ShedOverview {
   shed: string;
   n_wheelsets: number;
@@ -582,6 +647,7 @@ export interface PturnHealthCell {
   n_test: number | null;
   turn_rate_train: number | null;
   turn_rate_test: number | null;
+  calibration?: { bin_rates?: Array<number | null>; train_prevalence?: number | null } | null;
 }
 
 export interface ModelHealth {

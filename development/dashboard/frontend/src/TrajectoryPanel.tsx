@@ -522,6 +522,25 @@ function TrajectoryChart({
     };
   }, [data, turns, reducedConfidence, color]);
 
+  const residualOption = useMemo<EChartsOption>(() => {
+    const points = data.realised
+      .filter((r) => r.ts != null && r.residual != null)
+      .map((r) => [r.ts as string, r.residual as number]);
+    return {
+      animation: false,
+      grid: { left: 46, right: 16, top: 22, bottom: 24 },
+      title: { text: "realised residual (actual − forecast)", left: 0, top: 0,
+        textStyle: { fontSize: 10, color: "#82838c", fontWeight: 500 } },
+      tooltip: { trigger: "axis", confine: true,
+        valueFormatter: (v: unknown) => `${fmt(v)} mm` },
+      xAxis: { type: "time", axisLabel: { fontSize: 9, color: "#a7a8b0" }, splitLine: { show: false } },
+      yAxis: { type: "value", axisLabel: { fontSize: 9, color: "#a7a8b0" }, splitLine: { lineStyle: { color: "#f0f0e9" } } },
+      series: [{ name: "residual", type: "line", data: points, symbol: "circle", symbolSize: 5,
+        lineStyle: { color: "#14151a", width: 1 }, itemStyle: { color: "#14151a" }, connectNulls: false,
+        markLine: { silent: true, symbol: "none", lineStyle: { color: "#b8b8b0", width: 1, type: "dashed" }, data: [{ yAxis: 0 }] } }],
+    };
+  }, [data.realised]);
+
   const flags = data.flags;
   const nf = data.noise_floor_mm;
   const flagGroups = Array.from(new Set(subFlags.map((s) => s.group))).join(", ");
@@ -533,6 +552,12 @@ function TrajectoryChart({
   return (
     <div className="trajectory-card">
       <EChart option={option} height={260} />
+      {data.realised.some((r) => r.ts != null && r.residual != null) && (
+        <div className="residual-strip">
+          <EChart option={residualOption} height={92} />
+          <span className="muted tiny residual-note">positive = actual wear above forecast · negative = below forecast</span>
+        </div>
+      )}
       <div className="trajectory-meta">
         {reducedConfidence && (
           <span

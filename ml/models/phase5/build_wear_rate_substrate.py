@@ -39,6 +39,8 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from models.phase5.measurement_scope import apply_inspection_scope
+
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
@@ -46,7 +48,9 @@ from models.phase5.build_lifecycle_segments import (  # noqa: E402
     GATES, SIDE_FIELDS, compute_boundaries, side_mean,
 )
 
-WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
+from models.phase5.wes_paths import current_wes_path
+
+WES = current_wes_path()
 BENCH = ROOT / "model_datasets" / "v5" / "degradation_benchmark.parquet"
 SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 OUT = ROOT / "model_datasets" / "v5"
@@ -63,6 +67,7 @@ def main() -> None:
 
     # ---- reconstruct the wheelset stream with segment ids (same as substrate) ----
     wes = pd.read_parquet(WES)
+    wes = apply_inspection_scope(wes)
     wes = wes.sort_values(["wheelset_equipment_id", "measurement_timestamp"]).reset_index(drop=True)
     with warnings.catch_warnings():
         warnings.simplefilter("ignore", RuntimeWarning)

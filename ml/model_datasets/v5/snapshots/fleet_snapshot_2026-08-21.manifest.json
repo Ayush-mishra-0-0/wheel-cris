@@ -1,0 +1,31 @@
+{
+  "task": "fleet snapshot (P1.1) - one row per wheelset, current state",
+  "contract": "fleet_snapshot_v1",
+  "built_at_utc": "2026-08-21T10:16:15.194658+00:00",
+  "n_wheelsets": 19302,
+  "n_with_forecast": 19302,
+  "model_version": "3404998be4",
+  "train_cutoff": "2025-11-24",
+  "model_of_record": {
+    "wsmRoot": "per_horizon_xgb",
+    "wsmFlange": "wear_rate",
+    "wsmThread": "per_horizon_xgb",
+    "wsmDia": "wear_rate"
+  },
+  "sources": [
+    {
+      "path": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
+      "sha256": "a326259199431e3f0947fc43cba4835e069e0db94ff1cb9751de8d350f97fd40"
+    },
+    {
+      "path": "model_datasets\\v2\\exposure_features_v2.parquet",
+      "sha256": "74aaf1bf49c49a69cf9743980d6a2a8cb8e4da7c6f3abcb86cc70f2bb3649631"
+    },
+    {
+      "path": "model_datasets\\v5\\lifecycle_segments_shed.parquet",
+      "sha256": "55cf979f9871e56e5075ba2770f8bffe37cff7ab2223e3c4cfa42ef45803dc17"
+    }
+  ],
+  "rebuild": "ayush\\Scripts\\python -m dashboard.backend.build_fleet_snapshot",
+  "note": "Point-in-time export for ranking/overview. P(turn), wear state and limit proximity are separate columns and must not be collapsed. Live per-wheelset forecasts come from the API, not this file."
+}

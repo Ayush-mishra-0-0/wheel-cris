@@ -294,3 +294,30 @@ Readings:
 > **Gold contract (`limiting_dim` + `limiting_dim_source`): DONE** — emitted into `interval_context`, calibrated priors applied only where recorded reason is absent
 >
 > **Architecture unchanged.** This fills a previously missing semantic key (`reason_of_turning`); it does not warrant a rewrite. Attribution is provenance-tagged (`recorded_reason | ratio_calibrated | predicted`); no model trains on `reason_of_turning` as a label yet.
+
+## 10. Measurement scope gate — trip-shed exclusion
+
+Trip-shed and other designated non-home / non-inspection measurements must not
+enter lifecycle series, lifecycle turns, or any feature substrate feeding a
+forecast. The shared policy is implemented in
+`models/phase5/measurement_scope.py` and registered in
+`configs/measurement_scope_v1.json`; it is applied before lifecycle boundary
+construction and serving feature extraction. The dashboard chart must therefore
+not solve this as a display-only filter.
+
+**Domain-owner confirmation required before release:** provide the exact
+`FunctionalLocations.FLocCode/FLocName` values and `Sections.SecCode` values for
+trip-shed and any other non-inspection locations. Add those values to the scope
+register, refresh lifecycle artifacts, rebuild forecast substrates/snapshots,
+and report excluded-row counts. Until then, the policy only covers the
+explicitly configured trip-shed labels and environment override
+`WHEEL_EXCLUDED_LOCATION_CODES`.
+
+**Database audit completed 2026-08-21:** live `SLAM_PROD_DB_10.05.2022` returned
+FunctionalLocations `CHZ` (Trip Shed Charlapalli) and `DBRG` (Trip Shed DBRG),
+plus Sections `T/SHED`, `VMET`, `TS`, `SVDKAdmin`, `Trip shed BCT`, `KSJ`,
+`TSJBP` and the linked `CHZStore`, `CHZAdmin`, `DBRGStore`, `DBRGAdmin` rows.
+The current live WAP7 register has zero rows at those trip-shed functional
+locations and zero rows through those trip-shed sections. These are now
+registered as DB-verified exclusions; domain sign-off is still required before
+calling the scope contract final.

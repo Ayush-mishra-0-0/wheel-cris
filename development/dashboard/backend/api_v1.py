@@ -19,10 +19,11 @@ from fastapi.responses import FileResponse, StreamingResponse
 from pathlib import Path
 
 from .schemas import (
-    Capabilities, FleetBacktest, FleetLocos, FleetOverview, FleetRiskResponse,
-    FleetSearchResponse, LocomotiveSummary, LocoWheelsetTable, ModelHealth,
-    OperationalCapture, ShedOverview, TrajectoryContract, WheelAttribution,
-    WheelsetDetail, WheelsetReplay,
+    Capabilities, DispositionCreate, DispositionRecord, DispositionSummary,
+    FleetBacktest, FleetLocos, FleetOverview, FleetRiskResponse,
+    FleetSearchResponse, FleetWorklistResponse, LocomotiveSummary,
+    LocoWheelsetTable, ModelHealth, OperationalCapture, ShedOverview,
+    TrajectoryContract, WheelAttribution, WheelsetDetail, WheelsetReplay,
 )
 from . import backtest, service
 from .config import ENABLE_LEGACY_PLOTS
@@ -98,6 +99,51 @@ def fleet_search(q: str = Query(..., description="loco number / shed / loco type
     if "error" in data:
         raise HTTPException(status_code=503, detail=data["error"])
     return FleetSearchResponse(**data)
+
+
+@router.get("/fleet/worklist", response_model=FleetWorklistResponse, tags=["fleet"])
+def fleet_worklist(
+    k: int = Query(10, ge=1, le=100, description="top-k wheelsets per shed"),
+    shed: str | None = Query(None, description="restrict to one shed"),
+    max_staleness_days: int | None = Query(365, ge=0),
+) -> FleetWorklistResponse:
+    """Capacity-aware morning worklist: top-k per shed by calibrated 90d P(turn).
+
+    Each shed gets at most `k` rows so one busy shed cannot crowd out the rest
+    of the fleet. Prioritisation aid, not a turning instruction (contract §8).
+    """
+    data = service.fleet_worklist(k=k, shed=shed, max_staleness_days=max_staleness_days)
+    if "error" in data:
+        raise HTTPException(status_code=503, detail=data["error"])
+    return FleetWorklistResponse(**data)
+
+
+@router.get("/fleet/dispositions/summary", response_model=DispositionSummary, tags=["fleet"])
+def disposition_summary() -> DispositionSummary:
+    """Fleet-wide engineer-disposition counts (last 30d vs all time)."""
+    return DispositionSummary(**service.disposition_summary())
+
+
+@router.post("/wheelset/{ws}/disposition", response_model=DispositionRecord, tags=["wheelset"])
+def record_disposition(ws: int, body: DispositionCreate) -> DispositionRecord:
+    """Record an engineer decision on this wheelset (turn/inspect/defer/no_action).
+
+    Closes the recommendation loop: accepted or rejected, every decision is
+    logged with the snapshot context the engineer saw (calibrated P(turn),
+    decile, snapshot build time). This log is the labelled dataset for
+    action-quality evaluation.
+    """
+    try:
+        rec = service.record_disposition(ws, body.action, body.note, body.loco_number)
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+    return DispositionRecord(**rec)
+
+
+@router.get("/wheelset/{ws}/dispositions", response_model=list[DispositionRecord], tags=["wheelset"])
+def dispositions_for(ws: int) -> list[DispositionRecord]:
+    """Disposition history for one wheelset (oldest first)."""
+    return [DispositionRecord(**r) for r in service.dispositions_for(ws)]
 
 
 @router.get("/shed/{shed}", response_model=ShedOverview, tags=["fleet"])

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime, timezone
 from functools import lru_cache
 
 import joblib
@@ -29,6 +30,8 @@ TURNS = ROOT / "model_datasets" / "v5" / "lifecycle_turns.parquet"
 TRAJ_ARTEFACT = ROOT / "models" / "experiments" / "v5" / "trajectory_product_analysis.json"
 FLEET_BACKTEST = ROOT / "models" / "experiments" / "v5" / "fleet_backtest.json"
 ADAPT_ARTEFACT = ROOT / "model_datasets" / "v5" / "wheelset_adaptation.parquet"
+REGISTER = ROOT / "data" / "bronze" / "loco_wheel_register.parquet"
+REFERENCE_DECODE = ROOT / "configs" / "wheel_reference_decode_v1.json"
 
 HORIZONS = (30, 90, 180)
 DIMM = ("wsmRoot", "wsmFlange", "wsmThread", "wsmDia")
@@ -375,6 +378,7 @@ def model_health() -> dict:
             "brier": m.get("brier"), "ece": m.get("ece"),
             "n_test": m.get("n_test"),
             "turn_rate_train": m.get("turn_rate_train"), "turn_rate_test": m.get("turn_rate_test"),
+            "calibration": m.get("calibration"),
         }
 
     return {
@@ -621,7 +625,91 @@ def capabilities() -> dict:
             "model_of_record": meta.get("model_of_record"),
         },
         "limits": limits_register(),
+        "data_health": data_health(),
     }
+
+
+SCOPE_CONFIG = ROOT / "configs" / "measurement_scope_v1.json"
+BRONZE_META = ROOT / "data" / "bronze" / "wheel_measurements_metadata.json"
+LIFECYCLE_MANIFEST = ROOT / "model_datasets" / "v5" / "lifecycle_segments_manifest.json"
+
+
+@lru_cache(maxsize=1)
+def data_health() -> dict:
+    """Provenance freshness for the UI data-health banner.
+
+    Answers "how fresh is the data behind every number on this screen" from
+    the on-disk manifests only (no parquet reads): Bronze extraction, WES
+    materialization actually resolved for serving (wes_paths.current_wes_path),
+    lifecycle rebuild, fleet snapshot and the measurement-scope status.
+    """
+    from models.phase5.wes_paths import current_wes_path
+
+    out: dict = {"scope_status": None, "items": []}
+
+    def _item(name: str, path: Path | None, built_at: str | None, note: str,
+              rows: int | None = None) -> None:
+        it: dict = {"name": name, "built_at": built_at, "note": note}
+        if rows is not None:
+            it["rows"] = rows
+        if path is not None and path.exists():
+            it["path"] = str(path.relative_to(ROOT))
+            if built_at is None:
+                it["built_at"] = datetime.fromtimestamp(
+                    path.stat().st_mtime, timezone.utc).isoformat()
+        else:
+            it["missing"] = True
+        out["items"].append(it)
+
+    if SCOPE_CONFIG.exists():
+        try:
+            out["scope_status"] = json.loads(
+                SCOPE_CONFIG.read_text(encoding="utf-8")).get("status")
+        except (ValueError, OSError):
+            pass
+
+    wes_p = current_wes_path()
+    man = wes_p.with_name(
+        wes_p.stem.replace("wheel_engineering_state_",
+                           "wheel_engineering_state_manifest_") + ".json")
+    built_at = rows = None
+    if man.exists():
+        try:
+            m = json.loads(man.read_text(encoding="utf-8"))
+            built_at = m.get("generated_at_utc")
+            rows = m.get("rows")
+            out["wes_version"] = m.get("dataset_version")
+        except (ValueError, OSError):
+            pass
+    _item("WES (serving)", wes_p, built_at,
+          "per-measurement engineering state resolved for serving", rows)
+
+    if BRONZE_META.exists():
+        try:
+            m = json.loads(BRONZE_META.read_text(encoding="utf-8"))
+            _item("Bronze extract", BRONZE_META, m.get("extracted_at"),
+                  f"source {m.get('source_database', '?')}", m.get("rows"))
+        except (ValueError, OSError):
+            _item("Bronze extract", BRONZE_META, None, "metadata unreadable")
+
+    if LIFECYCLE_MANIFEST.exists():
+        try:
+            m = json.loads(LIFECYCLE_MANIFEST.read_text(encoding="utf-8"))
+            _item("Lifecycle segments", LIFECYCLE_MANIFEST, None,
+                  f"{m.get('n_segments')} segments / {m.get('n_turning_events')} turns "
+                  f"/ {m.get('n_wheelsets')} wheelsets")
+        except (ValueError, OSError):
+            _item("Lifecycle segments", LIFECYCLE_MANIFEST, None, "manifest unreadable")
+
+    snap_built = None
+    try:
+        snap_built = _manifest_ts()
+    except Exception:
+        pass
+    _item("Fleet snapshot", SNAPSHOT_PARQUET, snap_built,
+          "one row per wheelset feeding this dashboard")
+
+    return out
 
 
 def _feature_vector(feat_row: dict, num_feats, cat_feats, enc) -> np.ndarray:
@@ -1030,8 +1118,70 @@ def _turn_markers(wheelset_id: int, asof: pd.Timestamp) -> list[dict]:
             "post_wsmRoot": _f(r.get("post_wsmRoot")),
             "pre_wsmThread": _f(r.get("pre_wsmThread")),
             "post_wsmThread": _f(r.get("post_wsmThread")),
+            **_turn_reason_fields(r),
         })
     return out
+
+
+@lru_cache(maxsize=1)
+def _turn_reason_lookup() -> pd.DataFrame:
+    """Load the SLAM register used to explain lifecycle turning events."""
+    if not REGISTER.exists():
+        return pd.DataFrame()
+    try:
+        reg = pd.read_parquet(REGISTER)
+        cols = [c for c in ("LwrId", "LwrLocoId", "LwrPurpose", "LwrUpdatedOn") if c in reg.columns]
+        reg = reg[cols].copy()
+        if "LwrId" in reg:
+            reg["LwrId"] = pd.to_numeric(reg["LwrId"], errors="coerce")
+        if "LwrPurpose" in reg:
+            reg["LwrPurpose"] = pd.to_numeric(reg["LwrPurpose"], errors="coerce")
+        if "LwrUpdatedOn" in reg:
+            reg["LwrUpdatedOn"] = pd.to_datetime(reg["LwrUpdatedOn"], errors="coerce")
+        return reg
+    except Exception:
+        return pd.DataFrame()
+
+
+@lru_cache(maxsize=1)
+def _turn_reason_decode() -> dict[str, str]:
+    if not REFERENCE_DECODE.exists():
+        return {}
+    try:
+        return json.loads(REFERENCE_DECODE.read_text(encoding="utf-8")).get("wheel_reading_purpose", {})
+    except Exception:
+        return {}
+
+
+def _turn_reason_fields(turn: pd.Series) -> dict:
+    """Resolve the recorded SLAM Reason Of Turning, without inferring causes."""
+    reg = _turn_reason_lookup()
+    if reg.empty:
+        return {"reason_of_turning": None, "reason_of_turning_raw_code": None,
+                "reason_of_turning_source": "unavailable"}
+    hit = pd.DataFrame()
+    for key in ("pre_register_id", "register_id", "pre_measurement_record_id",
+                "post_register_id", "post_measurement_record_id"):
+        if key in turn.index and "LwrId" in reg.columns and pd.notna(turn.get(key)):
+            hit = reg[reg["LwrId"].eq(float(turn[key]))]
+            if not hit.empty:
+                break
+    for ts_key in ("pre_ts", "post_ts"):
+        if hit.empty and "LwrUpdatedOn" in reg.columns and pd.notna(turn.get(ts_key)):
+            hit = reg[reg["LwrUpdatedOn"].eq(pd.Timestamp(turn[ts_key]))]
+    if hit.empty or "LwrPurpose" not in hit.columns:
+        return {"reason_of_turning": None, "reason_of_turning_raw_code": None,
+                "reason_of_turning_source": "not_recorded_or_unmatched"}
+    code = hit.iloc[0]["LwrPurpose"]
+    raw = int(code) if pd.notna(code) else None
+    reason = _turn_reason_decode().get(str(raw)) if raw is not None else None
+    if raw in (None, 0) or reason == "No Reason Recorded":
+        return {"reason_of_turning": reason or "No Reason Recorded",
+                "reason_of_turning_raw_code": raw,
+                "reason_of_turning_source": "recorded_no_reason"}
+    return {"reason_of_turning": reason or f"Unknown recorded code {raw}",
+            "reason_of_turning_raw_code": raw,
+            "reason_of_turning_source": "recorded_reason"}
 
 
 def _limiting_dim_provenance(wheelset_id: int) -> dict | None:
@@ -1499,6 +1649,7 @@ def wheelset_history(wheelset_id: int) -> dict:
             "delta_wsmFlangeThickness": round(_f(r.get("delta_wsmFlangeThickness")), 4)
             if pd.notna(r.get("delta_wsmFlangeThickness")) else None,
             "dia_cut": _f(r.get("cut_dia")),
+            **_turn_reason_fields(r),
         })
     return {"wheelset_equipment_id": wheelset_id, "measurements": out_m, "turns": out_t}
 
@@ -1764,3 +1915,138 @@ def _manifest_ts() -> str | None:
         return json.loads(SNAPSHOT_MANIFEST.read_text()).get("built_at_utc")
     except Exception:
         return None
+
+
+# ---------------------------------------------------------------------------
+# Capacity-aware worklist + disposition capture (decision loop)
+# ---------------------------------------------------------------------------
+
+WORKLIST_COLS = ["shed_any", "loco_number", "loco_type", "wheelset_equipment_id",
+                 "axle_position_1_6", "wheel_position_1_12", "limiting_dim",
+                 "limiting_reason", "days_to_condemning_dia",
+                 "mean_wsmDia", "mean_wsmFlange", "mean_wsmRoot", "mean_wsmThread",
+                 "staleness_days", "latest_measurement"]
+
+
+def fleet_worklist(k: int = 10, shed: str | None = None,
+                   max_staleness_days: int | None = 365) -> dict:
+    """Top-k wheelsets per shed by the primary ranking (calibrated 90d P(turn)).
+
+    Capacity-aware morning worklist: each shed gets at most `k` rows so one
+    busy shed cannot crowd out the rest of the fleet. Ranking column is the
+    same `_rank_col` promotion as /fleet/risk (calibrated Target B). This is a
+    prioritisation aid, not a turning instruction (contract §8).
+    """
+    df = _with_current_staleness(_snapshot_df())
+    if df is None:
+        return {"error": f"fleet snapshot not built: {SNAPSHOT_PARQUET.relative_to(ML_ROOT)}"}
+    if max_staleness_days is not None and "staleness_days" in df.columns:
+        df = df[df["staleness_days"] <= max_staleness_days]
+    if shed:
+        df = df[df["shed_any"].astype(str).eq(str(shed))]
+    rank_col = _rank_col(df, "pturn_90d")
+    if rank_col not in df.columns:
+        return {"error": f"snapshot missing ranking column {rank_col}"}
+    df = df[df[rank_col].notna()]
+    items = []
+    for sh, grp in df.groupby("shed_any"):
+        top = grp.sort_values(rank_col, ascending=False).head(max(1, int(k)))
+        for _, r in top.iterrows():
+            item = {c: (str(r[c]) if c == "latest_measurement" and pd.notna(r[c])
+                        else (_f(r[c]) if c != "shed_any" else str(r[c])))
+                    for c in WORKLIST_COLS if c in r.index}
+            item["wheelset_equipment_id"] = int(r["wheelset_equipment_id"])
+            item["rank_score"] = _f(r[rank_col])
+            item["rank_score_kind"] = rank_col
+            item["pturn_90d_decile"] = _f(r.get("pturn_90d_decile"))
+            item["wear_bands"] = _wear_watch_bands(r)
+            items.append(item)
+    items.sort(key=lambda x: (x.get("rank_score") or 0) * -1)
+    return {"k_per_shed": int(k), "n_sheds": int(df["shed_any"].nunique()),
+            "total": len(items), "items": items,
+            "generated_at": datetime.now(timezone.utc).isoformat()}
+
+
+DISPOSITION_DIR = ROOT / "model_datasets" / "v5" / "dispositions"
+DISPOSITION_ACTIONS = ("turn", "inspect", "defer", "no_action")
+
+
+def record_disposition(wheelset_id: int, action: str, note: str | None = None,
+                       loco_number: str | None = None) -> dict:
+    """Append one engineer decision to the disposition log (JSONL).
+
+    Closes the recommendation loop: every dashboard suggestion can be accepted
+    (turn/inspect) or rejected (defer/no_action) with an optional note. The log
+    is the labelled decision dataset for action-quality evaluation later.
+    Provenance (snapshot version + current calibrated score) is captured at
+    decision time so future audits know what the engineer actually saw.
+    """
+    action_n = str(action).strip().lower().replace("-", "_").replace(" ", "_")
+    if action_n not in DISPOSITION_ACTIONS:
+        raise ValueError(f"action must be one of {DISPOSITION_ACTIONS}")
+    DISPOSITION_DIR.mkdir(parents=True, exist_ok=True)
+    snap = _snapshot_df()
+    pturn = decile = None
+    if snap is not None:
+        m = snap[snap["wheelset_equipment_id"] == int(wheelset_id)]
+        if not m.empty:
+            pturn = _f(m.iloc[-1].get("pturn_90d_calibrated"))
+            decile = _f(m.iloc[-1].get("pturn_90d_decile"))
+    rec = {
+        "ts_utc": datetime.now(timezone.utc).isoformat(),
+        "wheelset_equipment_id": int(wheelset_id),
+        "loco_number": loco_number,
+        "action": action_n,
+        "note": (note or None),
+        "context": {
+            "snapshot_built_at": _manifest_ts(),
+            "pturn_90d_calibrated": pturn,
+            "pturn_90d_decile": decile,
+        },
+    }
+    path = DISPOSITION_DIR / f"{datetime.now(timezone.utc):%Y-%m}.jsonl"
+    with path.open("a", encoding="utf-8") as fh:
+        fh.write(json.dumps(rec, ensure_ascii=False) + "\n")
+    return rec
+
+
+def dispositions_for(wheelset_id: int) -> list[dict]:
+    """Disposition history for one wheelset (all months, oldest first)."""
+    out: list[dict] = []
+    if not DISPOSITION_DIR.exists():
+        return out
+    for path in sorted(DISPOSITION_DIR.glob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rec = json.loads(line)
+            except ValueError:
+                continue
+            if int(rec.get("wheelset_equipment_id", -1)) == int(wheelset_id):
+                out.append(rec)
+    out.sort(key=lambda x: x.get("ts_utc") or "")
+    return out
+
+
+def disposition_summary() -> dict:
+    """Fleet-wide disposition counts per action (last 30 days vs all time)."""
+    import collections
+
+    per_action_all: dict[str, int] = collections.Counter()
+    per_action_30d: dict[str, int] = collections.Counter()
+    cutoff = (datetime.now(timezone.utc) - pd.Timedelta(days=30)).isoformat()
+    if DISPOSITION_DIR.exists():
+        for path in sorted(DISPOSITION_DIR.glob("*.jsonl")):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                try:
+                    rec = json.loads(line)
+                except ValueError:
+                    continue
+                a = rec.get("action")
+                per_action_all[a] += 1
+                if (rec.get("ts_utc") or "") >= cutoff:
+                    per_action_30d[a] += 1
+    return {"actions": sorted(DISPOSITION_ACTIONS),
+            "last_30d": dict(per_action_30d), "all_time": dict(per_action_all)}

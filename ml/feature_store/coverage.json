@@ -100,7 +100,11 @@
     "coverage_pct": 99.9916
   },
   "days_since_turning": {
-    "non_null_rows": 41517,
-    "coverage_pct": 18.4305
+    "non_null_rows": 41604,
+    "coverage_pct": 18.4692
+  },
+  "interval_distance_km": {
+    "non_null_rows": 0,
+    "coverage_pct": 0.0
   }
 }

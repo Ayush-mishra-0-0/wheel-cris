@@ -1,0 +1,16 @@
+{
+  "dataset_version": "free_delta_features_v1",
+  "generated_at_utc": "2026-08-21T10:03:09.793615+00:00",
+  "source_wes": "model_datasets\\v3\\wheel_engineering_state_v1.1.parquet",
+  "source_sha256": "1f09512dd62b15c87c25c31fb8906ddfd15ef017d067112f91cd46ff07d52e94",
+  "rows": 278480,
+  "delta_rule": "current same-wheelset mean minus immediately prior timestamp-ordered mean; first observation is NaN",
+  "no_interpolation": true,
+  "coverage": {
+    "flange_thickness_delta_mm": 0.930623,
+    "root_delta_mm": 0.930688,
+    "wheel_gauge_delta_mm": 0.930688,
+    "tire_thickness_delta_mm": 0.92932
+  },
+  "skid_flag_rows": 0
+}

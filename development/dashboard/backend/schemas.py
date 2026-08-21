@@ -88,6 +88,9 @@ class TurnEvent(BaseModel):
     segment_index: int | None = None
     delta_wsmFlangeThickness: float | None = None
     dia_cut: float | None = None
+    reason_of_turning: str | None = None
+    reason_of_turning_raw_code: int | None = None
+    reason_of_turning_source: str | None = None
 
 
 class TurnProbability(BaseModel):
@@ -356,6 +359,9 @@ class TurnMarker(BaseModel):
     pre_wsmDia: float | None = None
     post_wsmDia: float | None = None
     dia_cut: float | None = None
+    reason_of_turning: str | None = None
+    reason_of_turning_raw_code: int | None = None
+    reason_of_turning_source: str | None = None
     pre_wsmFlange: float | None = None
     post_wsmFlange: float | None = None
     pre_wsmRoot: float | None = None
@@ -408,6 +414,7 @@ class Capabilities(BaseModel):
     degradation_serving: dict = Field(default_factory=dict)
     limits: dict[str, dict] = Field(default_factory=dict)
     validation: dict = Field(default_factory=dict)
+    data_health: dict = Field(default_factory=dict)
 
 
 # ---------------------------------------------------------------------------
@@ -479,6 +486,35 @@ class FleetSearchResponse(BaseModel):
     query: str
     total: int = 0
     items: list[SearchHit] = Field(default_factory=list)
+
+
+class FleetWorklistResponse(BaseModel):
+    k_per_shed: int = 10
+    n_sheds: int = 0
+    total: int = 0
+    generated_at: str | None = None
+    items: list[dict] = Field(default_factory=list)
+
+
+class DispositionCreate(BaseModel):
+    action: str
+    note: str | None = None
+    loco_number: str | None = None
+
+
+class DispositionRecord(BaseModel):
+    ts_utc: str | None = None
+    wheelset_equipment_id: int
+    loco_number: str | None = None
+    action: str
+    note: str | None = None
+    context: dict = Field(default_factory=dict)
+
+
+class DispositionSummary(BaseModel):
+    actions: list[str] = Field(default_factory=list)
+    last_30d: dict = Field(default_factory=dict)
+    all_time: dict = Field(default_factory=dict)
 
 
 class ShedOverview(BaseModel):

@@ -35,8 +35,12 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+from models.phase5.measurement_scope import apply_inspection_scope
+
 ROOT = Path(__file__).resolve().parents[2]
-WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
+from models.phase5.wes_paths import current_wes_path
+
+WES = current_wes_path()
 OUT = ROOT / "model_datasets" / "v5"
 
 # quality-gate / plausibility windows (v1.0 spec section 4, artefact removal only)
@@ -185,6 +189,8 @@ def compute_boundaries(wes: pd.DataFrame) -> pd.DataFrame:
     REPLACEMENT_DIA_JUMP_MM (the P0.2 fix; see _dia_jump_replacement_mask).
     """
     g = wes.groupby("wheelset_equipment_id", sort=False)
+    if "measurement_record_id" in wes.columns:
+        wes["prev_measurement_record_id"] = g["measurement_record_id"].shift(1)
     for f in SIDE_FIELDS:
         wes[f"prev_{f}"] = g[f"mean_{f}"].shift(1)
     wes["prev_ts"] = g["_ts"].shift(1)
@@ -222,6 +228,7 @@ def compute_boundaries(wes: pd.DataFrame) -> pd.DataFrame:
 
 def build_segments() -> tuple[pd.DataFrame, pd.DataFrame]:
     wes = pd.read_parquet(WES)
+    wes = apply_inspection_scope(wes)
     wes = wes.sort_values(["wheelset_equipment_id", "measurement_timestamp"]).reset_index(drop=True)
 
     for f in SIDE_FIELDS:
@@ -253,6 +260,10 @@ def build_segments() -> tuple[pd.DataFrame, pd.DataFrame]:
               "segment_index": int(r["seg_id"]),
               "pre_ts": pd.Timestamp(pre_ts), "post_ts": pd.Timestamp(post_ts),
               "days_between": float((post_ts - pre_ts) / np.timedelta64(1, "D"))}
+        if "measurement_record_id" in r.index:
+            tr["post_measurement_record_id"] = r["measurement_record_id"]
+        if "prev_measurement_record_id" in r.index:
+            tr["pre_measurement_record_id"] = r["prev_measurement_record_id"]
         for f in SIDE_FIELDS:
             tr[f"pre_{f}"] = r[f"prev_{f}"]
             tr[f"post_{f}"] = r[f"mean_{f}"]

@@ -25,7 +25,9 @@ import numpy as np
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[4]
-WES = ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet"
+from models.phase5.wes_paths import current_wes_path
+
+WES = current_wes_path()
 EXPOSURE = ROOT / "model_datasets" / "v2" / "exposure_features_v2.parquet"
 SEG = ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet"
 
@@ -37,11 +39,13 @@ RATE_DIMS = (("wsmRoot", (30, 90)), ("wsmDia", (30, 90)))
 from models.phase5.build_lifecycle_segments import (  # noqa: E402
     SIDE_FIELDS, compute_boundaries, reset_aware_window_base, side_mean,
 )
+from models.phase5.measurement_scope import apply_inspection_scope
 
 
 @lru_cache(maxsize=1)
 def load_wes() -> pd.DataFrame:
     wes = pd.read_parquet(WES)
+    wes = apply_inspection_scope(wes)
     wes = wes.sort_values(["wheelset_equipment_id", "measurement_timestamp"]).reset_index(drop=True)
     with np.errstate(invalid="ignore"):
         for f in SIDE_FIELDS:

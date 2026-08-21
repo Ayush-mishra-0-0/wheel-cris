@@ -1,0 +1,64 @@
+{
+  "dataset_version": "wheel_engineering_state_v1.1",
+  "generated_at_utc": "2026-08-21T09:51:31.329374+00:00",
+  "grain": "one Gold-B attributable inspection measurement",
+  "rows": 278480,
+  "columns": 69,
+  "input_sha256": {
+    "raw_measurements": "f55c4649abafafa29aa3635e8aa105aee5020361645ce85176ee9f36cd3600d7",
+    "timeline_gold_b": "111a1682ef218c9436a71d3e3790690c914f92419d04f4a4e98577794e457cfe",
+    "feature_store_v1": "a2173d6827ec8135fb2276bcde96bde70be3768410454848b10915a24e82f950"
+  },
+  "state_semantics": "Measured engineering state and point-in-time context only; no margin, health score, latent engineering need, or future outcome is materialised.",
+  "quality_windows": {
+    "wsmDia1": [
+      1000.0,
+      1100.0
+    ],
+    "wsmDia2": [
+      1000.0,
+      1100.0
+    ],
+    "wsmFlangeThickness1": [
+      10.0,
+      50.0
+    ],
+    "wsmFlangeThickness2": [
+      10.0,
+      50.0
+    ],
+    "wsmRoot1": [
+      0.0,
+      30.0
+    ],
+    "wsmRoot2": [
+      0.0,
+      30.0
+    ],
+    "wsmTireThikness1": [
+      5.0,
+      100.0
+    ],
+    "wsmTireThikness2": [
+      5.0,
+      100.0
+    ],
+    "wsmWheelGauge1": [
+      1300.0,
+      1700.0
+    ],
+    "wsmWheelGauge2": [
+      1300.0,
+      1700.0
+    ]
+  },
+  "blocked_fields": [
+    "wsmFlange1",
+    "wsmFlange2",
+    "wsmThread1",
+    "wsmThread2",
+    "wsmKvalue1",
+    "wsmSDistance1"
+  ],
+  "context_available_rows": 225262
+}
