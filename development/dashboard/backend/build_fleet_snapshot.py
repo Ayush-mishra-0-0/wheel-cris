@@ -45,6 +45,7 @@ from dashboard.backend._paths import ML_ROOT  # noqa: E402
 from models.phase5.dashboard.backend.features import (  # noqa: E402
     extract_features, load_segments, load_wes,
 )
+from models.phase5.wes_paths import current_wes_path  # noqa: E402
 
 CONTRACT_INTERVAL_CONTEXT = ML_ROOT / "data/gold/interval_context/v1.0/inspection_interval_context.parquet"
 
@@ -292,30 +293,58 @@ def build_snapshot() -> pd.DataFrame:
     return df
 
 
-def write(df: pd.DataFrame) -> None:
-    OUT.parent.mkdir(parents=True, exist_ok=True)
-    df.to_parquet(OUT, index=False)
-    srcs = [
-        ML_ROOT / "model_datasets" / "v3" / "wheel_engineering_state_v1.0.parquet",
-        ML_ROOT / "model_datasets" / "v2" / "exposure_features_v2.parquet",
+def _snapshot_sources() -> list[Path]:
+    """Actual inputs of build_snapshot(), resolved live (never hardcoded).
+
+    The WES entry MUST go through the same resolver the build reads through
+    (features.load_wes -> wes_paths.current_wes_path) so manifest provenance
+    stays true across version refreshes.
+    """
+    return [
+        current_wes_path(),
         ML_ROOT / "model_datasets" / "v5" / "lifecycle_segments_shed.parquet",
+        service.ADAPT_ARTEFACT,
+        CONTRACT_INTERVAL_CONTEXT,
     ]
+
+
+def _build_manifest(df: pd.DataFrame | None = None,
+                    from_existing: bool = False) -> dict:
+    """Manifest for the snapshot; `from_existing=True` regenerates provenance
+    from the parquet already on disk (no re-inference)."""
+    if df is None:
+        df = pd.read_parquet(OUT)
+    prev: dict = {}
+    if MANIFEST.exists():
+        try:
+            prev = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        except ValueError:
+            prev = {}
     manifest = {
         "task": "fleet snapshot (P1.1) - one row per wheelset, current state",
         "contract": "fleet_snapshot_v1",
-        "built_at_utc": datetime.now(timezone.utc).isoformat(),
+        "built_at_utc": prev.get("built_at_utc") or datetime.now(timezone.utc).isoformat(),
         "n_wheelsets": int(len(df)),
         "n_with_forecast": int(df["model_version"].notna().sum()),
         "model_version": str(df["model_version"].dropna().iloc[0]) if "model_version" in df and df["model_version"].notna().any() else None,
         "train_cutoff": str(df["train_cutoff"].dropna().iloc[0]) if "train_cutoff" in df and df["train_cutoff"].notna().any() else None,
         "model_of_record": service.degradation_meta().get("model_of_record"),
-        "sources": [{"path": str(p.relative_to(ML_ROOT)), "sha256": _sha(p)} for p in srcs if p.exists()],
+        "sources": [{"path": str(p.relative_to(ML_ROOT)), "sha256": _sha(p)}
+                    for p in _snapshot_sources() if p.exists()],
         "rebuild": "ayush\\Scripts\\python -m dashboard.backend.build_fleet_snapshot",
         "note": ("Point-in-time export for ranking/overview. P(turn), wear state and "
                  "limit proximity are separate columns and must not be collapsed. "
                  "Live per-wheelset forecasts come from the API, not this file."),
     }
-    MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    if from_existing:
+        manifest["manifest_regenerated_at_utc"] = datetime.now(timezone.utc).isoformat()
+    return manifest
+
+
+def write(df: pd.DataFrame) -> None:
+    OUT.parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(OUT, index=False)
+    MANIFEST.write_text(json.dumps(_build_manifest(df), indent=2) + "\n", encoding="utf-8")
     print("wrote", OUT.relative_to(ML_ROOT))
 
 
@@ -336,6 +365,14 @@ def _f(v) -> float | None:
 
 
 def main() -> None:
+    if "--manifest-only" in sys.argv:
+        # Regenerate provenance from the EXISTING parquet (no re-inference).
+        manifest = _build_manifest(from_existing=True)
+        MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+        print("regenerated", MANIFEST.relative_to(ML_ROOT))
+        for s in manifest["sources"]:
+            print("  source:", s["path"])
+        return
     t0 = time.time()
     print("building fleet snapshot...")
     with warnings.catch_warnings():

@@ -14,18 +14,23 @@
   },
   "sources": [
     {
-      "path": "model_datasets\\v3\\wheel_engineering_state_v1.0.parquet",
-      "sha256": "a326259199431e3f0947fc43cba4835e069e0db94ff1cb9751de8d350f97fd40"
-    },
-    {
-      "path": "model_datasets\\v2\\exposure_features_v2.parquet",
-      "sha256": "74aaf1bf49c49a69cf9743980d6a2a8cb8e4da7c6f3abcb86cc70f2bb3649631"
+      "path": "model_datasets\\v3\\wheel_engineering_state_v1.1.parquet",
+      "sha256": "1f09512dd62b15c87c25c31fb8906ddfd15ef017d067112f91cd46ff07d52e94"
     },
     {
       "path": "model_datasets\\v5\\lifecycle_segments_shed.parquet",
       "sha256": "55cf979f9871e56e5075ba2770f8bffe37cff7ab2223e3c4cfa42ef45803dc17"
+    },
+    {
+      "path": "model_datasets\\v5\\wheelset_adaptation.parquet",
+      "sha256": "9115e10e2b8a8e21124f539aef0027d64c47c48c12a1511bf9941eb2d8ccd3fe"
+    },
+    {
+      "path": "data\\gold\\interval_context\\v1.0\\inspection_interval_context.parquet",
+      "sha256": "23fe31616836dc8a09d162e0678478439b89ded3b5f26f2325dfc637d3a7092c"
     }
   ],
   "rebuild": "ayush\\Scripts\\python -m dashboard.backend.build_fleet_snapshot",
-  "note": "Point-in-time export for ranking/overview. P(turn), wear state and limit proximity are separate columns and must not be collapsed. Live per-wheelset forecasts come from the API, not this file."
+  "note": "Point-in-time export for ranking/overview. P(turn), wear state and limit proximity are separate columns and must not be collapsed. Live per-wheelset forecasts come from the API, not this file.",
+  "manifest_regenerated_at_utc": "2026-08-21T11:14:51.644632+00:00"
 }
