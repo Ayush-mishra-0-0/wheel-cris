@@ -145,12 +145,14 @@ def build_snapshot() -> pd.DataFrame:
         last = w.iloc[-1]
         cov = service.feature_coverage(fr, svc["num_feats"])
 
-        # shed attribution lives on lifecycle_segments (seg), not WES
-        shed_any = "NA"
+        # shed attribution lives on lifecycle_segments (seg), not WES;
+        # normalized (strip/collapse/upper) so capacity groups never split
         srow = seg[(seg["wheelset_equipment_id"] == ws_id) &
                    (seg["segment_index"] == int(last["seg_id"]))]
-        if not srow.empty and pd.notna(srow.iloc[0]["shed_any"]):
-            shed_any = str(srow.iloc[0]["shed_any"])
+        shed_any = (service.normalize_shed(srow.iloc[0]["shed_any"])
+                    if not srow.empty and pd.notna(srow.iloc[0]["shed_any"]) else None)
+        if shed_any is None:
+            shed_any = "NA"
 
         row: dict = {
             "wheelset_equipment_id": int(ws_id),

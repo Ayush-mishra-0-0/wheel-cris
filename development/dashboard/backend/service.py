@@ -1741,7 +1741,20 @@ def _f(v) -> float | None:
 def _snapshot_df() -> pd.DataFrame | None:
     if not SNAPSHOT_PARQUET.exists():
         return None
-    return pd.read_parquet(SNAPSHOT_PARQUET)
+    df = pd.read_parquet(SNAPSHOT_PARQUET)
+    if "shed_any" in df.columns:
+        # Shed codes arrive with whitespace/case variants ("HWHE ", "hwhe");
+        # un-normalized they split capacity groups and shed filters.
+        df["shed_any"] = df["shed_any"].map(normalize_shed)
+    return df
+
+
+def normalize_shed(v) -> str | None:
+    """Canonical shed key: strip, collapse internal whitespace, uppercase."""
+    if v is None or (isinstance(v, float) and np.isnan(v)):
+        return None
+    s = " ".join(str(v).split())
+    return s.upper() if s else None
 
 
 def _with_current_staleness(df: pd.DataFrame | None) -> pd.DataFrame | None:
